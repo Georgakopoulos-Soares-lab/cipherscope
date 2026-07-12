@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cipherscope.dev/schemas/recommendations.schema.json",
+  "title": "CipherScope analyzer findings",
+  "description": "Evidence-linked, applicability-scoped diagnostics and optimization experiments for one run.",
+  "type": "object",
+  "required": ["schema_version", "run_id", "findings"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "run_id": {"$ref": "#/$defs/id"},
+    "synthetic_contract": {"type": "boolean"},
+    "analysis_status": {"enum": ["positive", "clean", "not_applicable"]},
+    "not_applicable_reasons": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"analysis_status": {"const": "positive"}}, "required": ["analysis_status"]},
+      "then": {"properties": {"findings": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"analysis_status": {"enum": ["clean", "not_applicable"]}}, "required": ["analysis_status"]},
+      "then": {"properties": {"findings": {"maxItems": 0}}}
+    }
+  ],
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 512},
+    "id_array": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/id"},
+      "uniqueItems": true
+    },
+    "string_array": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "finding_id",
+        "rule_id",
+        "category",
+        "severity",
+        "confidence",
+        "source_sites",
+        "evidence_event_ids",
+        "applicability",
+        "recommendation",
+        "limitations"
+      ],
+      "properties": {
+        "finding_id": {"$ref": "#/$defs/id"},
+        "rule_id": {"$ref": "#/$defs/id"},
+        "analyzer": {"type": "string", "minLength": 1},
+        "category": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["information", "opportunity", "warning", "error"]},
+        "confidence": {"enum": ["measured", "inferred", "estimated", "unknown"]},
+        "source_sites": {"$ref": "#/$defs/id_array"},
+        "source": {
+          "type": "object",
+          "properties": {
+            "file": {"type": ["string", "null"]},
+            "function": {"type": ["string", "null"]},
+            "lines": {
+              "type": "array",
+              "items": {"type": "integer", "minimum": 1},
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": true
+        },
+        "evidence_event_ids": {"$ref": "#/$defs/id_array"},
+        "evidence": {"type": "object"},
+        "applicability": {"$ref": "#/$defs/string_array"},
+        "estimated_impact": {
+          "type": "object",
+          "additionalProperties": {"type": ["number", "null"]}
+        },
+        "recommendation": {"type": "string", "minLength": 1},
+        "limitations": {"$ref": "#/$defs/string_array"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"rule_id": {"const": "rotation.hoist_same_input.v1"}}, "required": ["rule_id"]},
+          "then": {
+            "properties": {
+              "estimated_impact": {
+                "type": "object",
+                "properties": {"speedup": {"type": "null"}}
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

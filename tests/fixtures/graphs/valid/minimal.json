@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "fixture-graph-minimal",
+  "synthetic_contract": true,
+  "nodes": [
+    {"id": "ct_0001:v0", "node_type": "CiphertextVersion", "created_by_event": null, "parent_ids": [], "origin": "preexisting", "level": 0, "noise_scale_degree": 1, "observed_nonlinear_depth": 0},
+    {"id": "event_0001", "node_type": "RuntimeEvent", "operation": "EvalRotate", "status": "ok"},
+    {"id": "site_minimal", "node_type": "SourceSite", "file": "minimal.py", "line": 7, "function": "run", "qualified_function": "run", "source_sha256": "synthetic-minimal"},
+    {"id": "ct_0002:v0", "node_type": "CiphertextVersion", "created_by_event": "event_0001", "parent_ids": ["ct_0001:v0"], "origin": "derived", "level": 0, "noise_scale_degree": 1, "observed_nonlinear_depth": 0}
+  ],
+  "edges": [
+    {"edge_type": "called_from", "from": "event_0001", "to": "site_minimal"},
+    {"edge_type": "consumes", "from": "ct_0001:v0", "to": "event_0001"},
+    {"edge_type": "produces", "from": "event_0001", "to": "ct_0002:v0"},
+    {"edge_type": "derived_from", "from": "ct_0002:v0", "to": "ct_0001:v0"}
+  ],
+  "roots": ["ct_0001:v0"],
+  "outputs": ["ct_0002:v0"],
+  "critical_paths": {
+    "nonlinear_ciphertext": {"max_depth": 0, "event_ids": [], "confidence": "inferred"},
+    "observed_level_use": {"max_levels_consumed_in_epoch": 0, "bootstrap_event_ids": [], "confidence": "measured"}
+  }
+}

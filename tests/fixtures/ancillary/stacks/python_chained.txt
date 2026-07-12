@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "<redacted>/service.py", line 14, in decode_packet
+    raise ValueError("synthetic packet")
+ValueError: synthetic packet
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<redacted>/worker.py", line 29, in run
+    decode_packet()
+RuntimeError: synthetic chained failure

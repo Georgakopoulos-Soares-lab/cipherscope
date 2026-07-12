@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "fixture-graph-cycle",
+  "synthetic_contract": true,
+  "nodes": [
+    {"id": "ct_0001:v0", "node_type": "CiphertextVersion", "created_by_event": "event_0002", "parent_ids": ["ct_0002:v0"], "origin": "derived", "level": 1, "noise_scale_degree": 2, "observed_nonlinear_depth": 1},
+    {"id": "ct_0002:v0", "node_type": "CiphertextVersion", "created_by_event": "event_0001", "parent_ids": ["ct_0001:v0"], "origin": "derived", "level": 1, "noise_scale_degree": 2, "observed_nonlinear_depth": 1},
+    {"id": "event_0001", "node_type": "RuntimeEvent", "operation": "EvalMult", "status": "ok"},
+    {"id": "event_0002", "node_type": "RuntimeEvent", "operation": "EvalMult", "status": "ok"}
+  ],
+  "edges": [
+    {"edge_type": "derived_from", "from": "ct_0002:v0", "to": "ct_0001:v0"},
+    {"edge_type": "derived_from", "from": "ct_0001:v0", "to": "ct_0002:v0"}
+  ],
+  "roots": [],
+  "outputs": ["ct_0001:v0"],
+  "critical_paths": {
+    "nonlinear_ciphertext": {"max_depth": 1, "event_ids": ["event_0001", "event_0002"], "confidence": "inferred"},
+    "observed_level_use": {"max_levels_consumed_in_epoch": 1, "bootstrap_event_ids": [], "confidence": "measured"}
+  }
+}

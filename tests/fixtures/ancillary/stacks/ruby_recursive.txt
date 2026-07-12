@@ -1,0 +1,5 @@
+recursion_demo.rb:7:in `descend': stack level too deep (SystemStackError)
+	from recursion_demo.rb:7:in `descend'
+	from recursion_demo.rb:7:in `descend'
+	 ... 64 synthetic levels omitted ...
+	from recursion_demo.rb:12:in `<main>'

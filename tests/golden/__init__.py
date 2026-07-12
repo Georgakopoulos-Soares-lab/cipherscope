@@ -1,0 +1,1 @@
+"""Independent semantic golden tests."""

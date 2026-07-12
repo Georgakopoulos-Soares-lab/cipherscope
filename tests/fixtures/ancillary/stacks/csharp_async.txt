@@ -1,0 +1,5 @@
+System.InvalidOperationException: synthetic async failure
+   at Demo.Pipeline.TransformAsync() in /src/Pipeline.cs:line 24
+   at Demo.Pipeline.RunAsync() in /src/Pipeline.cs:line 39
+--- End of stack trace from previous location ---
+   at Demo.Program.Main(String[] args) in /src/Program.cs:line 11

@@ -1,0 +1,6 @@
+java.lang.IllegalStateException: synthetic outer failure
+	at example.Worker.run(Worker.java:31)
+	at example.Main.main(Main.java:8)
+Caused by: java.lang.IllegalArgumentException: synthetic inner failure
+	at example.Decoder.decode(Decoder.java:17)
+	at example.Worker.run(Worker.java:28)

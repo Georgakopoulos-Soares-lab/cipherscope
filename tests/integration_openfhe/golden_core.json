@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "wrapper_tag": "v1.5.1.0",
+  "wrapper_commit": "4f13e2c3a7e35f73f4816904dabd3a3db47b6e51",
+  "native_tag": "v1.5.1",
+  "native_commit": "1306d14f8c26bb6150d3e6ad54f28dfe1007689e",
+  "provisional_distribution": "1.5.1.0.24.4",
+  "provisional_wheel_sha256": "b39f50f570ea1236dc8a8c64b01552848eb66c068592c4178fa37249f182106e",
+  "batch_size": 8,
+  "a": [0.25, 0.5, 0.75, 1.0, 2.0, 3.0, 4.0, 5.0],
+  "b": [5.0, 4.0, 3.0, 2.0, 1.0, 0.75, 0.5, 0.25],
+  "rotation_indices": [1, -2, 2, 3],
+  "basic_max_abs_tolerance": 0.001,
+  "direct_vs_traced_tolerance": 1e-08,
+  "bootstrap_max_abs_tolerance": 0.005
+}

@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0.0",
+  "run": {"run_id": "fixture-trace-malformed"},
+  "context": {},
+  "events": [
+  "ciphertexts": []
+}

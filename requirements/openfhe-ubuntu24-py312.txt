@@ -1,0 +1,5 @@
+# Provisional official-wheel feasibility lane only.
+# The wheel is published for Ubuntu 24.04 / CPython 3.12 but is incorrectly
+# tagged py3-none-any despite containing an x86_64 CPython 3.12 extension.
+openfhe==1.5.1.0.24.4 \
+    --hash=sha256:b39f50f570ea1236dc8a8c64b01552848eb66c068592c4178fa37249f182106e

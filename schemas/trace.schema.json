@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cipherscope.dev/schemas/trace.schema.json",
+  "title": "CipherScope semantic trace",
+  "description": "Source-linked OpenFHE API events and immutable ciphertext-version states from one observed execution.",
+  "type": "object",
+  "required": ["schema_version", "run", "context", "events", "ciphertexts"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "run": {
+      "type": "object",
+      "required": ["run_id"],
+      "properties": {
+        "run_id": {"$ref": "#/$defs/id"},
+        "status": {"enum": ["completed", "incomplete", "failed", "interrupted"]},
+        "synthetic_contract": {"type": "boolean"},
+        "truncated": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "scheme": {"enum": ["CKKS", null]},
+        "ring_dimension": {"type": ["integer", "null"], "minimum": 1},
+        "available_slots": {"type": ["integer", "null"], "minimum": 0},
+        "configured_multiplicative_depth": {"type": ["integer", "null"], "minimum": 0}
+      },
+      "additionalProperties": true
+    },
+    "events": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/event"}
+    },
+    "ciphertexts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/ciphertext"}
+    },
+    "truncated": {"type": "boolean"},
+    "missing": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 512},
+    "id_array": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/id"},
+      "uniqueItems": true
+    },
+    "nullable_nonnegative_integer": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "source": {
+      "type": "object",
+      "required": ["file", "line", "function", "call_site_id"],
+      "properties": {
+        "file": {"type": ["string", "null"], "minLength": 1},
+        "line": {"type": ["integer", "null"], "minimum": 1},
+        "function": {"type": ["string", "null"], "minLength": 1},
+        "qualified_function": {"type": ["string", "null"]},
+        "source_sha256": {"type": ["string", "null"], "minLength": 1},
+        "call_site_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]}
+      },
+      "additionalProperties": true
+    },
+    "state_snapshot": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "level": {"$ref": "#/$defs/nullable_nonnegative_integer"},
+        "noise_scale_degree": {"$ref": "#/$defs/nullable_nonnegative_integer"},
+        "scale": {"type": ["number", "string", "null"]},
+        "slots": {"$ref": "#/$defs/nullable_nonnegative_integer"},
+        "context_id": {"type": ["string", "null"]},
+        "key_tag": {"type": ["string", "null"]},
+        "scaling_technique": {"type": ["string", "null"]},
+        "key_switch_technique": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "timing": {
+      "type": "object",
+      "required": ["start_ns", "wall_duration_ns"],
+      "properties": {
+        "start_ns": {"type": "integer", "minimum": 0},
+        "wall_duration_ns": {"type": "integer", "minimum": 0},
+        "process_cpu_duration_ns": {"$ref": "#/$defs/nullable_nonnegative_integer"},
+        "thread_cpu_duration_ns": {"$ref": "#/$defs/nullable_nonnegative_integer"}
+      },
+      "additionalProperties": true
+    },
+    "event": {
+      "type": "object",
+      "required": [
+        "event_id",
+        "sequence",
+        "kind",
+        "operation",
+        "status",
+        "source",
+        "input_ciphertexts",
+        "output_ciphertexts",
+        "timing"
+      ],
+      "properties": {
+        "event_id": {"$ref": "#/$defs/id"},
+        "sequence": {"type": "integer", "minimum": 0},
+        "kind": {"type": "string", "minLength": 1},
+        "operation": {"type": "string", "minLength": 1},
+        "overload": {"type": ["string", "null"]},
+        "granularity": {"type": ["string", "null"]},
+        "status": {"enum": ["ok", "error"]},
+        "error_class": {"type": "string", "minLength": 1},
+        "error_message": {"type": "string"},
+        "source": {"$ref": "#/$defs/source"},
+        "input_ciphertexts": {"$ref": "#/$defs/id_array"},
+        "output_ciphertexts": {"$ref": "#/$defs/id_array"},
+        "operand_kinds": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "timing": {"$ref": "#/$defs/timing"},
+        "input_states": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/state_snapshot"}
+        },
+        "output_states": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/state_snapshot"}
+        },
+        "semantic_arguments": {"type": "object"},
+        "thread_id": {"$ref": "#/$defs/nullable_nonnegative_integer"},
+        "python_thread_id": {"$ref": "#/$defs/nullable_nonnegative_integer"},
+        "missing": {
+          "type": "array",
+          "items": {"type": "string"},
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "error"}}, "required": ["status"]},
+          "then": {
+            "required": ["error_class"],
+            "properties": {
+              "output_ciphertexts": {"maxItems": 0},
+              "output_states": {"maxItems": 0}
+            }
+          }
+        }
+      ],
+      "additionalProperties": true
+    },
+    "ciphertext": {
+      "type": "object",
+      "required": ["id", "created_by_event", "parent_ids", "origin"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "created_by_event": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "parent_ids": {"$ref": "#/$defs/id_array"},
+        "origin": {"type": "string", "minLength": 1},
+        "level": {"$ref": "#/$defs/nullable_nonnegative_integer"},
+        "noise_scale_degree": {"$ref": "#/$defs/nullable_nonnegative_integer"},
+        "scale": {"type": ["number", "string", "null"]},
+        "slots": {"$ref": "#/$defs/nullable_nonnegative_integer"},
+        "context_id": {"type": ["string", "null"]},
+        "key_tag": {"type": ["string", "null"]},
+        "scaling_technique": {"type": ["string", "null"]},
+        "key_switch_technique": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

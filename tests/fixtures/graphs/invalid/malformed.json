@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "fixture-graph-malformed",
+  "synthetic_contract": true,
+  "nodes": [],
+  "edges": [],
+}

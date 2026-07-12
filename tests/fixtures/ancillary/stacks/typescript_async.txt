@@ -1,0 +1,5 @@
+Error: synthetic task failure
+    at encryptStage (/workspace/src/pipeline.ts:41:9)
+    at processTicksAndRejections (node:internal/process/task_queues:00:0)
+    at async runPipeline (/workspace/src/pipeline.ts:62:3)
+    at async <anonymous> (/workspace/src/index.ts:5:1)

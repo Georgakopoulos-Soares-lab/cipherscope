@@ -1,0 +1,7 @@
+panic: synthetic concurrent failure
+
+goroutine 19 [running]:
+example.invalid/worker.process(0x2)
+	<redacted>/worker.go:37 +0x42
+created by example.invalid/worker.start in goroutine 1
+	<redacted>/worker.go:18 +0x21

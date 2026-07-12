@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cipherscope.dev/schemas/manifest.schema.json",
+  "title": "CipherScope run manifest",
+  "description": "Reproducibility, coverage, privacy, clock, and parameter metadata for one CipherScope run.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "status",
+    "tool",
+    "runtime",
+    "coverage",
+    "privacy",
+    "clocks",
+    "parameter_set"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "synthetic_contract": {"type": "boolean"},
+    "run_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["completed", "incomplete", "failed", "interrupted"]},
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "python": {"type": ["string", "null"]},
+        "openfhe_python": {"type": ["string", "null"]},
+        "openfhe_native": {"type": ["string", "null"]},
+        "platform": {"type": ["string", "null"]},
+        "architecture": {"type": ["string", "null"]},
+        "threads": {"type": ["integer", "null"], "minimum": 1}
+      },
+      "additionalProperties": true
+    },
+    "coverage": {
+      "type": "object",
+      "required": [
+        "strict",
+        "traced_semantic_calls",
+        "allowed_passthrough_calls",
+        "unclassified_proxy_passthrough_calls",
+        "operator_overload_coverage",
+        "original_reference_bypass_observable"
+      ],
+      "properties": {
+        "strict": {"type": "boolean"},
+        "traced_semantic_calls": {"type": "integer", "minimum": 0},
+        "allowed_passthrough_calls": {"type": "integer", "minimum": 0},
+        "unclassified_proxy_passthrough_calls": {"type": "integer", "minimum": 0},
+        "operator_overload_coverage": {"type": "boolean"},
+        "original_reference_bypass_observable": {"type": "boolean"},
+        "truncated": {"type": "boolean"},
+        "failed_state_reads": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": true
+    },
+    "privacy": {
+      "type": "object",
+      "properties": {
+        "shadow_mode": {"type": "boolean"},
+        "paths": {"enum": ["basename", "basename_hash", "relative", "hash", "redact", "absolute"]},
+        "argv_recorded": {"type": "boolean"},
+        "plaintext_serialized": {"type": "boolean"},
+        "key_material_serialized": {"type": "boolean"},
+        "object_repr_serialized": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "clocks": {
+      "type": "object",
+      "required": ["wall", "cpu"],
+      "properties": {
+        "wall": {"type": "string", "minLength": 1},
+        "cpu": {"type": "string", "minLength": 1},
+        "thread_cpu": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "parameter_set": {
+      "type": "object",
+      "required": ["scheme", "ring_dimension", "configured_multiplicative_depth"],
+      "properties": {
+        "scheme": {"enum": ["CKKS", null]},
+        "ring_dimension": {"type": ["integer", "null"], "minimum": 1},
+        "configured_multiplicative_depth": {"type": ["integer", "null"], "minimum": 0},
+        "scaling_technique": {"type": ["string", "null"]},
+        "security_level": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

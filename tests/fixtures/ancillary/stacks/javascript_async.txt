@@ -1,0 +1,5 @@
+Error: synthetic async rejection
+    at fetchCipher (/srv/demo/worker.js:18:11)
+    at async evaluateBatch (/srv/demo/worker.js:27:5)
+    at async Promise.all (index 2)
+    at async main (/srv/demo/main.js:9:3)

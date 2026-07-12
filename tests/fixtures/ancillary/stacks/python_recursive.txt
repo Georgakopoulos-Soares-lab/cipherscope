@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "recursion_demo.py", line 8, in descend
+    return descend(depth - 1)
+  File "recursion_demo.py", line 8, in descend
+    return descend(depth - 1)
+  [Previous line repeated 37 more times]
+  File "recursion_demo.py", line 6, in descend
+    raise RuntimeError("synthetic recursion limit case")
+RuntimeError: synthetic recursion limit case

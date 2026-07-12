@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cipherscope.dev/schemas/graph.schema.json",
+  "title": "CipherScope ciphertext graph",
+  "description": "A typed executed computation graph with critical-path and bootstrap-epoch summaries.",
+  "type": "object",
+  "required": ["schema_version", "run_id", "nodes", "edges", "roots", "outputs", "critical_paths"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "run_id": {"$ref": "#/$defs/id"},
+    "synthetic_contract": {"type": "boolean"},
+    "nodes": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/node"}
+    },
+    "edges": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/edge"},
+      "uniqueItems": true
+    },
+    "roots": {"$ref": "#/$defs/id_array"},
+    "outputs": {"$ref": "#/$defs/id_array"},
+    "critical_paths": {
+      "type": "object",
+      "required": ["nonlinear_ciphertext", "observed_level_use"],
+      "properties": {
+        "nonlinear_ciphertext": {"$ref": "#/$defs/nonlinear_summary"},
+        "observed_level_use": {"$ref": "#/$defs/level_summary"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 512},
+    "id_array": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/id"},
+      "uniqueItems": true
+    },
+    "confidence": {"enum": ["measured", "inferred", "estimated", "unknown"]},
+    "node": {
+      "type": "object",
+      "required": ["id", "node_type"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "node_type": {
+          "enum": ["RuntimeEvent", "CiphertextVersion", "SourceSite", "PlaintextOrigin", "EvalKeyRequirement"]
+        },
+        "created_by_event": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "parent_ids": {"$ref": "#/$defs/id_array"},
+        "observed_nonlinear_depth": {"type": ["integer", "null"], "minimum": 0},
+        "observed_level_use_in_epoch": {"type": ["integer", "null"], "minimum": 0}
+      },
+      "additionalProperties": true
+    },
+    "edge": {
+      "type": "object",
+      "required": ["edge_type", "from", "to"],
+      "properties": {
+        "edge_type": {
+          "enum": ["called_from", "consumes", "produces", "derived_from", "uses_plaintext", "requires_key"]
+        },
+        "from": {"$ref": "#/$defs/id"},
+        "to": {"$ref": "#/$defs/id"}
+      },
+      "additionalProperties": false
+    },
+    "epoch_base": {
+      "type": "object",
+      "required": ["epoch_index", "start_sequence", "end_sequence", "closed_by_bootstrap_event_id", "event_ids", "confidence"],
+      "properties": {
+        "epoch_index": {"type": "integer", "minimum": 0},
+        "start_sequence": {"type": ["integer", "null"], "minimum": 0},
+        "end_sequence": {"type": ["integer", "null"], "minimum": 0},
+        "closed_by_bootstrap_event_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "event_ids": {"$ref": "#/$defs/id_array"},
+        "confidence": {"$ref": "#/$defs/confidence"}
+      }
+    },
+    "nonlinear_epoch": {
+      "allOf": [
+        {"$ref": "#/$defs/epoch_base"},
+        {
+          "type": "object",
+          "required": ["max_depth"],
+          "properties": {"max_depth": {"type": "integer", "minimum": 0}}
+        }
+      ]
+    },
+    "level_epoch": {
+      "allOf": [
+        {"$ref": "#/$defs/epoch_base"},
+        {
+          "type": "object",
+          "required": ["max_levels_consumed"],
+          "properties": {"max_levels_consumed": {"type": "integer", "minimum": 0}}
+        }
+      ]
+    },
+    "nonlinear_summary": {
+      "type": "object",
+      "required": ["max_depth", "event_ids", "confidence"],
+      "properties": {
+        "max_depth": {"type": "integer", "minimum": 0},
+        "event_ids": {"$ref": "#/$defs/id_array"},
+        "bootstrap_event_ids": {"$ref": "#/$defs/id_array"},
+        "epochs": {"type": "array", "items": {"$ref": "#/$defs/nonlinear_epoch"}},
+        "confidence": {"$ref": "#/$defs/confidence"}
+      },
+      "additionalProperties": true
+    },
+    "level_summary": {
+      "type": "object",
+      "required": ["max_levels_consumed_in_epoch", "bootstrap_event_ids", "confidence"],
+      "properties": {
+        "max_levels_consumed_in_epoch": {"type": "integer", "minimum": 0},
+        "event_ids": {"$ref": "#/$defs/id_array"},
+        "bootstrap_event_ids": {"$ref": "#/$defs/id_array"},
+        "epochs": {"type": "array", "items": {"$ref": "#/$defs/level_epoch"}},
+        "confidence": {"$ref": "#/$defs/confidence"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

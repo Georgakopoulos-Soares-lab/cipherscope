@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "fixture-graph-dangling",
+  "synthetic_contract": true,
+  "nodes": [
+    {"id": "ct_0001:v0", "node_type": "CiphertextVersion", "created_by_event": null, "parent_ids": [], "origin": "preexisting", "level": 0, "noise_scale_degree": 1, "observed_nonlinear_depth": 0},
+    {"id": "event_0001", "node_type": "RuntimeEvent", "operation": "EvalRotate", "status": "ok"}
+  ],
+  "edges": [
+    {"edge_type": "consumes", "from": "ct_missing:v0", "to": "event_0001"}
+  ],
+  "roots": ["ct_0001:v0"],
+  "outputs": [],
+  "critical_paths": {
+    "nonlinear_ciphertext": {"max_depth": 0, "event_ids": [], "confidence": "inferred"},
+    "observed_level_use": {"max_levels_consumed_in_epoch": 0, "bootstrap_event_ids": [], "confidence": "measured"}
+  }
+}

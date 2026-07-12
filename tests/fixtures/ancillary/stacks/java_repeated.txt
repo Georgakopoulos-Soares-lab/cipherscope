@@ -1,0 +1,6 @@
+java.lang.RuntimeException: synthetic repeated frames
+	at example.Loop.visit(Loop.java:22)
+	at example.Loop.visit(Loop.java:22)
+	at example.Loop.visit(Loop.java:22)
+	at example.Loop.visit(Loop.java:22)
+	... 48 more
