@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+import weakref
 from dataclasses import dataclass
 from typing import Any, Callable, Generic, Iterable, Mapping, TypeVar
 
@@ -14,19 +15,34 @@ CiphertextT = TypeVar("CiphertextT")
 
 @dataclass
 class _IdentityEntry(Generic[CiphertextT]):
-    """An internal strong-reference guard; its process identity is never emitted."""
+    """A weak-reference guard; its process identity is never emitted.
 
-    value: CiphertextT
+    Holds a *weak* reference, not a strong one, so a ciphertext can be
+    garbage-collected as soon as the caller's program is done with it
+    (previously this held ``value`` directly, pinning every ciphertext ever
+    seen for the entire life of the session). The cleanup callback removes
+    this entry the moment the object is actually collected, so its ``id()``
+    can be safely reused afterward without risk of aliasing a new object
+    against a stale entry.
+    """
+
+    ref: Callable[[], "CiphertextT | None"]
     base_id: str
     version: int
     trace_id: str
+
+    @property
+    def value(self) -> "CiphertextT | None":
+        return self.ref()
 
 
 class CiphertextRegistry(Generic[CiphertextT]):
     """Assign opaque IDs while recognizing Python aliases by object identity.
 
-    A strong reference is retained for the run so an internal ``id()`` lookup key
-    cannot be reused. Neither that key nor an object representation is serialized.
+    A weak reference is retained, so entries are cleaned up automatically
+    when a ciphertext is garbage-collected instead of being pinned in
+    memory for the entire life of the run. Neither the lookup key nor an
+    object representation is serialized.
     """
 
     def __init__(
@@ -39,6 +55,26 @@ class CiphertextRegistry(Generic[CiphertextT]):
         self._states: dict[str, CiphertextState] = {}
         self._annotations: dict[str, dict[str, Any]] = {}
         self._lock = threading.RLock()
+
+    def _make_entry_locked(
+        self,
+        value: CiphertextT,
+        base_id: str,
+        version: int,
+        trace_id: str,
+        lookup_key: int,
+    ) -> "_IdentityEntry[CiphertextT]":
+        def _on_collected(dead_ref: Any) -> None:
+            with self._lock:
+                current = self._identities.get(lookup_key)
+                if current is not None and current.ref is dead_ref:
+                    del self._identities[lookup_key]
+
+        try:
+            ref = weakref.ref(value, _on_collected)
+        except TypeError:
+            ref = lambda: value  # noqa: E731
+        return _IdentityEntry(ref, base_id, version, trace_id)
 
     def snapshot(self, value: CiphertextT) -> CiphertextMetadata:
         """Snapshot supported metadata without exposing object representations."""
@@ -61,7 +97,9 @@ class CiphertextRegistry(Generic[CiphertextT]):
 
             base_id = self._new_base_id_locked()
             trace_id = f"{base_id}:v0"
-            self._identities[lookup_key] = _IdentityEntry(value, base_id, 0, trace_id)
+            self._identities[lookup_key] = self._make_entry_locked(
+                value, base_id, 0, trace_id, lookup_key
+            )
             self._states[trace_id] = CiphertextState(
                 trace_id=trace_id,
                 created_by_event=None,
@@ -86,9 +124,6 @@ class CiphertextRegistry(Generic[CiphertextT]):
         with self._lock:
             entry = self._identities.get(lookup_key)
             if entry is not None and entry.value is value:
-                # An operation returning an existing native object creates a new
-                # immutable state version. This preserves a DAG while all aliases
-                # subsequently resolve to the same current version.
                 entry.version += 1
                 trace_id = f"{entry.base_id}:v{entry.version}"
                 entry.trace_id = trace_id
@@ -103,7 +138,9 @@ class CiphertextRegistry(Generic[CiphertextT]):
 
             base_id = self._new_base_id_locked()
             trace_id = f"{base_id}:v0"
-            self._identities[lookup_key] = _IdentityEntry(value, base_id, 0, trace_id)
+            self._identities[lookup_key] = self._make_entry_locked(
+                value, base_id, 0, trace_id, lookup_key
+            )
             self._states[trace_id] = CiphertextState(
                 trace_id=trace_id,
                 created_by_event=event_id,
@@ -129,8 +166,8 @@ class CiphertextRegistry(Generic[CiphertextT]):
             if entry is None or entry.value is not value:
                 base_id = self._new_base_id_locked()
                 trace_id = f"{base_id}:v0"
-                self._identities[lookup_key] = _IdentityEntry(
-                    value, base_id, 0, trace_id
+                self._identities[lookup_key] = self._make_entry_locked(
+                    value, base_id, 0, trace_id, lookup_key
                 )
                 self._states[trace_id] = CiphertextState(
                     trace_id=trace_id,

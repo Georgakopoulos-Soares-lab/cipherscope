@@ -55,6 +55,10 @@ EXPECTED_CHECKS = (
     "GAP-04",
     "RES-01",
     "RES-02",
+    "API-06",
+    "MUT-03",
+    "PROXY-05",
+    "ROT-03"
 )
 CHECK_PATTERN = re.compile(r"^([A-Z]+-[0-9]{2}):")
 

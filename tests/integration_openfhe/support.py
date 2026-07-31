@@ -180,6 +180,7 @@ def basic_fixture() -> BasicFixture:
     context.Enable(module.PKESchemeFeature.PKE)
     context.Enable(module.PKESchemeFeature.KEYSWITCH)
     context.Enable(module.PKESchemeFeature.LEVELEDSHE)
+    context.Enable(module.PKESchemeFeature.ADVANCEDSHE)
     keys = context.KeyGen()
     context.EvalMultKeyGen(keys.secretKey)
     context.EvalRotateKeyGen(keys.secretKey, list(GOLDEN["rotation_indices"]))
