@@ -794,31 +794,41 @@ _EDGE_TYPES: dict[str, tuple[str, str]] = {
 
 
 def _cycle(adjacency: Mapping[str, set[str]]) -> list[str] | None:
+    # Iterative DFS with an explicit stack, not Python's call stack -- a
+    # recursive `visit(child)` implementation hits Python's ~1000-frame
+    # recursion limit on long dependency chains (e.g. many-iteration
+    # training loops), crashing analysis on an otherwise valid trace even
+    # though the underlying program ran correctly. This has no depth
+    # ceiling beyond available memory. Same visited/active bookkeeping and
+    # deterministic sorted-order traversal as the original, same return
+    # shape (a cycle path list, or None if no cycle exists).
     visited: set[str] = set()
-    active: set[str] = set()
-    stack: list[str] = []
-
-    def visit(node: str) -> list[str] | None:
-        if node in active:
-            start = stack.index(node)
-            return [*stack[start:], node]
-        if node in visited:
-            return None
-        visited.add(node)
-        active.add(node)
-        stack.append(node)
-        for child in sorted(adjacency.get(node, ())):
-            found = visit(child)
-            if found is not None:
-                return found
-        stack.pop()
-        active.remove(node)
-        return None
-
-    for node in sorted(adjacency):
-        found = visit(node)
-        if found is not None:
-            return found
+    for start_node in sorted(adjacency):
+        if start_node in visited:
+            continue
+        active: set[str] = set()
+        stack: list[str] = [start_node]
+        iter_stack: list = [iter(sorted(adjacency.get(start_node, ())))]
+        active.add(start_node)
+        visited.add(start_node)
+        while stack:
+            node = stack[-1]
+            try:
+                child = next(iter_stack[-1])
+            except StopIteration:
+                stack.pop()
+                iter_stack.pop()
+                active.discard(node)
+                continue
+            if child in active:
+                start = stack.index(child)
+                return [*stack[start:], child]
+            if child in visited:
+                continue
+            visited.add(child)
+            active.add(child)
+            stack.append(child)
+            iter_stack.append(iter(sorted(adjacency.get(child, ()))))
     return None
 
 

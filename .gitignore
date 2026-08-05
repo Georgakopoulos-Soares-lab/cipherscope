@@ -23,3 +23,16 @@ prs_run_8192/
 prs-bench-results/
 prs-memory-results/
 prs_dot_product_analysis.py
+*.o[0-9]*
+*.e[0-9]*
+openfhe-build*.txt
+__pycache__/
+*.pyc
+*.bak
+external_suite/
+prs-bench-results/
+prs-memory-results/
+prs_run/
+prs_run_8192/
+prs_dot_product_analysis.py
+feasibility-*.json
