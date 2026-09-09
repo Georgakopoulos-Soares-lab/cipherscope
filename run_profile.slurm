@@ -2,7 +2,7 @@
 #SBATCH -J prs-profile
 #SBATCH -o prs-profile.o%j
 #SBATCH -e prs-profile.e%j
-#SBATCH -p development
+#SBATCH -p gh-dev
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -t 00:45:00
@@ -12,9 +12,9 @@ set -euo pipefail
 
 module purge
 module load TACC
-module load gcc/15.2.0
+module load gcc/15.1.0
 export PATH=$WORK/cipherscope-openfhe-build/opt/python311/bin:$PATH
-export LD_LIBRARY_PATH=/opt/apps/gcc/15.2.0/lib64:$WORK/cipherscope-openfhe-build/opt/python311/lib:$WORK/cipherscope-openfhe-build/opt/openfhe/lib:$WORK/cipherscope-openfhe-build/opt/openfhe/lib64
+export LD_LIBRARY_PATH=/home1/apps/gcc/15.1.0/lib64:$WORK/cipherscope-openfhe-build/opt/python311/lib:$WORK/cipherscope-openfhe-build/opt/openfhe/lib:$WORK/cipherscope-openfhe-build/opt/openfhe/lib64
 export PYTHONPATH=$WORK/cipherscope/src
 
 cd $WORK/cipherscope
