@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import unittest
+from pathlib import Path
 
 import cipherscope
 from cipherscope.graph import build_graph
@@ -173,11 +174,9 @@ class ProxyAndTraceTests(unittest.TestCase):
             for event in trace["events"]
         ]
         self.assertEqual(observed, expected)
+        source_file = str(Path(golden_calls.__file__).resolve())
         self.assertTrue(
-            all(
-                event["source"]["file"] == "golden_calls.py"
-                for event in trace["events"]
-            )
+            all(event["source"]["file"] == source_file for event in trace["events"])
         )
         self.assertEqual([event["sequence"] for event in trace["events"]], [1, 2, 3])
         support.record("TRACE-01", expected=expected, observed=observed)

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import weakref
 import unittest
+import weakref
 
 import cipherscope
 from cipherscope.compatibility import CompatibilityRegistry
@@ -186,7 +186,7 @@ class APISurfaceTests(unittest.TestCase):
         support.record("API-06", availability=availability)
 
     def test_id_01_weakref_and_hash_behavior_is_classified(self) -> None:
-        """ID-01: pybind weak-reference and hash behavior is observed explicitly."""
+        """ID-01: record whether pybind ciphertexts support weakrefs and hashing."""
 
         ciphertext = self.fixture.encrypt(self.fixture.a)
         try:
@@ -208,7 +208,7 @@ class APISurfaceTests(unittest.TestCase):
             "ID-01",
             weakref_supported=weakref_supported,
             hash_supported=hash_supported,
-            fallback="guarded strong-reference identity table",
+            tracking="weak references when supported, strong references otherwise",
         )
 
     def test_id_02_nested_aliases_and_cycles(self) -> None:

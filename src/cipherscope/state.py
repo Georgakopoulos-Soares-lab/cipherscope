@@ -103,7 +103,7 @@ def copy_mapping(value: Mapping[str, Any]) -> dict[str, Any]:
 
     result: dict[str, Any] = {}
     for key, item in value.items():
-        if isinstance(item, dict):
+        if isinstance(item, Mapping):
             result[key] = copy_mapping(item)
         elif isinstance(item, (list, tuple)):
             result[key] = copy_sequence(item)
@@ -117,7 +117,7 @@ def copy_sequence(value: Sequence[Any]) -> list[Any]:
 
     result: list[Any] = []
     for item in value:
-        if isinstance(item, dict):
+        if isinstance(item, Mapping):
             result.append(copy_mapping(item))
         elif isinstance(item, (list, tuple)):
             result.append(copy_sequence(item))

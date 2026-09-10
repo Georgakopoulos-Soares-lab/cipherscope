@@ -32,7 +32,11 @@ class _IdentityEntry(Generic[CiphertextT]):
 
 
 class CiphertextRegistry(Generic[CiphertextT]):
-    """Assign ciphertext IDs and recognize aliases by Python object identity."""
+    """Assign ciphertext IDs and recognize live Python object aliases.
+
+    Alias tracking depends on the binding returning the same Python wrapper for
+    the same ciphertext. The real OpenFHE gate checks that assumption.
+    """
 
     def __init__(
         self,
