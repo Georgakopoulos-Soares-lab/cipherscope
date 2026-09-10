@@ -3,20 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from itertools import pairwise
 from typing import Any
 
-from ..validation import ValidationError, validate_recommendations, validate_trace
-
+from ._shared import event_order, finalize, require_valid_trace
 
 RULE_ID = "precision.checkpoint_drop.v1"
-
-
-def _event_order(event: Mapping[str, Any]) -> tuple[int, str]:
-    sequence = event.get("sequence")
-    return (
-        sequence if isinstance(sequence, int) else 2**63,
-        str(event.get("event_id", "")),
-    )
 
 
 def _checkpoint_record(event: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -50,9 +42,7 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
     compatible checkpoints; it never reconstructs the compared values.
     """
 
-    validation = validate_trace(trace)
-    if not validation.valid:
-        raise ValidationError("trace", validation.errors)
+    require_valid_trace(trace)
 
     base = {
         "schema_version": trace["schema_version"],
@@ -71,7 +61,7 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
 
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
-        key=_event_order,
+        key=event_order,
     )
     checkpoints = [
         record
@@ -91,7 +81,7 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
         }
 
     drops: list[dict[str, Any]] = []
-    for earlier, later in zip(checkpoints, checkpoints[1:]):
+    for earlier, later in pairwise(checkpoints):
         if earlier["slot_count"] != later["slot_count"]:
             continue
         bits_lost = earlier["absolute_bits"] - later["absolute_bits"]
@@ -155,10 +145,7 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
         "inventory": {"checkpoints": len(checkpoints), "drops": drops},
         "findings": findings,
     }
-    result_validation = validate_recommendations(result, trace=trace)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace)
 
 
 

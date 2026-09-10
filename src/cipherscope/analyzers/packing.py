@@ -6,8 +6,7 @@ from collections.abc import Mapping
 from math import prod
 from typing import Any
 
-from ..validation import ValidationError, validate_recommendations, validate_trace
-
+from ._shared import finalize, require_valid_trace
 
 RULE_ID = "packing.low_utilization_annotated.v1"
 _LOW_UTILIZATION_THRESHOLD = 0.5
@@ -36,9 +35,7 @@ def analyze_packing(trace: Mapping[str, Any]) -> dict[str, Any]:
     utilization from ciphertext contents.
     """
 
-    validation = validate_trace(trace)
-    if not validation.valid:
-        raise ValidationError("trace", validation.errors)
+    require_valid_trace(trace)
 
     base = {
         "schema_version": trace["schema_version"],
@@ -148,10 +145,7 @@ def analyze_packing(trace: Mapping[str, Any]) -> dict[str, Any]:
             "inventory": inventory,
             "findings": [],
         }
-    result_validation = validate_recommendations(result, trace=trace)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace)
 
 
 

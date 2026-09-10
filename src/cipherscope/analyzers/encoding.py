@@ -5,18 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ..validation import ValidationError, validate_recommendations, validate_trace
-
+from ._shared import event_order, finalize, require_valid_trace
 
 RULE_ID = "encoding.repeated_public_constant.v1"
-
-
-def _event_order(event: Mapping[str, Any]) -> tuple[int, str]:
-    sequence = event.get("sequence")
-    return (
-        sequence if isinstance(sequence, int) else 2**63,
-        str(event.get("event_id", "")),
-    )
 
 
 def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
@@ -27,9 +18,7 @@ def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
     denote the same public constant.
     """
 
-    validation = validate_trace(trace)
-    if not validation.valid:
-        raise ValidationError("trace", validation.errors)
+    require_valid_trace(trace)
 
     base = {
         "schema_version": trace["schema_version"],
@@ -37,7 +26,7 @@ def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
     }
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
-        key=_event_order,
+        key=event_order,
     )
     groups: dict[str, list[Mapping[str, Any]]] = {}
     for event in events:
@@ -112,11 +101,7 @@ def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
         result = {**base, "analysis_status": "positive", "findings": findings}
     else:
         result = {**base, "analysis_status": "clean", "findings": []}
-    result_validation = validate_recommendations(result, trace=trace)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
-
+    return finalize(result, trace=trace)
 
 
 __all__ = ["RULE_ID", "analyze_encoding"]

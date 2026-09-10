@@ -5,14 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ..graph import build_graph
-from ..validation import (
-    ValidationError,
-    validate_graph,
-    validate_recommendations,
-    validate_trace,
-)
-
+from ._shared import finalize, resolve_graph
 
 RULE_ID = "parameters.depth_headroom_observed.v1"
 
@@ -35,14 +28,7 @@ def analyze_parameters(
     be claimed from an incomplete depth model. The result is limited to this run.
     """
 
-    trace_result = validate_trace(trace)
-    if not trace_result.valid:
-        raise ValidationError("trace", trace_result.errors)
-    if graph is None:
-        graph = build_graph(trace)
-    graph_result = validate_graph(graph, trace=trace)
-    if not graph_result.valid:
-        raise ValidationError("graph", graph_result.errors)
+    graph = resolve_graph(trace, graph)
 
     base = {
         "schema_version": trace["schema_version"],
@@ -137,11 +123,7 @@ def analyze_parameters(
         "inventory": inventory,
         "findings": [finding],
     }
-    result_validation = validate_recommendations(result, trace=trace, graph=graph)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
-
+    return finalize(result, trace=trace, graph=graph)
 
 
 __all__ = ["RULE_ID", "analyze_parameters"]

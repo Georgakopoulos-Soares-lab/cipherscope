@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ..validation import ValidationError, validate_recommendations, validate_trace
-
+from ._shared import event_order, finalize, require_valid_trace
 
 RULE_ID = "rotation.hoist_same_input.v1"
 _REQUIRED_STATE_FIELDS = (
@@ -15,14 +14,6 @@ _REQUIRED_STATE_FIELDS = (
     "scaling_technique",
     "key_switch_technique",
 )
-
-
-def _event_order(event: Mapping[str, Any]) -> tuple[int, str]:
-    sequence = event.get("sequence")
-    return (
-        sequence if isinstance(sequence, int) else 2**63,
-        str(event.get("event_id", "")),
-    )
 
 
 def _explicit_metadata(event: Mapping[str, Any]) -> dict[str, Any]:
@@ -124,12 +115,10 @@ def analyze_rotations(trace: Mapping[str, Any]) -> dict[str, Any]:
     and appears before every rotation in that group.
     """
 
-    validation = validate_trace(trace)
-    if not validation.valid:
-        raise ValidationError("trace", validation.errors)
+    require_valid_trace(trace)
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
-        key=_event_order,
+        key=event_order,
     )
     states = {
         str(state["id"]): state
@@ -160,7 +149,7 @@ def analyze_rotations(trace: Mapping[str, Any]) -> dict[str, Any]:
     evaluable_groups = 0
     unavailable_reasons: set[str] = set()
     for input_id in sorted(groups):
-        rotations = sorted(groups[input_id], key=_event_order)
+        rotations = sorted(groups[input_id], key=event_order)
         state = states[input_id]
         missing = [
             field for field in _REQUIRED_STATE_FIELDS if state.get(field) is None
@@ -275,10 +264,7 @@ def analyze_rotations(trace: Mapping[str, Any]) -> dict[str, Any]:
             "not_applicable_reasons": sorted(unavailable_reasons),
             "findings": [],
         }
-    result_validation = validate_recommendations(result, trace=trace)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace)
 
 
 __all__ = ["RULE_ID", "analyze_rotations"]

@@ -5,19 +5,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ..validation import ValidationError, validate_recommendations, validate_trace
-
+from ._shared import event_order, finalize, require_valid_trace
 
 RULE_ID = "provenance.public_value_ciphertext_mult.v1"
 _PUBLIC_PROVENANCES = {"public_constant", "model_parameter", "public_input"}
-
-
-def _event_order(event: Mapping[str, Any]) -> tuple[int, str]:
-    sequence = event.get("sequence")
-    return (
-        sequence if isinstance(sequence, int) else 2**63,
-        str(event.get("event_id", "")),
-    )
 
 
 def _public_derived_ids(states: list[Mapping[str, Any]]) -> set[str]:
@@ -63,9 +54,7 @@ def analyze_provenance(trace: Mapping[str, Any]) -> dict[str, Any]:
     that switching to a plaintext multiplication is correct for the protocol.
     """
 
-    validation = validate_trace(trace)
-    if not validation.valid:
-        raise ValidationError("trace", validation.errors)
+    require_valid_trace(trace)
 
     base = {
         "schema_version": trace["schema_version"],
@@ -85,7 +74,7 @@ def analyze_provenance(trace: Mapping[str, Any]) -> dict[str, Any]:
 
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
-        key=_event_order,
+        key=event_order,
     )
     findings: list[dict[str, Any]] = []
     for event in events:
@@ -153,10 +142,7 @@ def analyze_provenance(trace: Mapping[str, Any]) -> dict[str, Any]:
         result = {**base, "analysis_status": "positive", "findings": findings}
     else:
         result = {**base, "analysis_status": "clean", "findings": []}
-    result_validation = validate_recommendations(result, trace=trace)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace)
 
 
 
