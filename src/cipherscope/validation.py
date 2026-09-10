@@ -97,10 +97,6 @@ class ValidationResult(Sequence[ValidationIssue]):
         return not any(issue.severity == "error" for issue in self.issues)
 
     @property
-    def ok(self) -> bool:
-        return self.valid
-
-    @property
     def errors(self) -> tuple[ValidationIssue, ...]:
         return tuple(issue for issue in self.issues if issue.severity == "error")
 

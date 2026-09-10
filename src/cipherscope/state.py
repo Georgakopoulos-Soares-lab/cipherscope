@@ -73,7 +73,6 @@ class CiphertextObservation:
 
     trace_id: str
     metadata: CiphertextMetadata
-    is_fresh: bool = False
 
     def event_state(self) -> dict[str, Any]:
         """Return metadata captured at this event boundary."""

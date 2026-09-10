@@ -183,18 +183,5 @@ def analyze_serial_reductions(trace: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-class SerialReductionAnalyzer:
-    """Plugin-style wrapper for the region-gated serial-reduction review."""
 
-    rule_id = RULE_ID
-    required_fields = (
-        "regions[].operator == multiply",
-        "regions[].associative",
-        "events[].operation in {EvalMult, EvalMultNoRelin}",
-    )
-
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_serial_reductions(trace)
-
-
-__all__ = ["RULE_ID", "SerialReductionAnalyzer", "analyze_serial_reductions"]
+__all__ = ["RULE_ID", "analyze_serial_reductions"]

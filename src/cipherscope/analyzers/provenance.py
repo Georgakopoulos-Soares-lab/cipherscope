@@ -88,7 +88,6 @@ def analyze_provenance(trace: Mapping[str, Any]) -> dict[str, Any]:
         key=_event_order,
     )
     findings: list[dict[str, Any]] = []
-    flagged = 0
     for event in events:
         if event.get("status") != "ok" or event.get("operation") != "EvalMult":
             continue
@@ -98,7 +97,6 @@ def analyze_provenance(trace: Mapping[str, Any]) -> dict[str, Any]:
         public_operands = [item for item in inputs if item in public_ids]
         if not public_operands:
             continue
-        flagged += 1
         source = event.get("source", {})
         site = (
             [source["call_site_id"]]
@@ -161,17 +159,5 @@ def analyze_provenance(trace: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-class PublicValueAnalyzer:
-    """Plugin-style wrapper for advisory public-value provenance analysis."""
 
-    rule_id = RULE_ID
-    required_fields = (
-        "ciphertexts[].annotations.provenance",
-        "events[].operation == EvalMult",
-    )
-
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_provenance(trace)
-
-
-__all__ = ["RULE_ID", "PublicValueAnalyzer", "analyze_provenance"]
+__all__ = ["RULE_ID", "analyze_provenance"]

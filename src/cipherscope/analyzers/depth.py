@@ -129,16 +129,5 @@ def analyze_depth(
     return result
 
 
-class DepthAnalyzer:
-    """Small analyzer object for plugin-style orchestration."""
 
-    rule_id = RULE_ID
-    required_fields = ("events", "ciphertexts")
-
-    def analyze(
-        self, trace: Mapping[str, Any], graph: Mapping[str, Any] | None = None
-    ) -> dict[str, Any]:
-        return analyze_depth(trace, graph)
-
-
-__all__ = ["DepthAnalyzer", "RULE_ID", "analyze_depth"]
+__all__ = ["RULE_ID", "analyze_depth"]

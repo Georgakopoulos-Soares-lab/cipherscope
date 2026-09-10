@@ -118,14 +118,5 @@ def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-class EncodingAnalyzer:
-    """Plugin-style wrapper for repeated public-constant encoding analysis."""
 
-    rule_id = RULE_ID
-    required_fields = ("events[].semantic_arguments.constant_id",)
-
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_encoding(trace)
-
-
-__all__ = ["RULE_ID", "EncodingAnalyzer", "analyze_encoding"]
+__all__ = ["RULE_ID", "analyze_encoding"]

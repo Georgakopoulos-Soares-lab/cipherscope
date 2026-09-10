@@ -161,17 +161,5 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-class PrecisionAnalyzer:
-    """Plugin-style wrapper for shadow-mode precision-drop analysis."""
 
-    rule_id = RULE_ID
-    required_fields = (
-        "run.privacy.shadow_mode",
-        "events[].kind == checkpoint",
-    )
-
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_precision(trace)
-
-
-__all__ = ["RULE_ID", "PrecisionAnalyzer", "analyze_precision"]
+__all__ = ["RULE_ID", "analyze_precision"]

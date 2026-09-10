@@ -154,17 +154,5 @@ def analyze_packing(trace: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-class PackingAnalyzer:
-    """Plugin-style wrapper for annotated packing-utilization analysis."""
 
-    rule_id = RULE_ID
-    required_fields = (
-        "context.available_slots",
-        "ciphertexts[].annotations.meaningful_slots",
-    )
-
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_packing(trace)
-
-
-__all__ = ["RULE_ID", "PackingAnalyzer", "analyze_packing"]
+__all__ = ["RULE_ID", "analyze_packing"]

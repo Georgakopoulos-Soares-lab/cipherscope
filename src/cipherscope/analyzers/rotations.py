@@ -281,28 +281,4 @@ def analyze_rotations(trace: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-analyze_repeated_rotations = analyze_rotations
-
-
-class RotationAnalyzer:
-    """Small analyzer object for plugin-style orchestration."""
-
-    rule_id = RULE_ID
-    required_fields = (
-        "events[].semantic_arguments.rotation_index_requested",
-        "ciphertexts[].context_id",
-        "ciphertexts[].key_tag",
-        "ciphertexts[].scaling_technique",
-        "ciphertexts[].key_switch_technique",
-    )
-
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_rotations(trace)
-
-
-__all__ = [
-    "RULE_ID",
-    "RotationAnalyzer",
-    "analyze_repeated_rotations",
-    "analyze_rotations",
-]
+__all__ = ["RULE_ID", "analyze_rotations"]

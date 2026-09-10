@@ -190,17 +190,5 @@ def analyze_keys(trace: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-class KeyUsageAnalyzer:
-    """Plugin-style wrapper for observed-run key analysis."""
 
-    rule_id = RULE_ID
-    required_fields = (
-        "events[].semantic_arguments.rotation_indices_requested",
-        "events[].semantic_arguments.rotation_index_requested",
-    )
-
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_keys(trace)
-
-
-__all__ = ["KeyUsageAnalyzer", "RULE_ID", "analyze_keys"]
+__all__ = ["RULE_ID", "analyze_keys"]

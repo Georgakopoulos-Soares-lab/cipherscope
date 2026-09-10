@@ -218,20 +218,5 @@ def analyze_bootstrap(
     return result
 
 
-class BootstrapAnalyzer:
-    """Plugin-style wrapper for observed-run bootstrap analysis."""
 
-    rule_id = RULE_ID
-    required_fields = (
-        "events[].operation == EvalBootstrap",
-        "events[].input_states[].level",
-        "events[].output_states[].level",
-    )
-
-    def analyze(
-        self, trace: Mapping[str, Any], graph: Mapping[str, Any] | None = None
-    ) -> dict[str, Any]:
-        return analyze_bootstrap(trace, graph)
-
-
-__all__ = ["RULE_ID", "BootstrapAnalyzer", "analyze_bootstrap"]
+__all__ = ["RULE_ID", "analyze_bootstrap"]

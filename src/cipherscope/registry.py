@@ -107,7 +107,7 @@ class CiphertextRegistry(Generic[CiphertextT]):
                 origin="preexisting",
                 metadata=observed,
             )
-            return CiphertextObservation(trace_id, observed, is_fresh=True)
+            return CiphertextObservation(trace_id, observed)
 
     def observe_output(
         self,
@@ -134,7 +134,7 @@ class CiphertextRegistry(Generic[CiphertextT]):
                     origin="derived",
                     metadata=observed,
                 )
-                return CiphertextObservation(trace_id, observed, is_fresh=False)
+                return CiphertextObservation(trace_id, observed)
 
             base_id = self._new_base_id_locked()
             trace_id = f"{base_id}:v0"
@@ -148,7 +148,7 @@ class CiphertextRegistry(Generic[CiphertextT]):
                 origin="derived",
                 metadata=observed,
             )
-            return CiphertextObservation(trace_id, observed, is_fresh=True)
+            return CiphertextObservation(trace_id, observed)
 
     def annotate(
         self, value: CiphertextT, annotation: Mapping[str, Any]

@@ -143,19 +143,5 @@ def analyze_parameters(
     return result
 
 
-class ParameterAnalyzer:
-    """Plugin-style wrapper for observed depth-headroom analysis."""
 
-    rule_id = RULE_ID
-    required_fields = (
-        "context.configured_multiplicative_depth",
-        "critical_paths.observed_level_use.max_levels_consumed_in_epoch",
-    )
-
-    def analyze(
-        self, trace: Mapping[str, Any], graph: Mapping[str, Any] | None = None
-    ) -> dict[str, Any]:
-        return analyze_parameters(trace, graph)
-
-
-__all__ = ["RULE_ID", "ParameterAnalyzer", "analyze_parameters"]
+__all__ = ["RULE_ID", "analyze_parameters"]
