@@ -17,7 +17,6 @@ from cipherscope.analyzers.rotations import analyze_rotations  # noqa: E402
 from cipherscope.graph import build_graph  # noqa: E402
 from cipherscope.validation import (  # noqa: E402
     IssueCode,
-    MAX_METADATA_STRING_LENGTH,
     StrictJSONError,
     load_json_strict,
     validate_graph,
@@ -33,7 +32,6 @@ def _source(line: int, site: str) -> dict[str, object]:
         "line": line,
         "function": "workload",
         "qualified_function": "workload",
-        "source_sha256": "a" * 64,
         "call_site_id": site,
     }
 
@@ -273,10 +271,10 @@ class TraceValidationTests(unittest.TestCase):
         events[0]["error_class"] = "SyntheticError"
         self.assertIn(IssueCode.EVENT_ERROR_HAS_OUTPUTS, _codes(validate_trace(trace)))
 
-    def test_oversized_user_metadata_is_rejected(self) -> None:
+    def test_large_user_metadata_is_accepted(self) -> None:
         trace = _depth_trace()
-        trace["metadata"] = {"annotation": "x" * (MAX_METADATA_STRING_LENGTH + 1)}
-        self.assertIn(IssueCode.METADATA_LIMIT_EXCEEDED, _codes(validate_trace(trace)))
+        trace["metadata"] = {"annotation": "x" * 10_000}
+        self.assertTrue(validate_trace(trace).valid)
 
 
 class GraphTests(unittest.TestCase):
@@ -432,7 +430,6 @@ class OtherArtifactValidationTests(unittest.TestCase):
                 "operator_overload_coverage": False,
                 "original_reference_bypass_observable": False,
             },
-            "privacy": {"shadow_mode": False, "plaintext_serialized": False},
             "clocks": {"wall": "time.perf_counter_ns", "cpu": "time.process_time_ns"},
             "parameter_set": {
                 "scheme": "CKKS",

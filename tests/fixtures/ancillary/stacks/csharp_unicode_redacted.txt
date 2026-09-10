@@ -1,3 +1,0 @@
-System.Exception: synthetic <b>escaped</b> failure
-   at Demo.Επεξεργασία.Εκτέλεση() in <redacted>/κώδικας.cs:line 73
-   at Demo.Program.Main() in <redacted>/Program.cs:line 6

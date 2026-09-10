@@ -19,11 +19,31 @@ from .errors import (
     ShadowModeError,
 )
 from .recorder import EventRecorder
-from .shadow import decode_real, precision_metrics
 from .source import SourceResolver
 
 
 ContextT = TypeVar("ContextT")
+
+
+def _real_values(values: Any) -> list[float]:
+    """Convert decoded CKKS values to JSON numbers."""
+
+    return [
+        float(value.real if isinstance(value, complex) else value) for value in values
+    ]
+
+
+def _decode_real(plaintext: Any, length: int) -> list[float]:
+    """Read real packed values from an OpenFHE plaintext."""
+
+    set_length = getattr(plaintext, "SetLength", None)
+    if callable(set_length):
+        set_length(length)
+    for getter_name in ("GetRealPackedValue", "GetCKKSPackedValue"):
+        getter = getattr(plaintext, getter_name, None)
+        if callable(getter):
+            return _real_values(list(getter())[:length])
+    raise TypeError("the plaintext exposes no supported packed-value getter")
 
 
 @dataclass
@@ -205,12 +225,7 @@ class Session(Generic[ContextT]):
         meaningful_slots: int | None = None,
         provenance: str | None = None,
     ) -> Any:
-        """Attach a user assertion to a ciphertext and record it as evidence.
-
-        The ciphertext is returned unchanged so the annotation can wrap a value
-        inline. Annotations are run-local claims; they never authorize logging
-        the underlying value.
-        """
+        """Attach a user assertion and return the ciphertext unchanged."""
 
         self._require_active()
         annotation: dict[str, Any] = {}
@@ -261,12 +276,7 @@ class Session(Generic[ContextT]):
         expected: Any,
         decoder: Any = None,
     ) -> dict[str, Any]:
-        """Record aggregate precision metrics for one shadow-mode checkpoint.
-
-        Requires explicitly enabled shadow mode and a secret key. The secret key
-        and expected values are used only to compute aggregate metrics and are
-        never serialized into the trace.
-        """
+        """Decrypt a checkpoint and record its expected and observed values."""
 
         self._require_active()
         if not self.shadow_mode:
@@ -278,19 +288,26 @@ class Session(Generic[ContextT]):
         if not isinstance(name, str) or not name:
             raise AnnotationError("checkpoint name must be a non-empty string")
 
-        expected_list = list(expected)
+        expected_values = _real_values(expected)
         observation = self.recorder.registry.observe_input(ciphertext)
         native = self.context._context
         plaintext = native.Decrypt(ciphertext, self._secret_key)
         if decoder is not None:
-            observed = list(decoder(plaintext))
+            observed_values = _real_values(decoder(plaintext))
         else:
-            observed = decode_real(plaintext, len(expected_list))
-        metrics = precision_metrics(expected_list, observed)
-        # Only aggregate metrics and the checkpoint name survive; the decoded and
-        # expected values are dropped as soon as this call returns.
-        del observed, expected_list, plaintext
-        semantic_arguments = {"checkpoint_name": name, "metrics": metrics}
+            observed_values = _decode_real(plaintext, len(expected_values))
+        comparison = {
+            "status": (
+                "ok"
+                if expected_values and len(expected_values) == len(observed_values)
+                else "failed"
+            ),
+            "expected_values": expected_values,
+            "observed_values": observed_values,
+        }
+        if comparison["status"] == "failed":
+            comparison["reason"] = "shape_mismatch"
+        semantic_arguments = {"checkpoint_name": name, **comparison}
         self._record_meta_event(
             kind="checkpoint",
             operation="PrecisionCheckpoint",
@@ -299,7 +316,7 @@ class Session(Generic[ContextT]):
             operand_kinds=["ciphertext"],
             semantic_arguments=semantic_arguments,
         )
-        return metrics
+        return comparison
 
     def annotate_plaintext(
         self,
@@ -308,18 +325,15 @@ class Session(Generic[ContextT]):
         provenance: str,
         constant_id: str | None = None,
     ) -> Any:
-        """Record a run-local plaintext provenance assertion.
+        """Record a plaintext representation and its declared provenance."""
 
-        The plaintext object stays opaque; only the user-supplied provenance and
-        optional ``constant_id`` are recorded. ``constant_id`` is a path-redacted
-        run-local label and never authorizes logging the plaintext value.
-        """
-
-        del plaintext
         self._require_active()
         if not isinstance(provenance, str) or not provenance:
             raise AnnotationError("provenance must be a non-empty string")
-        semantic_arguments: dict[str, Any] = {"provenance": provenance}
+        semantic_arguments: dict[str, Any] = {
+            "provenance": provenance,
+            "plaintext_representation": repr(plaintext),
+        }
         if constant_id is not None:
             if not isinstance(constant_id, str) or not constant_id:
                 raise AnnotationError("constant_id must be a non-empty string")

@@ -13,12 +13,7 @@ TOOL_VERSION = "0.1.0"
 
 @dataclass(frozen=True)
 class CiphertextMetadata:
-    """A privacy-bounded snapshot of supported ciphertext getters.
-
-    Missing or unsafe values are represented by ``None``. ``missing_fields`` is
-    retained for event diagnostics but is not emitted as an arbitrary exception
-    message.
-    """
+    """Values read from supported ciphertext getters."""
 
     level: int | float | str | bool | None = None
     noise_scale_degree: int | float | str | bool | None = None
@@ -82,13 +77,12 @@ class CiphertextObservation:
 
 @dataclass(frozen=True)
 class SourceAttribution:
-    """A redacted first-external-frame source location."""
+    """The Python source location that called a traced operation."""
 
     file: str | None
     line: int | None
     function: str | None
     qualified_function: str | None
-    source_sha256: str | None
     call_site_id: str | None
 
     def to_dict(self) -> dict[str, Any]:
@@ -97,12 +91,11 @@ class SourceAttribution:
             "line": self.line,
             "function": self.function,
             "qualified_function": self.qualified_function,
-            "source_sha256": self.source_sha256,
             "call_site_id": self.call_site_id,
         }
 
 
-UNKNOWN_SOURCE = SourceAttribution(None, None, None, None, None, None)
+UNKNOWN_SOURCE = SourceAttribution(None, None, None, None, None)
 
 
 def copy_mapping(value: Mapping[str, Any]) -> dict[str, Any]:

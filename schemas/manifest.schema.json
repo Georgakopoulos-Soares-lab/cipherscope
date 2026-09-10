@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://cipherscope.dev/schemas/manifest.schema.json",
   "title": "CipherScope run manifest",
-  "description": "Reproducibility, coverage, privacy, clock, and parameter metadata for one CipherScope run.",
+  "description": "Reproducibility, coverage, clock, and parameter metadata for one CipherScope run.",
   "type": "object",
   "required": [
     "schema_version",
@@ -11,7 +11,6 @@
     "tool",
     "runtime",
     "coverage",
-    "privacy",
     "clocks",
     "parameter_set"
   ],
@@ -60,18 +59,6 @@
         "original_reference_bypass_observable": {"type": "boolean"},
         "truncated": {"type": "boolean"},
         "failed_state_reads": {"type": "integer", "minimum": 0}
-      },
-      "additionalProperties": true
-    },
-    "privacy": {
-      "type": "object",
-      "properties": {
-        "shadow_mode": {"type": "boolean"},
-        "paths": {"enum": ["basename", "basename_hash", "relative", "hash", "redact", "absolute"]},
-        "argv_recorded": {"type": "boolean"},
-        "plaintext_serialized": {"type": "boolean"},
-        "key_material_serialized": {"type": "boolean"},
-        "object_repr_serialized": {"type": "boolean"}
       },
       "additionalProperties": true
     },

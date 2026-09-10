@@ -88,7 +88,6 @@ code {{ background: #edf1f7; padding: .1rem .25rem; }}
 </head>
 <body>
 <h1>CipherScope run {_cell(run_id)}</h1>
-<p class="warning"><strong>Sensitive artifact:</strong> topology, source sites, rotations, and timing may reveal program structure. This research trace is not privacy neutral.</p>
 {synthetic_notice}
 <p>Status: <strong>{_cell(status)}</strong>. Traced semantic calls: <strong>{_cell(coverage.get("traced_semantic_calls"))}</strong>. Unclassified pass-throughs: <strong>{_cell(coverage.get("unclassified_proxy_passthrough_calls"))}</strong>.</p>
 <p>Maximum observed ciphertext-ciphertext nonlinear depth: <strong>{_cell(critical.get("max_depth"))}</strong>.</p>

@@ -223,6 +223,12 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("script", type=Path)
     run.add_argument("script_args", nargs=argparse.REMAINDER)
 
+    analyze = subcommands.add_parser(
+        "analyze", help="analyze a trace and write a run bundle"
+    )
+    analyze.add_argument("trace", type=Path)
+    analyze.add_argument("--output", type=Path, required=True)
+
     validate = subcommands.add_parser("validate", help="validate a run bundle")
     validate.add_argument("bundle", type=Path)
 
@@ -251,6 +257,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             output=args.output,
             strict=not args.permissive,
         )
+    if args.command == "analyze":
+        try:
+            trace = _mapping(load_json_file(args.trace), str(args.trace))
+            artifacts = build_analysis_bundle(trace)
+            destination = write_bundle(
+                args.output,
+                manifest=artifacts["manifest"],
+                trace=artifacts["trace"],
+                graph=artifacts["graph"],
+                recommendations=artifacts["recommendations"],
+            )
+        except (OSError, StrictJSONError, ValueError, ValidationError) as error:
+            print(f"cipherscope: analysis failed: {error}", file=sys.stderr)
+            return 2
+        print(f"Wrote analyzed CipherScope bundle to {destination}")
+        return 0
     if args.command in {"validate", "view"}:
         failures = validate_bundle(args.bundle)
         if failures:

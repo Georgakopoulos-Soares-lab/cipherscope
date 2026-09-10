@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import secrets
 import platform
+import secrets
 import sys
 import threading
 from typing import Any, Mapping
@@ -39,6 +39,7 @@ class EventRecorder:
         self._unclassified_passthrough_calls = 0
         self._rejected_unclassified_calls = 0
         self._backend_names: list[str] = []
+        self._backend_representations: list[str] = []
         self._lock = threading.RLock()
 
     def next_identity(self) -> tuple[int, str]:
@@ -80,12 +81,14 @@ class EventRecorder:
             self._rejected_unclassified_calls += 1
 
     def register_backend(self, context: Any) -> None:
-        """Record only a class name, never an instance representation."""
+        """Record the backend class and representation."""
 
         backend_name = type(context).__name__
+        backend_representation = repr(context)
         with self._lock:
             if backend_name not in self._backend_names:
                 self._backend_names.append(backend_name)
+                self._backend_representations.append(backend_representation)
 
     def to_trace(
         self,
@@ -106,6 +109,11 @@ class EventRecorder:
                 1 for event in events if event.get("kind") == "crypto_operation"
             )
             backend = self._backend_names[0] if self._backend_names else "unknown"
+            backend_representation = (
+                self._backend_representations[0]
+                if self._backend_representations
+                else "unknown"
+            )
             coverage = {
                 "strict": self.strict,
                 "traced_semantic_calls": traced_calls,
@@ -130,6 +138,7 @@ class EventRecorder:
                 "runtime": {
                     "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
                     "backend": backend,
+                    "backend_representation": backend_representation,
                     "platform": platform.system().lower(),
                     "architecture": platform.machine() or "unknown",
                     "openfhe_compatibility_target": (
@@ -137,14 +146,7 @@ class EventRecorder:
                     ),
                 },
                 "coverage": coverage,
-                "privacy": {
-                    "shadow_mode": self.shadow_mode,
-                    "paths": "basename_hash",
-                    "argv_recorded": False,
-                    "plaintext_serialized": False,
-                    "key_material_serialized": False,
-                    "object_repr_serialized": False,
-                },
+                "shadow_mode": self.shadow_mode,
             }
             if self.name is not None:
                 run["name"] = self.name

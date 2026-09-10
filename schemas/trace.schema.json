@@ -14,7 +14,8 @@
         "run_id": {"$ref": "#/$defs/id"},
         "status": {"enum": ["completed", "incomplete", "failed", "interrupted"]},
         "synthetic_contract": {"type": "boolean"},
-        "truncated": {"type": "boolean"}
+        "truncated": {"type": "boolean"},
+        "shadow_mode": {"type": "boolean"}
       },
       "additionalProperties": true
     },
@@ -62,7 +63,6 @@
         "line": {"type": ["integer", "null"], "minimum": 1},
         "function": {"type": ["string", "null"], "minLength": 1},
         "qualified_function": {"type": ["string", "null"]},
-        "source_sha256": {"type": ["string", "null"], "minLength": 1},
         "call_site_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]}
       },
       "additionalProperties": true
@@ -117,6 +117,15 @@
         "status": {"enum": ["ok", "error"]},
         "error_class": {"type": "string", "minLength": 1},
         "error_message": {"type": "string"},
+        "argument_representations": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "keyword_argument_representations": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        },
+        "output_representation": {"type": "string"},
         "source": {"$ref": "#/$defs/source"},
         "input_ciphertexts": {"$ref": "#/$defs/id_array"},
         "output_ciphertexts": {"$ref": "#/$defs/id_array"},

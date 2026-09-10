@@ -104,7 +104,7 @@ All three complete unchanged and produce validated bundles. `dot_product.py`
 enables `ADVANCEDSHE` before `EvalSumKeyGen`, and `bootstrapping.py` performs an
 eight-slot `EvalBootstrapSetup` (with a matching level budget and slot-count
 encoding) before `EvalBootstrapKeyGen`. CipherScope observes the real calls and
-preserves any failure as a sanitized error event instead of rewriting the
+preserves any failure as an error event instead of rewriting the
 program.
 
 ## Synthetic example gallery (`examples/synthetic/`)

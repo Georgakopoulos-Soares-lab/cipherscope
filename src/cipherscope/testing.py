@@ -12,9 +12,8 @@ from typing import Any
 class FakeCiphertext:
     """Metadata-only ciphertext stand-in; it performs no cryptography.
 
-    ``decoded_values`` is an optional developer aid: it lets the metadata-only
-    fake stand in for a decrypted plaintext during shadow-mode checkpoint tests.
-    It is never read by the tracing proxy or emitted into a trace.
+    ``decoded_values`` lets the fake stand in for a decrypted plaintext during
+    shadow-mode checkpoint tests.
     """
 
     level: int = 0
@@ -37,7 +36,7 @@ class FakeCiphertext:
 
 @dataclass(eq=False)
 class FakePlaintext:
-    """Opaque plaintext-shaped result used for forwarding and shadow decoding."""
+    """Plaintext-shaped result used for forwarding and shadow decoding."""
 
     marker: str = "fake_plaintext"
     values: list[float] | None = None

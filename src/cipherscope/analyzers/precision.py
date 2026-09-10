@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+import sys
 from collections.abc import Mapping
 from itertools import pairwise
 from typing import Any
@@ -15,32 +17,41 @@ def _checkpoint_record(event: Mapping[str, Any]) -> dict[str, Any] | None:
     semantic = event.get("semantic_arguments")
     if not isinstance(semantic, Mapping):
         return None
-    metrics = semantic.get("metrics")
     name = semantic.get("checkpoint_name")
-    if not isinstance(metrics, Mapping) or not isinstance(name, str):
+    expected = semantic.get("expected_values")
+    observed = semantic.get("observed_values")
+    if (
+        not isinstance(name, str)
+        or not isinstance(expected, list)
+        or not isinstance(observed, list)
+    ):
         return None
-    if metrics.get("status") != "ok":
+    if (
+        semantic.get("status") != "ok"
+        or not expected
+        or len(expected) != len(observed)
+        or any(
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isfinite(value)
+            for value in [*expected, *observed]
+        )
+    ):
         return None
-    absolute_bits = metrics.get("absolute_bits")
-    slot_count = metrics.get("slot_count")
-    if not isinstance(absolute_bits, (int, float)) or isinstance(absolute_bits, bool):
-        return None
-    if not isinstance(slot_count, int) or isinstance(slot_count, bool):
-        return None
+    max_error = max(
+        abs(float(actual) - float(wanted)) for wanted, actual in zip(expected, observed)
+    )
+    absolute_bits = -math.log2(max(max_error, sys.float_info.epsilon))
     return {
         "event_id": str(event["event_id"]),
         "checkpoint_name": name,
-        "absolute_bits": float(absolute_bits),
-        "slot_count": slot_count,
+        "absolute_bits": absolute_bits,
+        "slot_count": len(expected),
     }
 
 
 def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
-    """Rank precision drops between compatible shadow-mode checkpoints.
-
-    The rule is not applicable outside enabled shadow mode or with fewer than two
-    compatible checkpoints; it never reconstructs the compared values.
-    """
+    """Rank precision drops between compatible shadow-mode checkpoints."""
 
     require_valid_trace(trace)
 
@@ -48,8 +59,7 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
         "schema_version": trace["schema_version"],
         "run_id": trace["run"]["run_id"],
     }
-    privacy = trace["run"].get("privacy", {})
-    if not (isinstance(privacy, Mapping) and privacy.get("shadow_mode") is True):
+    if trace["run"].get("shadow_mode") is not True:
         return {
             **base,
             "analysis_status": "not_applicable",
@@ -132,9 +142,9 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
                 "source of precision loss before adjusting scale or depth."
             ),
             "limitations": [
-                "Precision is measured on the shadow-mode inputs only, not all inputs.",
+                "Precision is measured only at the configured checkpoints.",
                 "A drop can be expected for the computation and is not always a defect.",
-                "Aggregate metrics are reported; the compared values are not retained.",
+                "Recorded values may reveal the data processed by the workload.",
             ],
         }
         for index, drop in enumerate(drops)
@@ -146,7 +156,6 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
         "findings": findings,
     }
     return finalize(result, trace=trace)
-
 
 
 __all__ = ["RULE_ID", "analyze_precision"]

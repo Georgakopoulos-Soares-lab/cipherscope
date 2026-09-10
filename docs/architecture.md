@@ -11,17 +11,17 @@ user call -> traced context -> recorder -> validated trace
                                       `-> bundle exporters
 ```
 
-The session owns one run ID, lifecycle, context attachment, privacy policy, and
-coverage counters. `TracedCryptoContext` has explicit adapters for the supported
-operation registry. It snapshots safe metadata before timing, invokes the bound
-backend method once, stops clocks in `finally`, and records success or a sanitized
-failure. An unclassified call fails closed in strict mode.
+The session owns one run ID, lifecycle, context attachment, and coverage counters.
+`TracedCryptoContext` has explicit adapters for the supported operation registry.
+It snapshots metadata before timing, invokes the bound backend method once, stops
+clocks in `finally`, and records success or failure. An unclassified call fails
+closed in strict mode.
 
-The registry uses Python identity only as a private lookup key. Serialized IDs are
-monotonic names such as `ct_0001:v0`; raw addresses and object representations
-never leave the process. A first-seen operand becomes an explicit preexisting
-root. Encryption creates a ciphertext with no ciphertext parent, and decryption
-consumes ciphertext lineage without inspecting its plaintext result. Declared
+The registry uses Python identity as its lookup key. Serialized IDs are monotonic
+names such as `ct_0001:v0`. Events also record argument and result
+representations. A first-seen operand becomes a preexisting root. Encryption
+creates a ciphertext with no ciphertext parent, and decryption consumes
+ciphertext lineage. Declared
 in-place methods extend the same logical object through immutable `:vN` state
 nodes. Mutation selection follows the first ciphertext operand, including reverse
 scalar/plaintext overloads, rather than assuming the first Python argument is the
@@ -45,8 +45,8 @@ covered `EvalRotate` indices. It declines analysis for truncated or permissive
 traces and says "unused in this observed run," never globally unnecessary.
 
 Exporters project one analysis model into JSON, CSV, Perfetto-compatible JSON,
-and an escaped static HTML summary. Files are staged with restrictive permissions
-and atomically published as one run directory.
+and a static HTML summary. Files are staged and then published as one run
+directory.
 
 ## Claim boundary
 

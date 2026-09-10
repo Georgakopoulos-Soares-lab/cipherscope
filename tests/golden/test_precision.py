@@ -1,4 +1,4 @@
-"""Golden tests for shadow-mode precision-checkpoint drop analysis."""
+"""Golden tests for precision-checkpoint drop analysis."""
 
 from __future__ import annotations
 
@@ -18,7 +18,11 @@ def _shadow_trace(first_values: list[float], second_values: list[float]) -> dict
     with cipherscope.trace(backend, secret_key=object(), shadow_mode=True) as session:
         session.checkpoint("early", ciphertext=first, expected=expected)
         session.checkpoint("late", ciphertext=second, expected=expected)
-    return session.to_trace()
+    trace = session.to_trace()
+    first_checkpoint = trace["events"][0]["semantic_arguments"]
+    assert first_checkpoint["expected_values"] == expected
+    assert first_checkpoint["observed_values"] == first_values
+    return trace
 
 
 class PrecisionAnalyzerTests(unittest.TestCase):

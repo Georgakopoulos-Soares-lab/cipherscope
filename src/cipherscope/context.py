@@ -47,7 +47,7 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
     def Decrypt(
         self, ciphertext: Any, private_key: Any, *args: Any, **kwargs: Any
     ) -> Any:
-        """Decrypt through the native context without inspecting its plaintext result."""
+        """Decrypt through the native context and record the call."""
 
         return self._record_covered("Decrypt", (ciphertext, private_key, *args), kwargs)
 
@@ -208,6 +208,10 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         operand_kinds = compatibility.operand_kinds_for(operation, args, kwargs)
         overload = compatibility.overload_for(operation, args, kwargs)
         semantic_arguments = compatibility.semantic_arguments(operation, args, kwargs)
+        argument_representations = [repr(value) for value in args]
+        keyword_argument_representations = {
+            name: repr(value) for name, value in sorted(kwargs.items())
+        }
 
         # This complete input observation phase intentionally precedes every timer.
         input_objects = self._unique_identities(
@@ -267,8 +271,11 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
                     input_states=input_states,
                     output_states=[],
                     semantic_arguments=semantic_arguments,
+                    argument_representations=argument_representations,
+                    keyword_argument_representations=keyword_argument_representations,
                     missing=input_missing,
                     error_class=type(error).__name__,
+                    error_message=str(error),
                 )
             )
             raise
@@ -322,6 +329,9 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
                 input_states=input_states,
                 output_states=output_states,
                 semantic_arguments=semantic_arguments,
+                argument_representations=argument_representations,
+                keyword_argument_representations=keyword_argument_representations,
+                output_representation=repr(output),
                 missing=[*input_missing, *output_missing],
             )
         )
@@ -363,8 +373,12 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         input_states: list[dict[str, Any]],
         output_states: list[dict[str, Any]],
         semantic_arguments: dict[str, Any],
+        argument_representations: list[str],
+        keyword_argument_representations: dict[str, str],
         missing: list[str],
         error_class: str | None = None,
+        error_message: str | None = None,
+        output_representation: str | None = None,
     ) -> dict[str, Any]:
         event: dict[str, Any] = {
             "event_id": event_id,
@@ -391,10 +405,16 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
             "input_states": input_states,
             "output_states": output_states,
             "semantic_arguments": semantic_arguments,
+            "argument_representations": argument_representations,
+            "keyword_argument_representations": keyword_argument_representations,
             "thread_id": threading.get_native_id(),
             "python_thread_id": threading.get_ident(),
             "missing": missing,
         }
         if error_class is not None:
             event["error_class"] = error_class
+        if error_message is not None:
+            event["error_message"] = error_message
+        if output_representation is not None:
+            event["output_representation"] = output_representation
         return event

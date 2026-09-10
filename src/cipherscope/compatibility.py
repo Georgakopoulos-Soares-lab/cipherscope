@@ -283,7 +283,7 @@ class CompatibilityRegistry:
         )
 
     def snapshot_context(self, context: Any) -> dict[str, Any]:
-        """Capture a minimal, privacy-safe context description."""
+        """Read the supported context metadata fields."""
 
         missing: list[str] = []
         context_id = self._register_context(context)
@@ -396,7 +396,7 @@ class CompatibilityRegistry:
         Key and plaintext binding objects intentionally have no structural
         inspection fallback: their role is known only where the pinned method
         contract makes it explicit. This avoids calling representations or
-        probing arbitrary attributes on sensitive objects.
+        probing unrelated object attributes.
         """
 
         values = [*args, *kwargs.values()]
@@ -592,7 +592,7 @@ class CompatibilityRegistry:
 
     @staticmethod
     def _read_object(owner: Any, getters: tuple[str, ...]) -> Any:
-        """Read an opaque related object without converting or representing it."""
+        """Read a related object returned by one of the named getters."""
 
         for getter_name in getters:
             try:

@@ -20,7 +20,6 @@ JSONValue: TypeAlias = (
     None | bool | int | float | str | list["JSONValue"] | dict[str, "JSONValue"]
 )
 SUPPORTED_SCHEMA_MAJOR = 1
-MAX_METADATA_STRING_LENGTH = 4096
 _SEMVER = re.compile(
     r"^(?P<major>0|[1-9][0-9]*)\."
     r"(?P<minor>0|[1-9][0-9]*)\."
@@ -60,7 +59,6 @@ class IssueCode:
     ANALYSIS_STATUS = "analysis.status"
     ROTATION_SPEEDUP_CLAIM = "rotation.speedup_claim_forbidden"
     RUN_ID_MISMATCH = "run_id.mismatch"
-    METADATA_LIMIT_EXCEEDED = "metadata.limit_exceeded"
 
 
 @dataclass(frozen=True, slots=True)
@@ -341,35 +339,6 @@ def _root(
     return document, issues
 
 
-def _validate_metadata_size(
-    value: Any, path: str, issues: list[ValidationIssue]
-) -> None:
-    """Bound user-controlled descriptive metadata without limiting event counts."""
-
-    if isinstance(value, str):
-        if len(value) > MAX_METADATA_STRING_LENGTH:
-            _add(
-                issues,
-                IssueCode.METADATA_LIMIT_EXCEEDED,
-                path,
-                f"metadata string has {len(value)} characters; limit is {MAX_METADATA_STRING_LENGTH}",
-            )
-        return
-    if isinstance(value, Mapping):
-        for key, child in value.items():
-            if len(str(key)) > MAX_METADATA_STRING_LENGTH:
-                _add(
-                    issues,
-                    IssueCode.METADATA_LIMIT_EXCEEDED,
-                    path,
-                    f"metadata key exceeds {MAX_METADATA_STRING_LENGTH} characters",
-                )
-            _validate_metadata_size(child, f"{path}.{key}", issues)
-    elif isinstance(value, list):
-        for index, child in enumerate(value):
-            _validate_metadata_size(child, f"{path}[{index}]", issues)
-
-
 def validate_trace(document: Any) -> ValidationResult:
     """Validate a semantic trace, including all cross-record references."""
 
@@ -378,9 +347,6 @@ def validate_trace(document: Any) -> ValidationResult:
     )
     if trace is None:
         return ValidationResult("trace", tuple(issues))
-
-    if "metadata" in trace:
-        _validate_metadata_size(trace.get("metadata"), "$.metadata", issues)
 
     run = _mapping(trace.get("run"), "$.run", issues) if "run" in trace else None
     if run is not None:
@@ -641,11 +607,6 @@ def validate_trace(document: Any) -> ValidationResult:
                         f"{path}.timing.{field}",
                         "duration must not be negative",
                     )
-        if "semantic_arguments" in event:
-            _validate_metadata_size(
-                event.get("semantic_arguments"), f"{path}.semantic_arguments", issues
-            )
-
     ciphertext_ids: set[str] = set()
     state_by_id: dict[str, Mapping[str, Any]] = {}
     for index, state in states:
@@ -1310,7 +1271,7 @@ def validate_recommendations(
 def validate_manifest(
     document: Any, *, trace: Mapping[str, Any] | None = None
 ) -> ValidationResult:
-    """Validate minimum reproducibility, coverage, and privacy manifest fields."""
+    """Validate the required reproducibility and coverage manifest fields."""
 
     manifest, issues = _root(
         "manifest",
@@ -1321,7 +1282,6 @@ def validate_manifest(
             "tool",
             "runtime",
             "coverage",
-            "privacy",
             "clocks",
             "parameter_set",
         ),
@@ -1343,7 +1303,7 @@ def validate_manifest(
                 "$.status",
                 "must be 'completed', 'incomplete', 'failed', or 'interrupted'",
             )
-    for field in ("tool", "runtime", "coverage", "privacy", "clocks", "parameter_set"):
+    for field in ("tool", "runtime", "coverage", "clocks", "parameter_set"):
         if field in manifest:
             _mapping(manifest.get(field), f"$.{field}", issues)
     tool = manifest.get("tool")
@@ -1391,23 +1351,6 @@ def validate_manifest(
                     issues,
                     IssueCode.FIELD_TYPE,
                     f"$.coverage.{field}",
-                    "must be a boolean",
-                )
-    privacy = manifest.get("privacy")
-    if isinstance(privacy, Mapping):
-        for field in (
-            "shadow_mode",
-            "argv_recorded",
-            "plaintext_serialized",
-            "key_material_serialized",
-            "object_repr_serialized",
-        ):
-            value = privacy.get(field)
-            if value is not None and not isinstance(value, bool):
-                _add(
-                    issues,
-                    IssueCode.FIELD_TYPE,
-                    f"$.privacy.{field}",
                     "must be a boolean",
                 )
     clocks = manifest.get("clocks")
@@ -1516,7 +1459,6 @@ def load_and_validate(path: str | Path, kind: str) -> JSONValue:
 __all__ = [
     "IssueCode",
     "JSONValue",
-    "MAX_METADATA_STRING_LENGTH",
     "SUPPORTED_SCHEMA_MAJOR",
     "StrictJSONError",
     "ValidationError",

@@ -1,7 +1,0 @@
-thread 'tokio-runtime-worker' panicked at 'synthetic future failure', src/task.rs:44:9
-stack backtrace:
-   0: demo::task::poll
-             at ./src/task.rs:44:9
-   1: tokio::runtime::task::core::Core<T,S>::poll
-   2: demo::main::{{closure}}
-             at ./src/main.rs:12:5

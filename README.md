@@ -11,13 +11,13 @@ smallest coherent vertical slice from the canonical research plan:
 - reconstruct the executed ciphertext graph and critical paths;
 - report critical paths, repeated compatible rotations, and generated rotation
   keys unused in the observed run; and
-- export a schema-versioned, privacy-conscious run bundle.
+- export a schema-versioned run bundle.
 
 This is pre-alpha research software. The included fake backend performs no
 cryptography. An exact-pinned macOS ARM64 developer build now runs the real
 example and targeted binding tests, but the required primary Linux OpenFHE
 1.5.1.0 feasibility gate has not passed. CipherScope does not select secure
-parameters, prove precision, or make traces safe to publish.
+parameters or prove precision.
 
 ## Quick start
 
@@ -30,6 +30,8 @@ PYTHON=/opt/miniconda3/bin/python3.13  # use any Python >= 3.11
 PYTHONPATH=src "$PYTHON" -m unittest discover -s tests -p 'test_*.py'
 PYTHONPATH=src "$PYTHON" -m cipherscope.cli demo --output cipherscope-results/demo
 PYTHONPATH=src "$PYTHON" -m cipherscope.cli validate cipherscope-results/demo
+PYTHONPATH=src "$PYTHON" -m cipherscope.cli analyze \
+  cipherscope-results/demo/trace.json --output cipherscope-results/analyzed
 PYTHONPATH=src "$PYTHON" -m cipherscope.cli view cipherscope-results/demo
 ```
 
@@ -101,13 +103,12 @@ src/cipherscope/         Session, proxy, recorder, graph, analyzers, CLI
 examples/                Dependency-free demonstration workload
 tests/fake_backend/      Proxy/session mechanics
 tests/golden/            Independent semantic expectations
-tests/security/          Non-serialization, permissions, and escaping
 tests/fixtures/          Synthetic corpus and provenance catalog
-docs/                    Architecture, security, and corpus notes
+docs/                    Architecture and corpus notes
 ```
 
-See [architecture.md](docs/architecture.md), [security.md](docs/security.md),
-and [fixtures.md](docs/fixtures.md) for the implementation boundary. The parent
+See [architecture.md](docs/architecture.md) and [fixtures.md](docs/fixtures.md)
+for the implementation boundary. The parent
 research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 
 ## Current limitations
@@ -121,12 +122,9 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
   bounded streaming, and the remaining diagnostics are later milestones.
 - Metadata getters may be unavailable. Missing evidence remains `unknown`; it is
   never fabricated.
-- User metadata strings are bounded, but total event/trace byte caps and buffered
-  streaming are not implemented yet; do not trace an untrusted unbounded workload.
-- A Python process cannot guarantee physical zeroization of secret references.
-- Timing and graph topology can themselves reveal sensitive program structure.
-- Multi-language exception-stack fixtures exercise untrusted-text handling only;
-  CipherScope does not claim to profile those runtimes.
+- Trace size is not bounded and output is buffered in memory.
+- Traces include argument and output representations, exception messages,
+  absolute source paths, and precision-checkpoint values.
 
 ## Independent repository and submodule status
 

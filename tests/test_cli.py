@@ -13,14 +13,28 @@ from cipherscope.cli import main, validate_bundle
 
 
 class CLITests(unittest.TestCase):
-    def test_demo_validate_and_view(self) -> None:
+    def test_demo_analyze_validate_and_view(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "demo"
+            analyzed = Path(temporary) / "analyzed"
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(main(["demo", "--output", str(output)]), 0)
                 self.assertEqual(main(["validate", str(output)]), 0)
                 self.assertEqual(main(["view", str(output)]), 0)
+                self.assertEqual(
+                    main(
+                        [
+                            "analyze",
+                            str(output / "trace.json"),
+                            "--output",
+                            str(analyzed),
+                        ]
+                    ),
+                    0,
+                )
+                self.assertEqual(main(["validate", str(analyzed)]), 0)
             self.assertEqual(validate_bundle(output), [])
+            self.assertEqual(validate_bundle(analyzed), [])
             trace = json.loads((output / "trace.json").read_text(encoding="utf-8"))
             self.assertEqual(len(trace["events"]), 8)
             self.assertIs(trace["run"]["synthetic_contract"], True)
@@ -115,7 +129,7 @@ with cipherscope.trace(FakeCryptoContext()) as session:
                 [event["operation"] for event in trace["events"]], ["EvalRotate"]
             )
 
-    def test_uncaught_covered_failure_writes_sanitized_partial_bundle(self) -> None:
+    def test_uncaught_covered_failure_writes_partial_bundle(self) -> None:
         source = """\
 import cipherscope
 from cipherscope.testing import FakeCiphertext, FakeCryptoContext
@@ -134,9 +148,12 @@ cc.EvalMult(FakeCiphertext(), FakeCiphertext())
             self.assertEqual(code, 1)
             self.assertEqual(validate_bundle(output), [])
             serialized = (output / "trace.json").read_text(encoding="utf-8")
-            self.assertNotIn("SECRET-EXCEPTION-MESSAGE", serialized)
+            self.assertIn("SECRET-EXCEPTION-MESSAGE", serialized)
             trace = json.loads(serialized)
             self.assertEqual(trace["events"][0]["error_class"], "RuntimeError")
+            self.assertEqual(
+                trace["events"][0]["error_message"], "SECRET-EXCEPTION-MESSAGE"
+            )
             self.assertEqual(trace["events"][0]["output_ciphertexts"], [])
 
     def test_keyboard_interrupt_preserves_130_and_interrupted_bundle(self) -> None:

@@ -1,5 +1,0 @@
-0   synthetic_app   0xADDR  επεξεργασία + 19
-1   synthetic_app   0xADDR  worker_entry + 41
-2   libsynthetic    0xADDR  thread_start + 7
-... native frames truncated at synthetic limit ...
-note: path=<redacted>/δοκιμή.bin payload=&lt;opaque&gt;
