@@ -21,8 +21,8 @@ expectation code.
 
 ## Adding a fixture
 
-1. Use wholly synthetic values and run-local IDs.
+1. Use wholly synthetic values and generated IDs.
 2. Add one catalog entry with a unique stable ID and relative path.
-3. Keep the provenance object exactly explicit; do not infer a license or external origin.
+3. Record that the fixture is synthetic and has no external source or asserted license.
 4. Give invalid JSON cases one intended failure code whenever possible.
 5. Update the fixed counts in `../test_fixture_catalog.py` intentionally.

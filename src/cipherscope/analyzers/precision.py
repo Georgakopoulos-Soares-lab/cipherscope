@@ -1,4 +1,4 @@
-"""Shadow-mode precision-checkpoint drop analysis."""
+"""Measure precision loss between recorded checkpoints."""
 
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ def _checkpoint_record(event: Mapping[str, Any]) -> dict[str, Any] | None:
 
 
 def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
-    """Rank precision drops between compatible shadow-mode checkpoints."""
+    """Rank precision drops between compatible checkpoints."""
 
     require_valid_trace(trace)
 
@@ -64,7 +64,7 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
             **base,
             "analysis_status": "not_applicable",
             "not_applicable_reasons": [
-                "Precision analysis requires an explicitly enabled shadow-mode run."
+                "Precision analysis requires a run created with shadow_mode=True."
             ],
             "findings": [],
         }
@@ -129,7 +129,7 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
             "evidence_event_ids": drop["evidence_event_ids"],
             "evidence": drop,
             "applicability": [
-                "an explicitly enabled shadow-mode run",
+                "a run created with shadow_mode=True",
                 "two compatible checkpoints with the same slot count",
                 "a decrease in absolute precision bits between them",
             ],

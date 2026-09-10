@@ -1,4 +1,4 @@
-"""Deterministic metadata-only demonstration of the CipherScope vertical slice."""
+"""Run a deterministic demonstration with a metadata-only backend."""
 
 from __future__ import annotations
 
@@ -30,13 +30,13 @@ def build_demo_trace() -> dict[str, Any]:
 
 
 def build_demo_bundle() -> dict[str, dict[str, Any]]:
-    """Build every canonical in-memory demonstration artifact."""
+    """Build every document in the demonstration bundle."""
 
     return build_analysis_bundle(build_demo_trace())
 
 
 def write_demo(output_dir: Path | str) -> Path:
-    """Write the complete demonstration bundle atomically."""
+    """Write the demonstration bundle without leaving partial output."""
 
     bundle = build_demo_bundle()
     return write_bundle(

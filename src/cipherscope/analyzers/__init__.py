@@ -1,4 +1,4 @@
-"""Built-in CipherScope analyzers for the first vertical slice."""
+"""Built-in CipherScope analyzers."""
 
 from .bootstrap import analyze_bootstrap
 from .depth import analyze_depth

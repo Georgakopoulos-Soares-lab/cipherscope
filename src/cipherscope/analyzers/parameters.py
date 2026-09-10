@@ -24,7 +24,7 @@ def analyze_parameters(
     """Compare the configured multiplicative depth with fully modeled level use.
 
     The rule is not applicable whenever the observed level requirement is not
-    fully measured (opaque or unresolved paths), because unused headroom cannot
+    fully measured (no missing or unresolved paths), because unused headroom cannot
     be claimed from an incomplete depth model. The result is limited to this run.
     """
 
@@ -56,7 +56,7 @@ def analyze_parameters(
             **base,
             "analysis_status": "not_applicable",
             "not_applicable_reasons": [
-                "Observed level use is not fully measured; opaque or unresolved paths remain."
+                "Observed level use is not fully measured; missing or unresolved paths remain."
             ],
             "findings": [],
         }
@@ -100,7 +100,7 @@ def analyze_parameters(
         "evidence": inventory,
         "applicability": [
             "a known configured multiplicative depth for this run",
-            "fully measured observed level use with no opaque or unresolved paths",
+            "fully measured observed level use with no missing or unresolved paths",
             "observed per-epoch level use below the configured depth",
         ],
         "estimated_impact": {

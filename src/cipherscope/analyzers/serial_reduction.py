@@ -15,7 +15,7 @@ _CT_CT_OVERLOADS = {"ct_ct", "ciphertext_ciphertext"}
 
 
 def _longest_chain(mults: list[Mapping[str, Any]]) -> list[str]:
-    """Return the event IDs of the longest ct-ct product dependency chain.
+    """Return the event IDs of the longest ciphertext product chain.
 
     An edge exists when one multiplication consumes an output produced by an
     earlier multiplication in the same region, which is exactly a serial fold.
@@ -23,17 +23,18 @@ def _longest_chain(mults: list[Mapping[str, Any]]) -> list[str]:
 
     producers: dict[str, str] = {}
     for event in mults:
-        for output_id in event.get("output_ciphertexts", []):
-            producers[str(output_id)] = str(event["event_id"])
+        for output_ciphertext_id in event.get("output_ciphertexts", []):
+            producers[str(output_ciphertext_id)] = str(event["event_id"])
 
     best_chain: dict[str, list[str]] = {}
     longest: list[str] = []
     for event in mults:
         event_id = str(event["event_id"])
         parents = [
-            producers[str(input_id)]
-            for input_id in event.get("input_ciphertexts", [])
-            if str(input_id) in producers and producers[str(input_id)] != event_id
+            producers[str(input_ciphertext_id)]
+            for input_ciphertext_id in event.get("input_ciphertexts", [])
+            if str(input_ciphertext_id) in producers
+            and producers[str(input_ciphertext_id)] != event_id
         ]
         best_parent: list[str] = []
         for parent_id in parents:
@@ -167,7 +168,6 @@ def analyze_serial_reductions(trace: Mapping[str, Any]) -> dict[str, Any]:
             "findings": [],
         }
     return finalize(result, trace=trace)
-
 
 
 __all__ = ["RULE_ID", "analyze_serial_reductions"]

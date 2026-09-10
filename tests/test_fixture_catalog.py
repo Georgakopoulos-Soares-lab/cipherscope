@@ -7,7 +7,6 @@ import unittest
 from collections import Counter
 from pathlib import Path, PurePosixPath
 
-
 FIXTURE_ROOT = Path(__file__).with_name("fixtures")
 CATALOG_PATH = FIXTURE_ROOT / "corpus.json"
 
@@ -20,7 +19,6 @@ EXPECTED_PROVENANCE = {
     "kind": "synthetic",
     "source_url": None,
     "license": "NOASSERTION",
-    "sensitive": False,
 }
 
 
@@ -46,7 +44,7 @@ class FixtureCatalogTests(unittest.TestCase):
         for fixture_id in ids:
             self.assertRegex(fixture_id, r"^[a-z0-9]+(?:[._][a-z0-9]+)*$")
 
-    def test_catalog_paths_are_relative_safe_and_complete(self) -> None:
+    def test_catalog_paths_are_relative_and_complete(self) -> None:
         catalog_paths = set()
         for entry in self.entries:
             relative = PurePosixPath(entry["path"])
@@ -64,11 +62,10 @@ class FixtureCatalogTests(unittest.TestCase):
         }
         self.assertEqual(catalog_paths, artifact_paths)
 
-    def test_provenance_is_explicit_synthetic_and_non_sensitive(self) -> None:
+    def test_provenance_is_explicit_and_synthetic(self) -> None:
         for entry in self.entries:
             with self.subTest(fixture=entry["id"]):
                 self.assertEqual(entry["provenance"], EXPECTED_PROVENANCE)
-                self.assertIs(entry["provenance"]["sensitive"], False)
 
     def test_expected_stage_and_code_are_present(self) -> None:
         allowed_outcomes = {"accept", "reject"}

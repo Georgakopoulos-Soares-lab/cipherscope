@@ -6,8 +6,9 @@ import json
 import shutil
 import sysconfig
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from ..validation import assert_valid
 from .csv import operations_csv
@@ -16,7 +17,7 @@ from .report import render_summary_html
 
 
 def build_manifest(trace: Mapping[str, Any]) -> dict[str, Any]:
-    """Build the standalone manifest from canonical run metadata."""
+    """Build the bundle manifest from the recorded run metadata."""
 
     run = trace.get("run") or {}
     context = trace.get("context") or {}
@@ -88,7 +89,7 @@ def write_bundle(
     recommendations: Mapping[str, Any],
     manifest: Mapping[str, Any] | None = None,
 ) -> Path:
-    """Stage a complete bundle and publish it without overwriting."""
+    """Write a complete bundle without replacing an existing directory."""
 
     destination = Path(output_dir)
     if destination.exists():

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Literal, Mapping, Sequence
-
+from typing import Any, Literal
 
 SCHEMA_VERSION = "1.0.0"
 TOOL_NAME = "cipherscope"
@@ -42,19 +42,19 @@ class CiphertextMetadata:
 
 @dataclass(frozen=True)
 class CiphertextState:
-    """One immutable, run-local ciphertext version."""
+    """One recorded version of a ciphertext."""
 
-    trace_id: str
+    ciphertext_id: str
     created_by_event: str | None
     parent_ids: tuple[str, ...]
     origin: Literal["preexisting", "derived"]
     metadata: CiphertextMetadata
 
     def to_dict(self) -> dict[str, Any]:
-        """Return the canonical trace representation."""
+        """Return the state in the trace schema's format."""
 
         return {
-            "id": self.trace_id,
+            "id": self.ciphertext_id,
             "created_by_event": self.created_by_event,
             "parent_ids": list(self.parent_ids),
             "origin": self.origin,
@@ -64,15 +64,15 @@ class CiphertextState:
 
 @dataclass(frozen=True)
 class CiphertextObservation:
-    """A per-event observation associated with a registry identity."""
+    """Ciphertext metadata read before or after one event."""
 
-    trace_id: str
+    ciphertext_id: str
     metadata: CiphertextMetadata
 
     def event_state(self) -> dict[str, Any]:
         """Return metadata captured at this event boundary."""
 
-        return {"id": self.trace_id, **self.metadata.to_dict()}
+        return {"id": self.ciphertext_id, **self.metadata.to_dict()}
 
 
 @dataclass(frozen=True)
@@ -105,9 +105,7 @@ def copy_mapping(value: Mapping[str, Any]) -> dict[str, Any]:
     for key, item in value.items():
         if isinstance(item, dict):
             result[key] = copy_mapping(item)
-        elif isinstance(item, list):
-            result[key] = copy_sequence(item)
-        elif isinstance(item, tuple):
+        elif isinstance(item, (list, tuple)):
             result[key] = copy_sequence(item)
         else:
             result[key] = item

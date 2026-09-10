@@ -209,8 +209,8 @@ class ProxyAndTraceTests(unittest.TestCase):
             outputs=first["outputs"],
         )
 
-    def test_id_03_fresh_operation_outputs_get_distinct_trace_ids(self) -> None:
-        """ID-03: fresh native outputs receive distinct run-local ciphertext IDs."""
+    def test_id_03_fresh_outputs_get_distinct_ciphertext_ids(self) -> None:
+        """ID-03: each new native output receives a distinct ciphertext ID."""
 
         left = self.fixture.encrypt(self.fixture.a)
         right = self.fixture.encrypt(self.fixture.b)
@@ -219,10 +219,14 @@ class ProxyAndTraceTests(unittest.TestCase):
             session.context.EvalMult(left, right)
             session.context.EvalRotate(left, 1)
         trace = session.to_trace()
-        output_ids = [event["output_ciphertexts"][0] for event in trace["events"]]
-        self.assertEqual(len(output_ids), len(set(output_ids)))
-        self.assertTrue(all(identifier.endswith(":v0") for identifier in output_ids))
-        support.record("ID-03", output_ids=output_ids)
+        output_ciphertext_ids = [
+            event["output_ciphertexts"][0] for event in trace["events"]
+        ]
+        self.assertEqual(len(output_ciphertext_ids), len(set(output_ciphertext_ids)))
+        self.assertTrue(
+            all(identifier.endswith(":v0") for identifier in output_ciphertext_ids)
+        )
+        support.record("ID-03", output_ids=output_ciphertext_ids)
 
 
 if __name__ == "__main__":

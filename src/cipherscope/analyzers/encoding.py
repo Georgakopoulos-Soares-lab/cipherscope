@@ -13,9 +13,8 @@ RULE_ID = "encoding.repeated_public_constant.v1"
 def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
     """Flag public constants encoded more than once under the same constant ID.
 
-    CipherScope does not hash or compare unannotated plaintext values; only an
-    explicit, repeated run-local ``constant_id`` establishes that two encodings
-    denote the same public constant.
+    A repeated ``constant_id`` tells CipherScope that two encodings use the same
+    public constant. It does not infer equality for unannotated plaintexts.
     """
 
     require_valid_trace(trace)
@@ -78,7 +77,7 @@ def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
                     "encoding_count": len(occurrences),
                 },
                 "applicability": [
-                    "two or more encodings sharing one explicit run-local constant_id",
+                    "two or more encodings sharing one explicit constant_id",
                     "provenance asserted by the user, not inferred from values",
                 ],
                 "estimated_impact": {

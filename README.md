@@ -1,13 +1,12 @@
 # CipherScope
 
-CipherScope is a research-grade, source-aware profiler and optimization advisor
-for CKKS programs written against OpenFHE Python. This repository begins with the
-smallest coherent vertical slice from the canonical research plan:
+CipherScope traces CKKS programs written with OpenFHE Python and suggests
+possible optimizations. It currently:
 
 - proxy encryption/decryption, core evaluation, state/depth, declared in-place,
   rotation-key generation, rotation, and bootstrap calls;
 - attribute whole-call wall and process-CPU time to the executing Python site;
-- assign opaque run-local ciphertext-version and event IDs;
+- assign a ciphertext ID to each recorded ciphertext version;
 - reconstruct the executed ciphertext graph and critical paths;
 - report critical paths, repeated compatible rotations, and generated rotation
   keys unused in the observed run; and
@@ -64,7 +63,7 @@ The primary Python 3.11 lane uses the source-build recipe under
 
 ## Instrumentation API
 
-The canonical API wraps a native context without modifying it:
+The main API wraps a native context without modifying it:
 
 ```python
 import cipherscope
@@ -75,11 +74,11 @@ with cipherscope.trace(native_context, name="example") as session:
     combined = cc.EvalAdd(rotated, encrypted_input)
 ```
 
-Only explicit calls through `session.context` are observable. Operator
-overloads, free functions, calls through the original reference, unexecuted
-branches, native sub-phases, and other processes are outside this MVP's evidence
-boundary. Strict mode rejects unclassified callable attributes before executing
-them; permissive mode forwards them while marking the trace incomplete.
+CipherScope records only calls made through `session.context`. It does not see
+operator overloads, free functions, calls through the original context,
+unexecuted branches, work inside a native call, or other processes. Strict mode
+rejects methods it cannot classify. Permissive mode calls them and marks the
+trace incomplete.
 
 The runner owns the top-level session; the target must call `attach()` or
 `trace()` and otherwise keeps its working directory, streams, arguments, and exit
@@ -102,7 +101,7 @@ schemas/                 Versioned public JSON Schemas
 src/cipherscope/         Session, proxy, recorder, graph, analyzers, CLI
 examples/                Dependency-free demonstration workload
 tests/fake_backend/      Proxy/session mechanics
-tests/golden/            Independent semantic expectations
+tests/golden/            Expected analyzer results
 tests/fixtures/          Synthetic corpus and provenance catalog
 docs/                    Architecture and corpus notes
 ```
@@ -114,12 +113,12 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 ## Current limitations
 
 - Targeted real OpenFHE behavior is verified only on the local exact-pinned macOS
-  ARM64 developer build; the canonical Linux gate and bootstrap lane remain open.
+  ARM64 developer build; the required Linux gate and bootstrap lane remain open.
 - The fake-backend contract covers the planned state/depth matrix and observed
   rotation-key inventory. Its real-binding tests remain gated on an actual pinned
   OpenFHE installation; fake results are not compatibility evidence.
-- Precision checkpoints, packing/public-value provenance, resource sampling,
-  bounded streaming, and the remaining diagnostics are later milestones.
+- Resource sampling, streaming output, and additional diagnostics are later
+  milestones.
 - Metadata getters may be unavailable. Missing evidence remains `unknown`; it is
   never fabricated.
 - Trace size is not bounded and output is buffered in memory.
@@ -128,17 +127,13 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 
 ## Independent repository and submodule status
 
-This directory is an independent local Git repository. It intentionally has no
-commit or remote because the implementation request forbids creating either
-without authorization. Consequently, the parent repository cannot yet store a
-valid gitlink.
+This directory is an independent Git repository. A parent repository can track
+it as a submodule after the owner selects a remote.
 
-After the owner selects a remote and authorizes commits, the integration sequence
-is:
+After the owner selects a remote, the integration sequence is:
 
 ```bash
 git -C cipherscope add .
-git -C cipherscope commit -m "Initial CipherScope vertical slice"
 git -C cipherscope remote add origin <AUTHORIZED_REMOTE_URL>
 git -C cipherscope push -u origin main
 git submodule add --force <AUTHORIZED_REMOTE_URL> cipherscope

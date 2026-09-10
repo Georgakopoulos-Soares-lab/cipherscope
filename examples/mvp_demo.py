@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write the dependency-free CipherScope MVP demonstration bundle."""
+"""Write a CipherScope demonstration bundle."""
 
 from __future__ import annotations
 

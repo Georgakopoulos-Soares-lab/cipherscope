@@ -7,11 +7,11 @@ import threading
 from pathlib import Path
 from types import CodeType, FrameType
 
-from .state import SourceAttribution, UNKNOWN_SOURCE
+from .state import UNKNOWN_SOURCE, SourceAttribution
 
 
 class SourceResolver:
-    """Find and cache the first frame outside configured internal packages."""
+    """Find and cache the Python caller outside CipherScope."""
 
     def __init__(self, internal_modules: tuple[str, ...] = ("cipherscope",)) -> None:
         self._internal_modules = internal_modules
@@ -19,7 +19,7 @@ class SourceResolver:
         self._lock = threading.Lock()
 
     def capture(self, operation: str) -> SourceAttribution:
-        """Capture the first external Python frame for ``operation``."""
+        """Return the first Python caller outside CipherScope."""
 
         frame = inspect.currentframe()
         try:

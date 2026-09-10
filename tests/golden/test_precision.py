@@ -50,7 +50,7 @@ class PrecisionAnalyzerTests(unittest.TestCase):
             session.context.EvalBootstrap(FakeCiphertext())
         result = analyze_precision(session.to_trace())
         self.assertEqual(result["analysis_status"], "not_applicable")
-        self.assertIn("shadow-mode", result["not_applicable_reasons"][0])
+        self.assertIn("shadow_mode=True", result["not_applicable_reasons"][0])
 
     def test_checkpoint_requires_enabled_shadow_mode(self) -> None:
         backend = FakeCryptoContext()

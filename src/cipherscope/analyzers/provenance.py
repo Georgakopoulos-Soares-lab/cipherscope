@@ -19,15 +19,15 @@ def _public_derived_ids(states: list[Mapping[str, Any]]) -> set[str]:
     operand breaks the chain, so an encrypted+public sum is never called public.
     """
 
-    by_id = {str(state["id"]): state for state in states}
+    ciphertext_by_id = {str(state["id"]): state for state in states}
     memo: dict[str, bool] = {}
 
-    def is_public(state_id: str, stack: frozenset[str]) -> bool:
-        if state_id in memo:
-            return memo[state_id]
-        if state_id in stack:
+    def is_public(ciphertext_id: str, stack: frozenset[str]) -> bool:
+        if ciphertext_id in memo:
+            return memo[ciphertext_id]
+        if ciphertext_id in stack:
             return False
-        state = by_id.get(state_id)
+        state = ciphertext_by_id.get(ciphertext_id)
         if state is None:
             return False
         annotations = state.get("annotations")
@@ -35,20 +35,24 @@ def _public_derived_ids(states: list[Mapping[str, Any]]) -> set[str]:
             isinstance(annotations, Mapping)
             and annotations.get("provenance") in _PUBLIC_PROVENANCES
         ):
-            memo[state_id] = True
+            memo[ciphertext_id] = True
             return True
         parents = [str(item) for item in state.get("parent_ids", [])]
         result = bool(parents) and all(
-            is_public(parent, stack | {state_id}) for parent in parents
+            is_public(parent, stack | {ciphertext_id}) for parent in parents
         )
-        memo[state_id] = result
+        memo[ciphertext_id] = result
         return result
 
-    return {state_id for state_id in by_id if is_public(state_id, frozenset())}
+    return {
+        ciphertext_id
+        for ciphertext_id in ciphertext_by_id
+        if is_public(ciphertext_id, frozenset())
+    }
 
 
 def analyze_provenance(trace: Mapping[str, Any]) -> dict[str, Any]:
-    """Flag ct-ct multiplications with an operand of purely public provenance.
+    """Flag ciphertext-ciphertext products with a public-only input.
 
     This is an advisory review item backed by explicit annotations, never proof
     that switching to a plaintext multiplication is correct for the protocol.
@@ -61,8 +65,8 @@ def analyze_provenance(trace: Mapping[str, Any]) -> dict[str, Any]:
         "run_id": trace["run"]["run_id"],
     }
     states = [state for state in trace["ciphertexts"] if isinstance(state, Mapping)]
-    public_ids = _public_derived_ids(states)
-    if not public_ids:
+    public_ciphertext_ids = _public_derived_ids(states)
+    if not public_ciphertext_ids:
         return {
             **base,
             "analysis_status": "not_applicable",
@@ -83,7 +87,7 @@ def analyze_provenance(trace: Mapping[str, Any]) -> dict[str, Any]:
         if event.get("overload") not in {"ct_ct", "ciphertext_ciphertext"}:
             continue
         inputs = [str(item) for item in event.get("input_ciphertexts", [])]
-        public_operands = [item for item in inputs if item in public_ids]
+        public_operands = [item for item in inputs if item in public_ciphertext_ids]
         if not public_operands:
             continue
         source = event.get("source", {})
@@ -143,7 +147,6 @@ def analyze_provenance(trace: Mapping[str, Any]) -> dict[str, Any]:
     else:
         result = {**base, "analysis_status": "clean", "findings": []}
     return finalize(result, trace=trace)
-
 
 
 __all__ = ["RULE_ID", "analyze_provenance"]

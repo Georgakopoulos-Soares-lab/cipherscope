@@ -1,8 +1,7 @@
-"""Strict JSON loading and semantic validation for CipherScope artifacts.
+"""Load JSON and validate CipherScope documents.
 
-The project deliberately keeps validation in the standard library.  The JSON Schema
-files shipped with CipherScope are the public interchange contract; the functions in
-this module enforce the cross-record invariants that JSON Schema cannot express.
+The JSON Schema files define each document's fields. This module also checks
+relationships between events, ciphertexts, graph nodes, and findings.
 """
 
 from __future__ import annotations
@@ -14,7 +13,6 @@ from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypeAlias, overload
-
 
 JSONValue: TypeAlias = (
     None | bool | int | float | str | list["JSONValue"] | dict[str, "JSONValue"]
@@ -121,7 +119,7 @@ class ValidationResult(Sequence[ValidationIssue]):
 
 
 class ValidationError(ValueError):
-    """Raised when an artifact with semantic validation failures is consumed."""
+    """Raised when a CipherScope document fails validation."""
 
     def __init__(self, kind: str, issues: Iterable[ValidationIssue]) -> None:
         self.kind = kind
@@ -194,11 +192,6 @@ def load_json_file(path: str | Path) -> JSONValue:
     """Read *path* as UTF-8 and decode it with :func:`load_json_strict`."""
 
     return load_json_strict(Path(path).read_bytes())
-
-
-# Discoverable aliases for callers accustomed to ``json.loads`` terminology.
-loads_strict = load_json_strict
-strict_json_loads = load_json_strict
 
 
 def _add(issues: list[ValidationIssue], code: str, path: str, message: str) -> None:
@@ -340,7 +333,7 @@ def _root(
 
 
 def validate_trace(document: Any) -> ValidationResult:
-    """Validate a semantic trace, including all cross-record references."""
+    """Validate a trace and the references between its records."""
 
     trace, issues = _root(
         "trace", document, ("run", "context", "events", "ciphertexts")
@@ -420,7 +413,6 @@ def validate_trace(document: Any) -> ValidationResult:
     previous_sequence: int | None = None
     event_inputs: dict[str, list[str]] = {}
     event_outputs: dict[str, list[str]] = {}
-    event_by_id: dict[str, Mapping[str, Any]] = {}
 
     for index, event in events:
         path = f"$.events[{index}]"
@@ -454,7 +446,6 @@ def validate_trace(document: Any) -> ValidationResult:
                     f"duplicate event ID {event_id!r}",
                 )
             event_ids.add(event_id)
-            event_by_id.setdefault(event_id, event)
 
         raw_sequence = event.get("sequence")
         if (
@@ -492,14 +483,13 @@ def validate_trace(document: Any) -> ValidationResult:
             if name in event:
                 _string(event.get(name), f"{path}.{name}", issues)
         status = event.get("status")
-        if status not in {"ok", "error"}:
-            if "status" in event:
-                _add(
-                    issues,
-                    IssueCode.FIELD_VALUE,
-                    f"{path}.status",
-                    "must be 'ok' or 'error'",
-                )
+        if "status" in event and status not in {"ok", "error"}:
+            _add(
+                issues,
+                IssueCode.FIELD_VALUE,
+                f"{path}.status",
+                "must be 'ok' or 'error'",
+            )
         source = (
             _mapping(event.get("source"), f"{path}.source", issues)
             if "source" in event
@@ -564,14 +554,17 @@ def validate_trace(document: Any) -> ValidationResult:
                 if snapshot is None:
                     continue
                 snapshot_id = snapshot.get("id")
-                if _string(snapshot_id, f"{snapshot_path}.id", issues) is not None:
-                    if refs is not None and snapshot_id not in refs:
-                        _add(
-                            issues,
-                            IssueCode.REFERENCE_INCONSISTENT,
-                            f"{snapshot_path}.id",
-                            f"snapshot {snapshot_id!r} is absent from {state_field[:-7]}_ciphertexts",
-                        )
+                if (
+                    _string(snapshot_id, f"{snapshot_path}.id", issues) is not None
+                    and refs is not None
+                    and snapshot_id not in refs
+                ):
+                    _add(
+                        issues,
+                        IssueCode.REFERENCE_INCONSISTENT,
+                        f"{snapshot_path}.id",
+                        f"snapshot {snapshot_id!r} is absent from {state_field[:-7]}_ciphertexts",
+                    )
 
         timing = (
             _mapping(event.get("timing"), f"{path}.timing", issues)
@@ -608,7 +601,6 @@ def validate_trace(document: Any) -> ValidationResult:
                         "duration must not be negative",
                     )
     ciphertext_ids: set[str] = set()
-    state_by_id: dict[str, Mapping[str, Any]] = {}
     for index, state in states:
         path = f"$.ciphertexts[{index}]"
         _required(
@@ -626,7 +618,6 @@ def validate_trace(document: Any) -> ValidationResult:
                     f"duplicate ciphertext ID {ciphertext_id!r}",
                 )
             ciphertext_ids.add(ciphertext_id)
-            state_by_id.setdefault(ciphertext_id, state)
         created_by = state.get("created_by_event")
         if created_by is not None:
             _string(created_by, f"{path}.created_by_event", issues)
@@ -674,7 +665,7 @@ def validate_trace(document: Any) -> ValidationResult:
 
     for index, state in states:
         path = f"$.ciphertexts[{index}]"
-        state_id = state.get("id")
+        ciphertext_id = state.get("id")
         created_by = state.get("created_by_event")
         parents = state.get("parent_ids")
         if created_by is not None and created_by not in event_ids:
@@ -684,14 +675,17 @@ def validate_trace(document: Any) -> ValidationResult:
                 f"{path}.created_by_event",
                 f"unknown event {created_by!r}",
             )
-        elif isinstance(state_id, str) and isinstance(created_by, str):
-            if state_id not in event_outputs.get(created_by, []):
-                _add(
-                    issues,
-                    IssueCode.REFERENCE_INCONSISTENT,
-                    f"{path}.created_by_event",
-                    f"event {created_by!r} does not list {state_id!r} as an output",
-                )
+        elif (
+            isinstance(ciphertext_id, str)
+            and isinstance(created_by, str)
+            and ciphertext_id not in event_outputs.get(created_by, [])
+        ):
+            _add(
+                issues,
+                IssueCode.REFERENCE_INCONSISTENT,
+                f"{path}.created_by_event",
+                f"event {created_by!r} does not list {ciphertext_id!r} as an output",
+            )
         if isinstance(parents, list):
             for parent_index, parent in enumerate(parents):
                 if isinstance(parent, str) and parent not in ciphertext_ids:
@@ -712,8 +706,8 @@ def validate_trace(document: Any) -> ValidationResult:
                         f"{path}.parent_ids",
                         "parent_ids do not match the producing event's ciphertext inputs",
                     )
-        if isinstance(state_id, str):
-            producer = producers.get(state_id)
+        if isinstance(ciphertext_id, str):
+            producer = producers.get(ciphertext_id)
             if producer is not None and producer != created_by:
                 _add(
                     issues,
@@ -751,14 +745,7 @@ _EDGE_TYPES: dict[str, tuple[str, str]] = {
 
 
 def _cycle(adjacency: Mapping[str, set[str]]) -> list[str] | None:
-    # Iterative DFS with an explicit stack, not Python's call stack -- a
-    # recursive `visit(child)` implementation hits Python's ~1000-frame
-    # recursion limit on long dependency chains (e.g. many-iteration
-    # training loops), crashing analysis on an otherwise valid trace even
-    # though the underlying program ran correctly. This has no depth
-    # ceiling beyond available memory. Same visited/active bookkeeping and
-    # deterministic sorted-order traversal as the original, same return
-    # shape (a cycle path list, or None if no cycle exists).
+    # Use an explicit stack so long dependency chains do not hit the recursion limit.
     visited: set[str] = set()
     for start_node in sorted(adjacency):
         if start_node in visited:
@@ -1162,14 +1149,18 @@ def validate_recommendations(
                 if field in finding:
                     _string(finding.get(field), f"{path}.{field}", issues)
             confidence = finding.get("confidence")
-            if confidence not in {"measured", "inferred", "estimated", "unknown"}:
-                if "confidence" in finding:
-                    _add(
-                        issues,
-                        IssueCode.FIELD_VALUE,
-                        f"{path}.confidence",
-                        "unknown confidence value",
-                    )
+            if "confidence" in finding and confidence not in {
+                "measured",
+                "inferred",
+                "estimated",
+                "unknown",
+            }:
+                _add(
+                    issues,
+                    IssueCode.FIELD_VALUE,
+                    f"{path}.confidence",
+                    "unknown confidence value",
+                )
             for field in (
                 "source_sites",
                 "evidence_event_ids",
@@ -1290,19 +1281,18 @@ def validate_manifest(
         return ValidationResult("manifest", tuple(issues))
     if "run_id" in manifest:
         _string(manifest.get("run_id"), "$.run_id", issues)
-    if manifest.get("status") not in {
+    if "status" in manifest and manifest.get("status") not in {
         "completed",
         "incomplete",
         "failed",
         "interrupted",
     }:
-        if "status" in manifest:
-            _add(
-                issues,
-                IssueCode.FIELD_VALUE,
-                "$.status",
-                "must be 'completed', 'incomplete', 'failed', or 'interrupted'",
-            )
+        _add(
+            issues,
+            IssueCode.FIELD_VALUE,
+            "$.status",
+            "must be 'completed', 'incomplete', 'failed', or 'interrupted'",
+        )
     for field in ("tool", "runtime", "coverage", "clocks", "parameter_set"):
         if field in manifest:
             _mapping(manifest.get(field), f"$.{field}", issues)
@@ -1449,7 +1439,7 @@ def assert_valid(
 
 
 def load_and_validate(path: str | Path, kind: str) -> JSONValue:
-    """Strictly load one artifact and raise if its semantic contract is invalid."""
+    """Load one document and raise if it is invalid."""
 
     document = load_json_file(path)
     assert_valid(kind, document)
@@ -1457,9 +1447,9 @@ def load_and_validate(path: str | Path, kind: str) -> JSONValue:
 
 
 __all__ = [
+    "SUPPORTED_SCHEMA_MAJOR",
     "IssueCode",
     "JSONValue",
-    "SUPPORTED_SCHEMA_MAJOR",
     "StrictJSONError",
     "ValidationError",
     "ValidationIssue",
@@ -1468,8 +1458,6 @@ __all__ = [
     "load_and_validate",
     "load_json_file",
     "load_json_strict",
-    "loads_strict",
-    "strict_json_loads",
     "validate_document",
     "validate_graph",
     "validate_manifest",

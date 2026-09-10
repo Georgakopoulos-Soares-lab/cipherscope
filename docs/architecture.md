@@ -11,21 +11,18 @@ user call -> traced context -> recorder -> validated trace
                                       `-> bundle exporters
 ```
 
-The session owns one run ID, lifecycle, context attachment, and coverage counters.
-`TracedCryptoContext` has explicit adapters for the supported operation registry.
-It snapshots metadata before timing, invokes the bound backend method once, stops
-clocks in `finally`, and records success or failure. An unclassified call fails
-closed in strict mode.
+The session owns one run ID, its attached contexts, and its coverage counters.
+`TracedCryptoContext` defines methods for each supported OpenFHE call. It reads
+metadata before timing, calls the backend method once, stops clocks in `finally`,
+and records success or failure. Strict mode rejects methods it cannot classify.
 
-The registry uses Python identity as its lookup key. Serialized IDs are monotonic
+The registry uses Python object identity for lookup. Recorded ciphertext IDs are
 names such as `ct_0001:v0`. Events also record argument and result
 representations. A first-seen operand becomes a preexisting root. Encryption
 creates a ciphertext with no ciphertext parent, and decryption consumes
-ciphertext lineage. Declared
-in-place methods extend the same logical object through immutable `:vN` state
-nodes. Mutation selection follows the first ciphertext operand, including reverse
-scalar/plaintext overloads, rather than assuming the first Python argument is the
-mutated object.
+that ciphertext. An in-place method creates the next `:vN` version for the same
+Python object. The first ciphertext operand is treated as the changed value,
+including when a scalar or plaintext appears first in the Python arguments.
 
 Graph construction happens only after trace validation. Its nodes represent
 runtime events, ciphertext versions, source sites, and rotation-key requirements;
@@ -34,9 +31,9 @@ Critical-path calculations distinguish
 ciphertext-ciphertext nonlinear depth from observed level transitions. Bootstrap
 starts a new epoch without erasing historical lineage or the global maximum.
 
-Analyzers consume validated documents and decline to emit findings when required
-evidence is missing. The repeated-rotation rule requires the same immutable input
-version, distinct indices, compatible context/key/scaling metadata, HYBRID key
+Analyzers use validated documents and return `not_applicable` when required data
+is missing. The repeated-rotation rule requires the same recorded input version,
+distinct indices, compatible context/key/scaling metadata, HYBRID key
 switching, and no earlier compatible fast-rotation precompute. It recommends a
 measured experiment and does not predict speedup.
 
@@ -44,11 +41,10 @@ The key-usage rule compares successful traced `EvalRotateKeyGen` requests with
 covered `EvalRotate` indices. It declines analysis for truncated or permissive
 traces and says "unused in this observed run," never globally unnecessary.
 
-Exporters project one analysis model into JSON, CSV, Perfetto-compatible JSON,
-and a static HTML summary. Files are staged and then published as one run
-directory.
+Exporters write JSON, CSV, Perfetto-compatible JSON, and a static HTML summary.
+Files are staged and then moved into one run directory.
 
-## Claim boundary
+## What the tests prove
 
 The fake backend establishes instrumentation mechanics, deterministic contracts,
 and failure handling—not OpenFHE correctness or cryptographic security. The real

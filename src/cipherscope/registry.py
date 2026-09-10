@@ -1,49 +1,38 @@
-"""Thread-safe run-local identity registry for ciphertext-like objects."""
+"""Track ciphertext IDs and versions for one tracing session."""
 
 from __future__ import annotations
 
 import threading
 import weakref
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any, Callable, Generic, Iterable, Mapping, TypeVar
+from typing import Any, Generic, TypeVar
 
 from .state import CiphertextMetadata, CiphertextObservation, CiphertextState
-
 
 CiphertextT = TypeVar("CiphertextT")
 
 
 @dataclass
 class _IdentityEntry(Generic[CiphertextT]):
-    """A weak-reference guard; its process identity is never emitted.
+    """Track one object without keeping weak-referenceable objects alive.
 
-    Holds a *weak* reference, not a strong one, so a ciphertext can be
-    garbage-collected as soon as the caller's program is done with it
-    (previously this held ``value`` directly, pinning every ciphertext ever
-    seen for the entire life of the session). The cleanup callback removes
-    this entry the moment the object is actually collected, so its ``id()``
-    can be safely reused afterward without risk of aliasing a new object
-    against a stale entry.
+    The callback removes the entry when the object is collected. This prevents
+    a later object with the same ``id()`` from being mistaken for it.
     """
 
-    ref: Callable[[], "CiphertextT | None"]
+    ref: Callable[[], CiphertextT | None]
     base_id: str
     version: int
-    trace_id: str
+    ciphertext_id: str
 
     @property
-    def value(self) -> "CiphertextT | None":
+    def value(self) -> CiphertextT | None:
         return self.ref()
 
 
 class CiphertextRegistry(Generic[CiphertextT]):
-    """Assign opaque IDs while recognizing Python aliases by object identity.
-
-    A weak reference is retained, so entries are cleaned up automatically
-    when a ciphertext is garbage-collected instead of being pinned in
-    memory for the entire life of the run. Neither the lookup key nor an
-    object representation is serialized.
-    """
+    """Assign ciphertext IDs and recognize aliases by Python object identity."""
 
     def __init__(
         self,
@@ -61,9 +50,9 @@ class CiphertextRegistry(Generic[CiphertextT]):
         value: CiphertextT,
         base_id: str,
         version: int,
-        trace_id: str,
+        ciphertext_id: str,
         lookup_key: int,
-    ) -> "_IdentityEntry[CiphertextT]":
+    ) -> _IdentityEntry[CiphertextT]:
         def _on_collected(dead_ref: Any) -> None:
             with self._lock:
                 current = self._identities.get(lookup_key)
@@ -73,11 +62,14 @@ class CiphertextRegistry(Generic[CiphertextT]):
         try:
             ref = weakref.ref(value, _on_collected)
         except TypeError:
-            ref = lambda: value  # noqa: E731
-        return _IdentityEntry(ref, base_id, version, trace_id)
+
+            def ref() -> CiphertextT | None:
+                return value
+
+        return _IdentityEntry(ref, base_id, version, ciphertext_id)
 
     def snapshot(self, value: CiphertextT) -> CiphertextMetadata:
-        """Snapshot supported metadata without exposing object representations."""
+        """Read the supported metadata from a ciphertext."""
 
         return self._snapshotter(value)
 
@@ -86,28 +78,28 @@ class CiphertextRegistry(Generic[CiphertextT]):
         value: CiphertextT,
         metadata: CiphertextMetadata | None = None,
     ) -> CiphertextObservation:
-        """Resolve an input, creating an explicit preexisting root if necessary."""
+        """Return the input's current ID, registering it when first seen."""
 
         observed = metadata if metadata is not None else self.snapshot(value)
         lookup_key = id(value)
         with self._lock:
             entry = self._identities.get(lookup_key)
             if entry is not None and entry.value is value:
-                return CiphertextObservation(entry.trace_id, observed)
+                return CiphertextObservation(entry.ciphertext_id, observed)
 
             base_id = self._new_base_id_locked()
-            trace_id = f"{base_id}:v0"
+            ciphertext_id = f"{base_id}:v0"
             self._identities[lookup_key] = self._make_entry_locked(
-                value, base_id, 0, trace_id, lookup_key
+                value, base_id, 0, ciphertext_id, lookup_key
             )
-            self._states[trace_id] = CiphertextState(
-                trace_id=trace_id,
+            self._states[ciphertext_id] = CiphertextState(
+                ciphertext_id=ciphertext_id,
                 created_by_event=None,
                 parent_ids=(),
                 origin="preexisting",
                 metadata=observed,
             )
-            return CiphertextObservation(trace_id, observed)
+            return CiphertextObservation(ciphertext_id, observed)
 
     def observe_output(
         self,
@@ -117,7 +109,7 @@ class CiphertextRegistry(Generic[CiphertextT]):
         parent_ids: Iterable[str],
         metadata: CiphertextMetadata | None = None,
     ) -> CiphertextObservation:
-        """Resolve an output alias or register a fresh derived ciphertext."""
+        """Create the output's next ID and record its parent ciphertexts."""
 
         observed = metadata if metadata is not None else self.snapshot(value)
         lookup_key = id(value)
@@ -125,30 +117,30 @@ class CiphertextRegistry(Generic[CiphertextT]):
             entry = self._identities.get(lookup_key)
             if entry is not None and entry.value is value:
                 entry.version += 1
-                trace_id = f"{entry.base_id}:v{entry.version}"
-                entry.trace_id = trace_id
-                self._states[trace_id] = CiphertextState(
-                    trace_id=trace_id,
+                ciphertext_id = f"{entry.base_id}:v{entry.version}"
+                entry.ciphertext_id = ciphertext_id
+                self._states[ciphertext_id] = CiphertextState(
+                    ciphertext_id=ciphertext_id,
                     created_by_event=event_id,
                     parent_ids=tuple(parent_ids),
                     origin="derived",
                     metadata=observed,
                 )
-                return CiphertextObservation(trace_id, observed)
+                return CiphertextObservation(ciphertext_id, observed)
 
             base_id = self._new_base_id_locked()
-            trace_id = f"{base_id}:v0"
+            ciphertext_id = f"{base_id}:v0"
             self._identities[lookup_key] = self._make_entry_locked(
-                value, base_id, 0, trace_id, lookup_key
+                value, base_id, 0, ciphertext_id, lookup_key
             )
-            self._states[trace_id] = CiphertextState(
-                trace_id=trace_id,
+            self._states[ciphertext_id] = CiphertextState(
+                ciphertext_id=ciphertext_id,
                 created_by_event=event_id,
                 parent_ids=tuple(parent_ids),
                 origin="derived",
                 metadata=observed,
             )
-            return CiphertextObservation(trace_id, observed)
+            return CiphertextObservation(ciphertext_id, observed)
 
     def annotate(
         self, value: CiphertextT, annotation: Mapping[str, Any]
@@ -165,43 +157,43 @@ class CiphertextRegistry(Generic[CiphertextT]):
             entry = self._identities.get(lookup_key)
             if entry is None or entry.value is not value:
                 base_id = self._new_base_id_locked()
-                trace_id = f"{base_id}:v0"
+                ciphertext_id = f"{base_id}:v0"
                 self._identities[lookup_key] = self._make_entry_locked(
-                    value, base_id, 0, trace_id, lookup_key
+                    value, base_id, 0, ciphertext_id, lookup_key
                 )
-                self._states[trace_id] = CiphertextState(
-                    trace_id=trace_id,
+                self._states[ciphertext_id] = CiphertextState(
+                    ciphertext_id=ciphertext_id,
                     created_by_event=None,
                     parent_ids=(),
                     origin="preexisting",
                     metadata=observed,
                 )
                 entry = self._identities[lookup_key]
-            trace_id = entry.trace_id
-            merged = {**self._annotations.get(trace_id, {}), **dict(annotation)}
-            self._annotations[trace_id] = merged
-            return CiphertextObservation(trace_id, observed)
+            ciphertext_id = entry.ciphertext_id
+            merged = {**self._annotations.get(ciphertext_id, {}), **dict(annotation)}
+            self._annotations[ciphertext_id] = merged
+            return CiphertextObservation(ciphertext_id, observed)
 
-    def state(self, trace_id: str) -> CiphertextState:
-        """Return an immutable state by its opaque trace ID."""
+    def state(self, ciphertext_id: str) -> CiphertextState:
+        """Return the recorded state for a ciphertext ID."""
 
         with self._lock:
-            return self._states[trace_id]
+            return self._states[ciphertext_id]
 
     def states(self) -> list[dict[str, Any]]:
-        """Return states in monotonic ID allocation order."""
+        """Return states in ciphertext ID allocation order."""
 
         with self._lock:
             result: list[dict[str, Any]] = []
             for state in self._states.values():
                 item = state.to_dict()
-                annotation = self._annotations.get(state.trace_id)
+                annotation = self._annotations.get(state.ciphertext_id)
                 if annotation:
                     item["annotations"] = dict(annotation)
                 result.append(item)
             return result
 
     def _new_base_id_locked(self) -> str:
-        trace_id = f"ct_{self._next_id:04d}"
+        ciphertext_id = f"ct_{self._next_id:04d}"
         self._next_id += 1
-        return trace_id
+        return ciphertext_id

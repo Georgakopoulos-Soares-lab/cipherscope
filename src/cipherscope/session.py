@@ -5,8 +5,10 @@ from __future__ import annotations
 import contextvars
 import threading
 import time
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
-from typing import Any, ContextManager, Generic, Literal, TypeVar
+from types import TracebackType
+from typing import Any, Generic, Literal, TypeVar
 
 from .compatibility import DEFAULT_COMPATIBILITY, CompatibilityRegistry
 from .context import TracedCryptoContext
@@ -20,7 +22,6 @@ from .errors import (
 )
 from .recorder import EventRecorder
 from .source import SourceResolver
-
 
 ContextT = TypeVar("ContextT")
 
@@ -49,7 +50,7 @@ def _decode_real(plaintext: Any, length: int) -> list[float]:
 @dataclass
 class _Ownership:
     native_context: Any
-    session: "Session[Any]"
+    session: Session[Any]
 
 
 _OWNERS: dict[int, _Ownership] = {}
@@ -62,8 +63,8 @@ _ACTIVE_SESSION: contextvars.ContextVar[Any] = contextvars.ContextVar(
 class Session(Generic[ContextT]):
     """Own one trace run and all proxies attached during that run.
 
-    Lifecycle is ``created -> active -> closed``. A session cannot be re-entered;
-    proxies deliberately stop forwarding after their owner closes.
+    A session moves from ``created`` to ``active`` to ``closed``. It cannot be
+    entered again after it closes, and its proxies stop accepting calls.
     """
 
     def __init__(
@@ -113,12 +114,12 @@ class Session(Generic[ContextT]):
 
     @property
     def has_attached_context(self) -> bool:
-        """Whether any native context participated in this run."""
+        """Return whether the session has an attached context."""
 
         with self._lock:
             return bool(self._proxies)
 
-    def __enter__(self) -> "Session[ContextT]":
+    def __enter__(self) -> Session[ContextT]:
         with self._lock:
             if self._state == "closed":
                 raise SessionClosedError(
@@ -143,16 +144,21 @@ class Session(Generic[ContextT]):
             self._abort_enter()
             raise
 
-    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> Literal[False]:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> Literal[False]:
         del exc_type, traceback
         self.close(status="failed" if exc is not None else "completed")
         return False
 
     def close(self, *, status: str = "completed") -> None:
-        """Close the active session and release native-context ownership.
+        """Close the session and release its attached native contexts.
 
-        The status is accepted for lifecycle symmetry; callers choose the status
-        emitted later by :meth:`to_trace`.
+        ``status`` remains accepted for API compatibility. :meth:`to_trace`
+        chooses the status written to the trace.
         """
 
         del status
@@ -177,7 +183,7 @@ class Session(Generic[ContextT]):
             _ACTIVE_SESSION.reset(token)
 
     def attach(self, native_context: Any) -> TracedCryptoContext[Any, Any]:
-        """Attach one native context, idempotently within this active session."""
+        """Attach a context, or return its existing proxy if already attached."""
 
         self._require_active()
         if isinstance(native_context, TracedCryptoContext):
@@ -196,11 +202,14 @@ class Session(Generic[ContextT]):
 
             with _OWNERS_LOCK:
                 ownership = _OWNERS.get(identity)
-                if ownership is not None and ownership.native_context is native_context:
-                    if ownership.session is not self:
-                        raise AlreadyTracedError(
-                            "the native context is already attached to another session"
-                        )
+                if (
+                    ownership is not None
+                    and ownership.native_context is native_context
+                    and ownership.session is not self
+                ):
+                    raise AlreadyTracedError(
+                        "the native context is already attached to another session"
+                    )
                 _OWNERS[identity] = _Ownership(native_context, self)
 
             proxy: TracedCryptoContext[Any, Any] = TracedCryptoContext(
@@ -261,7 +270,7 @@ class Session(Generic[ContextT]):
         self._record_meta_event(
             kind="annotation",
             operation="Annotate",
-            input_ids=[observation.trace_id],
+            input_ciphertext_ids=[observation.ciphertext_id],
             input_states=[observation.event_state()],
             operand_kinds=["ciphertext"],
             semantic_arguments=annotation,
@@ -284,7 +293,7 @@ class Session(Generic[ContextT]):
                 "precision checkpoints require a session created with shadow_mode=True"
             )
         if self._secret_key is None:
-            raise ShadowModeError("shadow-mode checkpoints require a secret_key")
+            raise ShadowModeError("precision checkpoints require a secret_key")
         if not isinstance(name, str) or not name:
             raise AnnotationError("checkpoint name must be a non-empty string")
 
@@ -311,7 +320,7 @@ class Session(Generic[ContextT]):
         self._record_meta_event(
             kind="checkpoint",
             operation="PrecisionCheckpoint",
-            input_ids=[observation.trace_id],
+            input_ciphertext_ids=[observation.ciphertext_id],
             input_states=[observation.event_state()],
             operand_kinds=["ciphertext"],
             semantic_arguments=semantic_arguments,
@@ -341,7 +350,7 @@ class Session(Generic[ContextT]):
         self._record_meta_event(
             kind="annotation",
             operation="AnnotatePlaintext",
-            input_ids=[],
+            input_ciphertext_ids=[],
             input_states=[],
             operand_kinds=["plaintext"],
             semantic_arguments=semantic_arguments,
@@ -355,12 +364,11 @@ class Session(Generic[ContextT]):
         operator: str,
         associative: bool = False,
         commutative: bool = False,
-    ) -> "_Region":
-        """Open a labeled span with explicit algebraic assertions.
+    ) -> _Region:
+        """Mark a named group of events and its algebraic properties.
 
-        The assertions are the user's claim about the operation reduced inside
-        the span; analyzers only propose a restructuring when the assertions make
-        it plausible.
+        The serial-reduction analyzer uses these user-provided properties before
+        suggesting a different evaluation order.
         """
 
         self._require_active()
@@ -396,7 +404,7 @@ class Session(Generic[ContextT]):
         *,
         kind: str,
         operation: str,
-        input_ids: list[str],
+        input_ciphertext_ids: list[str],
         input_states: list[dict[str, Any]],
         operand_kinds: list[str],
         semantic_arguments: dict[str, Any],
@@ -414,7 +422,7 @@ class Session(Generic[ContextT]):
                 "granularity": None,
                 "status": "ok",
                 "source": source.to_dict(),
-                "input_ciphertexts": list(input_ids),
+                "input_ciphertexts": list(input_ciphertext_ids),
                 "output_ciphertexts": [],
                 "operand_kinds": list(operand_kinds),
                 "timing": {
@@ -433,10 +441,9 @@ class Session(Generic[ContextT]):
         )
 
     def to_trace(self, status: str = "completed") -> dict[str, Any]:
-        """Return ``{schema_version, run, context, events, ciphertexts}``.
+        """Build and return the session's trace.
 
-        This is an in-memory operation; output writing intentionally belongs to a
-        later exporter layer.
+        This method does not write any files.
         """
 
         with self._lock:
@@ -503,8 +510,8 @@ class Session(Generic[ContextT]):
             _ACTIVE_SESSION.reset(token)
 
 
-class _Region(ContextManager["Session[Any]"]):
-    """Record the event-sequence span covered by a labeled reduction region."""
+class _Region(AbstractContextManager["Session[Any]"]):
+    """Record the events inside a named reduction region."""
 
     def __init__(
         self,
@@ -530,7 +537,12 @@ class _Region(ContextManager["Session[Any]"]):
         self._entered = True
         return self._session
 
-    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> Literal[False]:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> Literal[False]:
         del exc_type, exc, traceback
         if not self._entered or self._start_sequence is None:
             raise SessionLifecycleError("the region was not entered")
@@ -547,8 +559,8 @@ class _Region(ContextManager["Session[Any]"]):
         return False
 
 
-class _ContextScope(ContextManager[Session[Any]]):
-    """Join an active run without finalizing it when the local scope exits."""
+class _ContextScope(AbstractContextManager[Session[Any]]):
+    """Attach a context to the active session for one ``with`` block."""
 
     def __init__(self, session: Session[Any], native_context: Any) -> None:
         self._session = session
@@ -566,7 +578,12 @@ class _ContextScope(ContextManager[Session[Any]]):
         self._entered = True
         return self._session
 
-    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> Literal[False]:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> Literal[False]:
         del exc_type, exc, traceback
         if not self._entered or self._identity is None:
             raise SessionLifecycleError("the trace context scope was not entered")
@@ -616,11 +633,10 @@ def runner_session(
     strict: bool = True,
     compatibility: CompatibilityRegistry | None = None,
 ) -> Session[Any]:
-    """Create a context-free session for a runner to activate.
+    """Create a session that waits for target code to attach a context.
 
-    While the returned session is active, target code may call :func:`attach` or
-    use :func:`trace` to join the runner-owned run. Closing a joined ``trace``
-    scope never closes this top-level session.
+    Target code may call :func:`attach` or :func:`trace` while this session is
+    active. Leaving that inner scope does not close the runner's session.
     """
 
     return Session(name=name, strict=strict, compatibility=compatibility)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure CKKS precision loss across a computation with shadow-mode checkpoints.
+"""Measure CKKS precision loss across a computation with checkpoints.
 
 Real OpenFHE program using CipherScope's opt-in shadow mode. Two checkpoints
 decrypt the ciphertext, compare against the expected plaintext values, and record

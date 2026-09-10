@@ -1,4 +1,4 @@
-"""CipherScope command-line interface for the dependency-free MVP."""
+"""CipherScope command-line interface."""
 
 from __future__ import annotations
 
@@ -25,7 +25,6 @@ from .validation import (
     validate_recommendations,
     validate_trace,
 )
-
 
 REQUIRED_BUNDLE_FILES = (
     "manifest.json",
@@ -210,7 +209,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="cipherscope", description=__doc__)
     subcommands = parser.add_subparsers(dest="command", required=True)
 
-    demo = subcommands.add_parser("demo", help="write the fake-backend MVP bundle")
+    demo = subcommands.add_parser("demo", help="write a fake-backend example bundle")
     demo.add_argument("--output", type=Path, required=True)
 
     run = subcommands.add_parser("run", help="run an instrumented Python script")

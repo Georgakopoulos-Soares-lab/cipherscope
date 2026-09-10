@@ -151,7 +151,7 @@ class CoreTraceTests(unittest.TestCase):
 
     def test_in_place_failure_does_not_advance_ciphertext_version(self) -> None:
         backend = FakeCryptoContext()
-        backend.fail_operations["EvalAddInPlace"] = RuntimeError("sensitive")
+        backend.fail_operations["EvalAddInPlace"] = RuntimeError("backend failure")
         left = FakeCiphertext()
 
         with cipherscope.trace(backend) as session:
@@ -211,7 +211,7 @@ class CoreTraceTests(unittest.TestCase):
             graph["edges"],
         )
 
-    def test_four_operation_vertical_slice_and_trace_contract(self) -> None:
+    def test_four_operations_produce_a_valid_trace(self) -> None:
         backend = FakeCryptoContext()
         left = FakeCiphertext()
         right = FakeCiphertext(level=1, noise_scale_degree=2)
@@ -302,11 +302,13 @@ class CoreTraceTests(unittest.TestCase):
             order.append("wall-clock")
             return next(clock_values)
 
-        with mock.patch(
-            "cipherscope.context.time.perf_counter_ns", side_effect=wall_clock
+        with (
+            mock.patch(
+                "cipherscope.context.time.perf_counter_ns", side_effect=wall_clock
+            ),
+            cipherscope.trace(backend) as session,
         ):
-            with cipherscope.trace(backend) as session:
-                session.context.EvalBootstrap(value)
+            session.context.EvalBootstrap(value)
 
         self.assertEqual(backend.calls["EvalBootstrap"], 1)
         native_index = order.index("native")

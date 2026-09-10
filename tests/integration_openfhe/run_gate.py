@@ -20,7 +20,6 @@ from typing import Any, TextIO
 
 from . import support
 
-
 EXPECTED_CHECKS = (
     "ENV-01",
     "ENV-02",
@@ -58,7 +57,7 @@ EXPECTED_CHECKS = (
     "API-06",
     "MUT-03",
     "PROXY-05",
-    "ROT-03"
+    "ROT-03",
 )
 CHECK_PATTERN = re.compile(r"^([A-Z]+-[0-9]{2}):")
 
@@ -70,7 +69,7 @@ def _check_id(test: unittest.TestCase) -> str | None:
 
 
 class EvidenceResult(unittest.TextTestResult):
-    """Capture bounded per-check status while retaining normal test output."""
+    """Capture each check's result while retaining normal test output."""
 
     def __init__(
         self,
@@ -90,16 +89,20 @@ class EvidenceResult(unittest.TextTestResult):
         self._finish(test, "pass")
         super().addSuccess(test)
 
-    def addFailure(self, test: unittest.TestCase, err: tuple[type, BaseException, Any]) -> None:
-        self._finish(test, "fail", self._bounded_error(err))
+    def addFailure(
+        self, test: unittest.TestCase, err: tuple[type, BaseException, Any]
+    ) -> None:
+        self._finish(test, "fail", self._error_detail(err))
         super().addFailure(test, err)
 
-    def addError(self, test: unittest.TestCase, err: tuple[type, BaseException, Any]) -> None:
-        self._finish(test, "fail", self._bounded_error(err))
+    def addError(
+        self, test: unittest.TestCase, err: tuple[type, BaseException, Any]
+    ) -> None:
+        self._finish(test, "fail", self._error_detail(err))
         super().addError(test, err)
 
     def addSkip(self, test: unittest.TestCase, reason: str) -> None:
-        self._finish(test, "skip", reason[:500])
+        self._finish(test, "skip", reason)
         super().addSkip(test, reason)
 
     def _finish(
@@ -122,10 +125,9 @@ class EvidenceResult(unittest.TextTestResult):
         self.checks[check_id] = record
 
     @staticmethod
-    def _bounded_error(err: tuple[type, BaseException, Any]) -> str:
+    def _error_detail(err: tuple[type, BaseException, Any]) -> str:
         error_type, error, _traceback = err
-        message = str(error).replace("\n", " ")[:400]
-        return f"{error_type.__name__}: {message}"
+        return f"{error_type.__name__}: {error}"
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -135,7 +137,9 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="Evidence JSON path (default: artifact/feasibility/<lane>/feasibility.json)",
     )
-    parser.add_argument("--quiet", action="store_true", help="Use concise unittest output")
+    parser.add_argument(
+        "--quiet", action="store_true", help="Use concise unittest output"
+    )
     return parser
 
 
@@ -231,12 +235,8 @@ def run(*, output: Path, stream: TextIO, verbosity: int) -> tuple[int, dict[str,
             "wrapper_commit": support.GOLDEN["wrapper_commit"],
             "native_tag": support.GOLDEN["native_tag"],
             "native_commit": support.GOLDEN["native_commit"],
-            "provisional_distribution": support.GOLDEN[
-                "provisional_distribution"
-            ],
-            "provisional_wheel_sha256": support.GOLDEN[
-                "provisional_wheel_sha256"
-            ],
+            "provisional_distribution": support.GOLDEN["provisional_distribution"],
+            "provisional_wheel_sha256": support.GOLDEN["provisional_wheel_sha256"],
         },
         "summary": {
             **counts,

@@ -1,8 +1,8 @@
 # Examples
 
-`mvp_demo.py` runs the first CipherScope vertical slice against a deterministic,
-metadata-only fake context. It is an end-to-end instrumentation example, not
-cryptography and not evidence of OpenFHE compatibility.
+`mvp_demo.py` runs a small CipherScope example against a deterministic,
+metadata-only fake context. It demonstrates the complete tracing workflow, not
+cryptography or OpenFHE compatibility.
 
 Run it from the implementation repository:
 
@@ -12,10 +12,11 @@ PYTHONPATH=src python3 -m cipherscope.cli validate /tmp/cipherscope-demo
 ```
 
 The workload intentionally generates the four required rotation keys, performs
-four rotations of one immutable ciphertext, an addition, a ciphertext-ciphertext
-multiplication, and a bootstrap. Its output should contain a versioned graph, a
-nonlinear-depth path, one conservative `rotation.hoist_same_input.v1` finding,
-and a clean `keys.unused_in_observed_run.v1` result.
+four rotations of one recorded ciphertext version, an addition, a
+ciphertext-ciphertext multiplication, and a bootstrap. Its output should contain
+a versioned graph, a nonlinear-depth path, one conservative
+`rotation.hoist_same_input.v1` finding, and a clean
+`keys.unused_in_observed_run.v1` result.
 
 ## Profile a small program with `cipherscope run`
 
@@ -62,7 +63,7 @@ The bundle contains `trace.json`, `ciphertext_graph.json`,
 `summary.html`. With the arguments above, the recommendations include a
 repeated-rotation opportunity and report generated rotation index `4` as unused
 in this observed run. The trace and timings come from actual OpenFHE calls; this
-local macOS ARM64 developer build is not a substitute for the canonical Linux
+local macOS ARM64 developer build is not a substitute for the required Linux
 compatibility gate.
 
 ## Profile existing scripts without editing them
@@ -157,7 +158,7 @@ delta and reports `clean`. The underuse finding itself is exercised by the
 fake-model golden test (`tests/golden/test_bootstrap.py`); observing bootstrap
 restoration from real ciphertext getters alone is a documented limitation.
 
-### Instrumented programs (CipherScope annotation and shadow-mode API)
+### Instrumented programs (CipherScope annotations and precision checkpoints)
 
 These use CipherScope's session API (`annotate`, `annotate_plaintext`, `region`,
 `checkpoint`) to supply the explicit assertions that packing, provenance,
@@ -168,7 +169,7 @@ directly:
 | Program | Assertion used | Diagnostic exercised |
 |---|---|---|
 | `annotate_packing.py` | `annotate(meaningful_slots=...)` | packing low utilization |
-| `public_constant_mult.py` | `annotate(provenance="public_constant")` | public-value ct-ct multiply |
+| `public_constant_mult.py` | `annotate(provenance="public_constant")` | public-value ciphertext multiply |
 | `repeated_public_constant.py` | `annotate_plaintext(constant_id=...)` | repeated public-constant encoding |
 | `serial_reduction_region.py` | `region(operator="multiply", associative=True)` | serial multiplication reduction |
 | `precision_checkpoints.py` | `checkpoint(...)` in `shadow_mode=True` | precision checkpoint drop |

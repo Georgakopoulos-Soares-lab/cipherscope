@@ -5,133 +5,133 @@
     {
       "id": "graph.valid.minimal", "path": "graphs/valid/minimal.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "valid", "minimal"], "expected": {"outcome": "accept", "stage": "graph_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.valid.deep", "path": "graphs/valid/deep.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "valid", "deep", "nonlinear_depth"], "expected": {"outcome": "accept", "stage": "graph_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.valid.repeated", "path": "graphs/valid/repeated.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "valid", "repeated", "rotation"], "expected": {"outcome": "accept", "stage": "graph_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.valid.bootstrap", "path": "graphs/valid/bootstrap.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "valid", "bootstrap", "epoch_reset"], "expected": {"outcome": "accept", "stage": "graph_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.valid.disconnected", "path": "graphs/valid/disconnected.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "valid", "disconnected", "multiple_roots"], "expected": {"outcome": "accept", "stage": "graph_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.valid.unicode", "path": "graphs/valid/unicode.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "valid", "unicode", "escaping"], "expected": {"outcome": "accept", "stage": "graph_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.valid.empty", "path": "graphs/valid/empty.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "valid", "empty"], "expected": {"outcome": "accept", "stage": "graph_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.invalid.cyclic", "path": "graphs/invalid/cyclic.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "invalid", "cyclic", "isolated_rule"], "expected": {"outcome": "reject", "stage": "graph_validation", "code": "graph.cycle"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.invalid.dangling", "path": "graphs/invalid/dangling.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "invalid", "dangling", "isolated_rule"], "expected": {"outcome": "reject", "stage": "graph_validation", "code": "graph.dangling_edge"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.invalid.duplicate_node", "path": "graphs/invalid/duplicate_node.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "invalid", "duplicate", "isolated_rule"], "expected": {"outcome": "reject", "stage": "graph_validation", "code": "graph.node_id_duplicate"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.invalid.unsupported_major", "path": "graphs/invalid/unsupported_major.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "invalid", "schema_version", "isolated_rule"], "expected": {"outcome": "reject", "stage": "graph_validation", "code": "schema.unknown_major"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "graph.invalid.malformed", "path": "graphs/invalid/malformed.json", "artifact_kind": "ciphertext_graph_json", "language": "json",
       "tags": ["graph", "invalid", "malformed", "isolated_rule"], "expected": {"outcome": "reject", "stage": "json_decode", "code": "json.syntax"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
 
     {
       "id": "trace.valid.minimal", "path": "traces/valid/minimal.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "valid", "minimal"], "expected": {"outcome": "accept", "stage": "trace_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.valid.deep", "path": "traces/valid/deep.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "valid", "deep", "nonlinear_depth"], "expected": {"outcome": "accept", "stage": "trace_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.valid.repeated", "path": "traces/valid/repeated.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "valid", "repeated", "rotation"], "expected": {"outcome": "accept", "stage": "trace_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.valid.bootstrap", "path": "traces/valid/bootstrap.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "valid", "bootstrap", "epoch_reset"], "expected": {"outcome": "accept", "stage": "trace_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.valid.unicode", "path": "traces/valid/unicode.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "valid", "unicode", "escaping"], "expected": {"outcome": "accept", "stage": "trace_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.valid.empty", "path": "traces/valid/empty.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "valid", "empty"], "expected": {"outcome": "accept", "stage": "trace_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.valid.large_metadata_4096", "path": "traces/valid/large_metadata_4096.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "valid", "large_metadata", "escaping"], "expected": {"outcome": "accept", "stage": "trace_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.invalid.dangling_ciphertext", "path": "traces/invalid/dangling_ciphertext.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "invalid", "dangling", "isolated_rule"], "expected": {"outcome": "reject", "stage": "trace_validation", "code": "reference.dangling_ciphertext"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.invalid.duplicate_event_id", "path": "traces/invalid/duplicate_event_id.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "invalid", "duplicate", "isolated_rule"], "expected": {"outcome": "reject", "stage": "trace_validation", "code": "event.id_duplicate"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.invalid.nonmonotonic_sequence", "path": "traces/invalid/nonmonotonic_sequence.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "invalid", "nonmonotonic_sequence", "isolated_rule"], "expected": {"outcome": "reject", "stage": "trace_validation", "code": "event.sequence_nonmonotonic"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.invalid.negative_duration", "path": "traces/invalid/negative_duration.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "invalid", "negative_duration", "isolated_rule"], "expected": {"outcome": "reject", "stage": "trace_validation", "code": "timing.negative_duration"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.invalid.failed_event_has_outputs", "path": "traces/invalid/failed_event_has_outputs.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "invalid", "failed_event", "outputs", "isolated_rule"], "expected": {"outcome": "reject", "stage": "trace_validation", "code": "event.error_has_outputs"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.valid.large_metadata_unbounded", "path": "traces/valid/large_metadata_unbounded.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "valid", "large_metadata", "escaping"], "expected": {"outcome": "accept", "stage": "trace_validation", "code": "ok"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     },
     {
       "id": "trace.invalid.malformed", "path": "traces/invalid/malformed.json", "artifact_kind": "semantic_trace_json", "language": "json",
       "tags": ["trace", "invalid", "malformed", "isolated_rule"], "expected": {"outcome": "reject", "stage": "json_decode", "code": "json.syntax"},
-      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION", "sensitive": false}
+      "provenance": {"kind": "synthetic", "source_url": null, "license": "NOASSERTION"}
     }
   ]
 }

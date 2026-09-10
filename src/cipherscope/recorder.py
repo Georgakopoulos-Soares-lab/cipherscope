@@ -1,4 +1,4 @@
-"""Thread-safe event buffering and semantic trace construction."""
+"""Collect events and build a trace for one session."""
 
 from __future__ import annotations
 
@@ -6,7 +6,8 @@ import platform
 import secrets
 import sys
 import threading
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from .compatibility import CompatibilityRegistry
 from .registry import CiphertextRegistry
@@ -43,7 +44,7 @@ class EventRecorder:
         self._lock = threading.RLock()
 
     def next_identity(self) -> tuple[int, str]:
-        """Atomically allocate a deterministic in-process event sequence."""
+        """Allocate the next event sequence and ID."""
 
         with self._lock:
             sequence = self._next_sequence
@@ -57,13 +58,13 @@ class EventRecorder:
             return self._next_sequence
 
     def record_region(self, region: Mapping[str, Any]) -> None:
-        """Record one user-declared region span for offline analyzers."""
+        """Record one user-declared region for later analysis."""
 
         with self._lock:
             self._regions.append(copy_mapping(region))
 
     def record_event(self, event: Mapping[str, Any]) -> None:
-        """Append one completed event without retaining caller-owned containers."""
+        """Copy and append one completed event."""
 
         with self._lock:
             self._events.append(copy_mapping(event))
@@ -96,7 +97,7 @@ class EventRecorder:
         context: Mapping[str, Any],
         status: str = "completed",
     ) -> dict[str, Any]:
-        """Build the canonical in-memory trace document."""
+        """Build the complete trace document."""
 
         if not isinstance(status, str) or not status:
             raise ValueError("status must be a non-empty string")

@@ -13,7 +13,7 @@ class FakeCiphertext:
     """Metadata-only ciphertext stand-in; it performs no cryptography.
 
     ``decoded_values`` lets the fake stand in for a decrypted plaintext during
-    shadow-mode checkpoint tests.
+    precision-checkpoint tests.
     """
 
     level: int = 0

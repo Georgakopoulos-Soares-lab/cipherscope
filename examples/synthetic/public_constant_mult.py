@@ -45,4 +45,6 @@ print(f"product: {observed} (expected [0.5, 1.0, 1.5, 2.0])")
 report = analyze_provenance(session.to_trace())
 print(f"provenance analysis: {report['analysis_status']}")
 for finding in report["findings"]:
-    print(f"  public-operand ct-ct multiply at event {finding['evidence_event_ids']}")
+    print(
+        f"  public-operand ciphertext multiply at event {finding['evidence_event_ids']}"
+    )

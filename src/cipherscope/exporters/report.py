@@ -1,10 +1,11 @@
-"""Escaped, dependency-free static HTML report."""
+"""Build a static HTML report."""
 
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Mapping
 from html import escape
-from typing import Any, Mapping
+from typing import Any
 
 
 def _cell(value: object) -> str:
@@ -17,7 +18,7 @@ def render_summary_html(
     graph: Mapping[str, Any],
     recommendations: Mapping[str, Any],
 ) -> str:
-    """Render only escaped scalar fields from validated artifacts."""
+    """Build an HTML summary of validated documents."""
 
     events = sorted(trace.get("events", ()), key=lambda item: item["sequence"])
     counts = Counter(event.get("operation", "unknown") for event in events)
@@ -97,7 +98,7 @@ code {{ background: #edf1f7; padding: .1rem .25rem; }}
 <table><thead><tr><th>#</th><th>Operation</th><th>Status</th><th>Source</th><th>Wall ns</th></tr></thead><tbody>{event_rows}</tbody></table>
 <h2>Findings</h2>
 {finding_rows}
-<p>Canonical semantics are in <code>trace.json</code>; this page is a projection.</p>
+<p>Complete trace data is in <code>trace.json</code>; this page is a summary.</p>
 </body>
 </html>
 """

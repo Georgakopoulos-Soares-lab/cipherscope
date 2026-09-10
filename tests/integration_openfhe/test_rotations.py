@@ -35,10 +35,14 @@ class RotationTests(unittest.TestCase):
             for event in trace["events"]
         ]
         self.assertEqual(observed_indices, [1, -2])
-        input_ids = [event["input_ciphertexts"][0] for event in trace["events"]]
-        self.assertEqual(input_ids[0], input_ids[1])
-        output_ids = [event["output_ciphertexts"][0] for event in trace["events"]]
-        self.assertNotEqual(output_ids[0], output_ids[1])
+        input_ciphertext_ids = [
+            event["input_ciphertexts"][0] for event in trace["events"]
+        ]
+        self.assertEqual(input_ciphertext_ids[0], input_ciphertext_ids[1])
+        output_ciphertext_ids = [
+            event["output_ciphertexts"][0] for event in trace["events"]
+        ]
+        self.assertNotEqual(output_ciphertext_ids[0], output_ciphertext_ids[1])
 
         observations: dict[str, float] = {}
         for label, direct, traced, index in (

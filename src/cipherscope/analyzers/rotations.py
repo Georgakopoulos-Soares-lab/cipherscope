@@ -51,7 +51,7 @@ def _precompute_source(event: Mapping[str, Any]) -> str | None:
 
 
 def _covered_by_prior_precompute(
-    input_id: str,
+    ciphertext_id: str,
     rotations: list[Mapping[str, Any]],
     events: list[Mapping[str, Any]],
     state: Mapping[str, Any],
@@ -61,7 +61,7 @@ def _covered_by_prior_precompute(
         if (
             event.get("status") == "ok"
             and event.get("operation") == "EvalFastRotationPrecompute"
-            and _precompute_source(event) == input_id
+            and _precompute_source(event) == ciphertext_id
             and isinstance(event.get("sequence"), int)
             and event["sequence"] < first_sequence
             and _event_is_compatible(event, state)
@@ -79,7 +79,7 @@ def _rotation_index(event: Mapping[str, Any]) -> int | None:
 
 
 def _has_intervening_mutation(
-    input_id: str,
+    ciphertext_id: str,
     rotations: list[Mapping[str, Any]],
     events: list[Mapping[str, Any]],
 ) -> bool:
@@ -91,7 +91,7 @@ def _has_intervening_mutation(
             event.get("status") != "ok"
             or not isinstance(sequence, int)
             or not first_sequence < sequence < last_sequence
-            or input_id not in event.get("input_ciphertexts", [])
+            or ciphertext_id not in event.get("input_ciphertexts", [])
         ):
             continue
         operation = event.get("operation")
@@ -107,7 +107,7 @@ def _has_intervening_mutation(
 
 
 def analyze_rotations(trace: Mapping[str, Any]) -> dict[str, Any]:
-    """Find eligible repeated rotations from the same immutable ciphertext version.
+    """Find eligible repeated rotations from the same recorded ciphertext version.
 
     The top-level ``analysis_status`` distinguishes a finding (``positive``), an
     evidence-backed absence (``clean``), and missing prerequisites
@@ -148,31 +148,31 @@ def analyze_rotations(trace: Mapping[str, Any]) -> dict[str, Any]:
     findings: list[dict[str, Any]] = []
     evaluable_groups = 0
     unavailable_reasons: set[str] = set()
-    for input_id in sorted(groups):
-        rotations = sorted(groups[input_id], key=event_order)
-        state = states[input_id]
+    for ciphertext_id in sorted(groups):
+        rotations = sorted(groups[ciphertext_id], key=event_order)
+        state = states[ciphertext_id]
         missing = [
             field for field in _REQUIRED_STATE_FIELDS if state.get(field) is None
         ]
         if missing:
             unavailable_reasons.add(
-                f"Ciphertext {input_id} lacks required metadata: {', '.join(missing)}."
+                f"Ciphertext {ciphertext_id} lacks required metadata: {', '.join(missing)}."
             )
             continue
         if state.get("key_switch_technique") != "HYBRID":
             unavailable_reasons.add(
-                f"Ciphertext {input_id} does not use the validated HYBRID key-switch technique."
+                f"Ciphertext {ciphertext_id} does not use the validated HYBRID key-switch technique."
             )
             continue
         if not all(_event_is_compatible(event, state) for event in rotations):
             unavailable_reasons.add(
-                f"Rotation metadata for ciphertext {input_id} is inconsistent."
+                f"Rotation metadata for ciphertext {ciphertext_id} is inconsistent."
             )
             continue
         indices = [_rotation_index(event) for event in rotations]
         if any(index is None for index in indices):
             unavailable_reasons.add(
-                f"Ciphertext {input_id} has a rotation with an unknown requested index."
+                f"Ciphertext {ciphertext_id} has a rotation with an unknown requested index."
             )
             continue
         evaluable_groups += 1
@@ -181,9 +181,9 @@ def analyze_rotations(trace: Mapping[str, Any]) -> dict[str, Any]:
         )
         if len(distinct_indices) < 2:
             continue
-        if _has_intervening_mutation(input_id, rotations, events):
+        if _has_intervening_mutation(ciphertext_id, rotations, events):
             continue
-        if _covered_by_prior_precompute(input_id, rotations, events, state):
+        if _covered_by_prior_precompute(ciphertext_id, rotations, events, state):
             continue
 
         source_sites = sorted(
@@ -226,13 +226,13 @@ def analyze_rotations(trace: Mapping[str, Any]) -> dict[str, Any]:
                 },
                 "evidence_event_ids": [str(event["event_id"]) for event in rotations],
                 "evidence": {
-                    "source_ciphertext_version": input_id,
+                    "source_ciphertext_version": ciphertext_id,
                     "rotation_indices_requested": distinct_indices,
                     "rotation_count": len(rotations),
                     "combined_wall_duration_ns": combined_wall,
                 },
                 "applicability": [
-                    "same immutable ciphertext version",
+                    "same recorded ciphertext version",
                     "at least two distinct requested rotation indices",
                     "matching context and key tag",
                     "matching scaling state and HYBRID key-switch technique",

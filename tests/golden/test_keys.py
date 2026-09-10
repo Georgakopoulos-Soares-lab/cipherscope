@@ -64,7 +64,7 @@ class KeyUsageAnalyzerTests(unittest.TestCase):
         with cipherscope.trace(backend, strict=False) as session:
             session.context.EvalRotateKeyGen(object(), [1, 2])
             session.context.EvalRotate(FakeCiphertext(), 1)
-            session.context.Unclassified("opaque")
+            session.context.Unclassified("unclassified argument")
         result = analyze_keys(session.to_trace())
         self.assertEqual(result["analysis_status"], "not_applicable")
         self.assertEqual(result["findings"], [])
