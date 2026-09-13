@@ -18,6 +18,15 @@ def _observed_level_use(graph: Mapping[str, Any]) -> Mapping[str, Any] | None:
     return observed if isinstance(observed, Mapping) else None
 
 
+def _has_level_metadata(trace: Mapping[str, Any]) -> bool:
+    """Zero consumed levels is only a measurement if at least one level was read."""
+
+    for state in trace.get("ciphertexts", []):
+        if isinstance(state, Mapping) and isinstance(state.get("level"), int):
+            return True
+    return False
+
+
 def analyze_parameters(
     trace: Mapping[str, Any], graph: Mapping[str, Any] | None = None
 ) -> dict[str, Any]:
@@ -50,6 +59,15 @@ def analyze_parameters(
             "findings": [],
         }
 
+    if not _has_level_metadata(trace):
+        return {
+            **base,
+            "analysis_status": "not_applicable",
+            "not_applicable_reasons": [
+                "No ciphertext state with a level was recorded, so level use cannot be observed."
+            ],
+            "findings": [],
+        }
     observed = _observed_level_use(graph)
     if observed is None or observed.get("confidence") != "measured":
         return {

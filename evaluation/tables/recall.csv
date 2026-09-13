@@ -1,0 +1,14 @@
+rule_id,seeded_positives,detected,recall,seeded_negatives,not_applicable_cases,false_positives,fp_rate,mismatches,invalid_runs
+bootstrap.restored_levels_underused.v1,0,0,,1,0,0,0.0000,0,0
+configuration.testing_only_security.v1,1,1,1.0000,2,1,0,0.0000,0,0
+depth.critical_path.v1,3,3,1.0000,0,0,0,,0,0
+encoding.repeated_public_constant.v1,1,1,1.0000,1,0,0,0.0000,0,0
+keys.unused_in_observed_run.v1,1,1,1.0000,3,0,0,0.0000,0,0
+multiplication.serial_reduction_review.v1,1,1,1.0000,2,1,0,0.0000,0,0
+packing.low_utilization_annotated.v1,1,1,1.0000,1,0,0,0.0000,0,0
+parameters.depth_headroom_observed.v1,1,1,1.0000,1,0,0,0.0000,0,0
+precision.checkpoint_drop.v1,1,1,1.0000,2,0,0,0.0000,0,0
+precision.tolerance_violated.v1,1,1,1.0000,1,0,0,0.0000,0,0
+provenance.public_value_ciphertext_mult.v1,1,1,1.0000,1,0,0,0.0000,0,0
+rotation.hoist_same_input.v1,1,1,1.0000,3,0,0,0.0000,0,0
+ALL,13,13,1.0000,18,2,0,0.0000,0,0

@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import contextvars
+import math
+import sys
 import threading
 import time
+from collections.abc import Mapping
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from types import TracebackType
@@ -47,6 +50,66 @@ def _decode_real(plaintext: Any, length: int) -> list[float]:
     raise TypeError("the plaintext exposes no supported packed-value getter")
 
 
+TOLERANCE_KEYS = ("absolute", "relative", "min_bits")
+
+
+def _tolerance_contract(tolerance: Any) -> dict[str, float] | None:
+    """Validate a checkpoint tolerance: absolute and/or relative error, or a bits floor."""
+
+    if tolerance is None:
+        return None
+    if not isinstance(tolerance, Mapping) or not tolerance:
+        raise AnnotationError(
+            "tolerance must be a non-empty mapping with absolute, relative, or min_bits"
+        )
+    contract: dict[str, float] = {}
+    for key, value in tolerance.items():
+        if key not in TOLERANCE_KEYS:
+            raise AnnotationError(f"unknown tolerance key {key!r}")
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise AnnotationError(f"tolerance {key} must be a number")
+        if not math.isfinite(value) or value < 0:
+            raise AnnotationError(f"tolerance {key} must be finite and non-negative")
+        contract[key] = float(value)
+    return contract
+
+
+def _precision_metrics(
+    expected: list[float], observed: list[float], contract: dict[str, float] | None
+) -> dict[str, Any]:
+    """Compare a checkpoint with its expectation and, if declared, its tolerance."""
+
+    errors = [abs(actual - wanted) for wanted, actual in zip(expected, observed)]
+    max_abs_error = max(errors, default=0.0)
+    max_rel_error = max(
+        (
+            error / max(abs(wanted), sys.float_info.epsilon)
+            for wanted, error in zip(expected, errors)
+        ),
+        default=0.0,
+    )
+    absolute_bits = -math.log2(max(max_abs_error, sys.float_info.epsilon))
+    metrics: dict[str, Any] = {
+        "max_abs_error": max_abs_error,
+        "max_rel_error": max_rel_error,
+        "absolute_bits": absolute_bits,
+        "tolerance_status": "undeclared",
+    }
+    if contract is None:
+        return metrics
+    violated: list[str] = []
+    if "absolute" in contract and max_abs_error > contract["absolute"]:
+        violated.append("absolute")
+    if "relative" in contract and max_rel_error > contract["relative"]:
+        violated.append("relative")
+    if "min_bits" in contract and absolute_bits < contract["min_bits"]:
+        violated.append("min_bits")
+    metrics["tolerance"] = dict(contract)
+    metrics["tolerance_status"] = "violated" if violated else "within"
+    metrics["violated"] = violated
+    return metrics
+
+
 @dataclass
 class _Ownership:
     native_context: Any
@@ -76,6 +139,10 @@ class Session(Generic[ContextT]):
         compatibility: CompatibilityRegistry | None = None,
         secret_key: Any = None,
         shadow_mode: bool = False,
+        allow_testing_security: bool = False,
+        max_events: int | None = None,
+        max_trace_bytes: int | None = None,
+        spool_dir: Any = None,
     ) -> None:
         self.strict = strict
         self.shadow_mode = shadow_mode
@@ -86,6 +153,10 @@ class Session(Generic[ContextT]):
             strict=strict,
             name=name,
             shadow_mode=shadow_mode,
+            allow_testing_security=allow_testing_security,
+            max_events=max_events,
+            max_trace_bytes=max_trace_bytes,
+            spool_dir=spool_dir,
         )
         self.source_resolver = SourceResolver()
         self._initial_context = native_context
@@ -96,6 +167,8 @@ class Session(Generic[ContextT]):
         self._scoped_ids: set[int] = set()
         self._current_context: TracedCryptoContext[Any, Any] | None = None
         self._context_metadata: dict[str, Any] | None = None
+        self._declared_parameters: dict[str, Any] | None = None
+        self._pending_parameters: Any = None
         self._lock = threading.RLock()
 
     @property
@@ -139,10 +212,19 @@ class Session(Generic[ContextT]):
                 proxy = self.attach(self._initial_context)
                 with self._lock:
                     self._scoped_ids.add(self._native_identity(proxy))
+            if self._pending_parameters is not None:
+                self.declare_parameters(self._pending_parameters)
+                self._pending_parameters = None
             return self
         except BaseException:
             self._abort_enter()
             raise
+
+    def with_parameters(self, parameters: Any) -> Session[ContextT]:
+        """Declare CCParams once the session is entered; returns self for chaining."""
+
+        self._pending_parameters = parameters
+        return self
 
     def __exit__(
         self,
@@ -182,9 +264,27 @@ class Session(Generic[ContextT]):
         if token is not None:
             _ACTIVE_SESSION.reset(token)
 
-    def attach(self, native_context: Any) -> TracedCryptoContext[Any, Any]:
+    def declare_parameters(self, parameters: Any) -> None:
+        """Record CCParams fields (security level, ring size) the context cannot expose."""
+
+        self._require_active()
+        snapshot = self.compatibility.snapshot_parameters(parameters)
+        with self._lock:
+            self._declared_parameters = snapshot
+            if self._context_metadata is not None:
+                self._context_metadata.update(snapshot)
+
+    def attach(
+        self, native_context: Any, *, parameters: Any = None
+    ) -> TracedCryptoContext[Any, Any]:
         """Attach a context, or return its existing proxy if already attached."""
 
+        proxy = self._attach(native_context)
+        if parameters is not None:
+            self.declare_parameters(parameters)
+        return proxy
+
+    def _attach(self, native_context: Any) -> TracedCryptoContext[Any, Any]:
         self._require_active()
         if isinstance(native_context, TracedCryptoContext):
             if native_context.belongs_to(self):
@@ -223,6 +323,8 @@ class Session(Generic[ContextT]):
                 self._context_metadata = self.compatibility.snapshot_context(
                     native_context
                 )
+                if self._declared_parameters is not None:
+                    self._context_metadata.update(self._declared_parameters)
             return proxy
 
     def annotate(
@@ -237,6 +339,9 @@ class Session(Generic[ContextT]):
         """Attach a user assertion and return the ciphertext unchanged."""
 
         self._require_active()
+        if not self.recorder.accepting:
+            self.recorder.count_dropped_call()
+            return ciphertext
         annotation: dict[str, Any] = {}
         if shape is not None:
             if not isinstance(shape, (list, tuple)) or any(
@@ -277,6 +382,16 @@ class Session(Generic[ContextT]):
         )
         return ciphertext
 
+    def enable_shadow_mode(self, secret_key: Any) -> None:
+        """Turn on precision checkpoints for a session that started without them."""
+
+        if secret_key is None:
+            raise ShadowModeError("shadow mode requires a secret_key")
+        with self._lock:
+            self.shadow_mode = True
+            self.recorder.shadow_mode = True
+            self._secret_key = secret_key
+
     def checkpoint(
         self,
         name: str,
@@ -284,6 +399,7 @@ class Session(Generic[ContextT]):
         ciphertext: Any,
         expected: Any,
         decoder: Any = None,
+        tolerance: Any = None,
     ) -> dict[str, Any]:
         """Decrypt a checkpoint and record its expected and observed values."""
 
@@ -296,6 +412,10 @@ class Session(Generic[ContextT]):
             raise ShadowModeError("precision checkpoints require a secret_key")
         if not isinstance(name, str) or not name:
             raise AnnotationError("checkpoint name must be a non-empty string")
+        contract = _tolerance_contract(tolerance)
+        if not self.recorder.accepting:
+            self.recorder.count_dropped_call()
+            return {"status": "dropped", "reason": "trace_truncated"}
 
         expected_values = _real_values(expected)
         observation = self.recorder.registry.observe_input(ciphertext)
@@ -316,6 +436,8 @@ class Session(Generic[ContextT]):
         }
         if comparison["status"] == "failed":
             comparison["reason"] = "shape_mismatch"
+        else:
+            comparison.update(_precision_metrics(expected_values, observed_values, contract))
         semantic_arguments = {"checkpoint_name": name, **comparison}
         self._record_meta_event(
             kind="checkpoint",
@@ -337,6 +459,9 @@ class Session(Generic[ContextT]):
         """Record a plaintext representation and its declared provenance."""
 
         self._require_active()
+        if not self.recorder.accepting:
+            self.recorder.count_dropped_call()
+            return plaintext
         if not isinstance(provenance, str) or not provenance:
             raise AnnotationError("provenance must be a non-empty string")
         semantic_arguments: dict[str, Any] = {
@@ -388,6 +513,9 @@ class Session(Generic[ContextT]):
         start_sequence: int,
         end_sequence: int,
     ) -> None:
+        if not self.recorder.accepting:
+            self.recorder.count_dropped_call()
+            return
         self.recorder.record_region(
             {
                 "name": name,
@@ -562,9 +690,12 @@ class _Region(AbstractContextManager["Session[Any]"]):
 class _ContextScope(AbstractContextManager[Session[Any]]):
     """Attach a context to the active session for one ``with`` block."""
 
-    def __init__(self, session: Session[Any], native_context: Any) -> None:
+    def __init__(
+        self, session: Session[Any], native_context: Any, *, parameters: Any = None
+    ) -> None:
         self._session = session
         self._native_context = native_context
+        self._parameters = parameters
         self._previous: TracedCryptoContext[Any, Any] | None = None
         self._identity: int | None = None
         self._entered = False
@@ -576,6 +707,8 @@ class _ContextScope(AbstractContextManager[Session[Any]]):
             self._native_context
         )
         self._entered = True
+        if self._parameters is not None:
+            self._session.declare_parameters(self._parameters)
         return self._session
 
     def __exit__(
@@ -600,6 +733,11 @@ def trace(
     compatibility: CompatibilityRegistry | None = None,
     secret_key: Any = None,
     shadow_mode: bool = False,
+    parameters: Any = None,
+    allow_testing_security: bool = False,
+    max_events: int | None = None,
+    max_trace_bytes: int | None = None,
+    spool_dir: Any = None,
 ) -> Session[ContextT] | _ContextScope:
     """Create a top-level session or join the session active in this context."""
 
@@ -612,11 +750,21 @@ def trace(
             compatibility=compatibility,
             secret_key=secret_key,
             shadow_mode=shadow_mode,
-        )
-    return _ContextScope(active, native_context)
+            allow_testing_security=allow_testing_security,
+            max_events=max_events,
+            max_trace_bytes=max_trace_bytes,
+            spool_dir=spool_dir,
+        ).with_parameters(parameters)
+    if shadow_mode and not active.shadow_mode:
+        active.enable_shadow_mode(secret_key)
+    if allow_testing_security:
+        active.recorder.allow_testing_security = True
+    return _ContextScope(active, native_context, parameters=parameters)
 
 
-def attach(native_context: ContextT) -> TracedCryptoContext[ContextT, Any]:
+def attach(
+    native_context: ContextT, *, parameters: Any = None
+) -> TracedCryptoContext[ContextT, Any]:
     """Attach to the active session, or fail with :class:`NoActiveSessionError`."""
 
     active = _ACTIVE_SESSION.get()
@@ -624,7 +772,7 @@ def attach(native_context: ContextT) -> TracedCryptoContext[ContextT, Any]:
         raise NoActiveSessionError(
             "cipherscope.attach() requires an active Session or trace() scope"
         )
-    return active.attach(native_context)
+    return active.attach(native_context, parameters=parameters)
 
 
 def runner_session(
@@ -632,6 +780,10 @@ def runner_session(
     name: str | None = None,
     strict: bool = True,
     compatibility: CompatibilityRegistry | None = None,
+    allow_testing_security: bool = False,
+    max_events: int | None = None,
+    max_trace_bytes: int | None = None,
+    spool_dir: Any = None,
 ) -> Session[Any]:
     """Create a session that waits for target code to attach a context.
 
@@ -639,4 +791,12 @@ def runner_session(
     active. Leaving that inner scope does not close the runner's session.
     """
 
-    return Session(name=name, strict=strict, compatibility=compatibility)
+    return Session(
+        name=name,
+        strict=strict,
+        compatibility=compatibility,
+        allow_testing_security=allow_testing_security,
+        max_events=max_events,
+        max_trace_bytes=max_trace_bytes,
+        spool_dir=spool_dir,
+    )

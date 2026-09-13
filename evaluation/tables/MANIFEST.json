@@ -1,0 +1,33 @@
+{
+  "bootstrap": {
+    "rounds": 2000,
+    "seed": 20260913
+  },
+  "inputs": {
+    "ablation": {
+      "path": "raw/semantic_ablation.csv",
+      "sha256": "b8995f6f15ab4f1de9f9d12896cc8c1cd083014707d4dab99c607b8a04005bcd"
+    },
+    "scaling": {
+      "path": "raw/scaling.csv",
+      "sha256": "29ce9882446353a4787f021b546e5ff49d74d56c1829d32cee46af8865b90336"
+    },
+    "seeded": {
+      "path": "raw/seeded/case_results.json",
+      "sha256": "33a6ce1df72c33fbb46f43b943214d329dd21cc7b64dd711265a0b220dda756e"
+    }
+  },
+  "schema": "schema/results.schema.json",
+  "skipped_inputs": {
+    "coverage": "/Users/kap4722/cipherscope/evaluation/raw/coverage_report.csv",
+    "findings": "/Users/kap4722/cipherscope/evaluation/adjudication/findings.csv",
+    "workload_runs": "/Users/kap4722/cipherscope/evaluation/raw/workload_runs.csv"
+  },
+  "tables": {
+    "generic_profiler_comparison.csv": "ee9b06ae0ee214142b1c283431d4961512857b51a653569518a821d5914e634f",
+    "recall.csv": "d1786dde2890ee5839fa9ef514003e19cf07617f9f46699086237598c806c7ed",
+    "scaling.csv": "ac43239c0c0dfebf0a7327fc3ca21c54ad9333b499c8a05bff310863fa954a08",
+    "seeded_cases.csv": "9eb3c905458fd5d6bd84b3154cd772e0488f37de5e1d51ec7c1bdb2b7f29813c",
+    "semantic_ablation.csv": "06f47f2d5dab763958e2828267e88b0521de8540db402617387bc9b983d5cf27"
+  }
+}

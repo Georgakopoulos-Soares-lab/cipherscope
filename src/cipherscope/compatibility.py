@@ -283,6 +283,37 @@ class CompatibilityRegistry:
             missing_fields=tuple(missing),
         )
 
+    def snapshot_parameters(self, parameters: Any) -> dict[str, Any]:
+        """Read the declared CCParams fields the live context cannot expose."""
+
+        missing: list[str] = []
+        security_level = self._read(
+            parameters, "security_level", ("GetSecurityLevel",), ("security_level",), missing
+        )
+        ring_dimension = self._read(
+            parameters, "declared_ring_dimension", ("GetRingDim",), ("ring_dim",), missing
+        )
+        depth = self._read(
+            parameters,
+            "declared_multiplicative_depth",
+            ("GetMultiplicativeDepth",),
+            ("multiplicative_depth",),
+            missing,
+        )
+        scaling_mod_size = self._read(
+            parameters, "scaling_mod_size", ("GetScalingModSize",), ("scaling_mod_size",), missing
+        )
+        # OpenFHE reports 0 when the library chose the ring dimension itself.
+        if ring_dimension == 0:
+            ring_dimension = None
+        return {
+            "security_level": security_level,
+            "declared_ring_dimension": ring_dimension,
+            "declared_multiplicative_depth": depth,
+            "scaling_mod_size": scaling_mod_size,
+            "parameters_missing": sorted(set(missing)),
+        }
+
     def snapshot_context(self, context: Any) -> dict[str, Any]:
         """Read the supported context metadata fields."""
 

@@ -6,15 +6,45 @@ import argparse
 import csv
 import json
 import runpy
+import subprocess
 import sys
 import traceback
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from .ablation import ABLATION_COLUMNS, ablate, minimum_modes
+from .adjudication import (
+    BundleExport,
+    append_stale,
+    export_bundle,
+    merge_findings,
+    precision_report,
+    read_findings,
+    write_findings,
+    write_precision_table,
+)
+from .coverage import (
+    classify_run,
+    entrypoint_from_trace,
+    report_row,
+    scan_file,
+    summarize_report,
+    write_coverage_report,
+)
 from .demo import write_demo
 from .exporters import write_bundle
 from .pipeline import build_analysis_bundle
+from .seeded import (
+    all_matched,
+    bundle_path,
+    evaluate_case,
+    load_ground_truth,
+    recall_table,
+    require_openfhe,
+    run_case,
+    write_results,
+)
 from .session import runner_session
 from .validation import (
     StrictJSONError,
@@ -153,6 +183,9 @@ def run_target(
     *,
     output: Path,
     strict: bool,
+    allow_testing_security: bool = False,
+    max_events: int | None = None,
+    max_trace_bytes: int | None = None,
 ) -> int:
     """Execute a target in a runner-owned session and preserve its exit code."""
 
@@ -167,7 +200,13 @@ def run_target(
     old_path = sys.path[:]
     target_code = 0
     status = "completed"
-    session = runner_session(name=script.stem, strict=strict)
+    session = runner_session(
+        name=script.stem,
+        strict=strict,
+        allow_testing_security=allow_testing_security,
+        max_events=max_events,
+        max_trace_bytes=max_trace_bytes,
+    )
     try:
         with session:
             sys.argv = [str(script), *script_args]
@@ -205,6 +244,143 @@ def run_target(
     return target_code
 
 
+def preflight_targets(scripts: Sequence[Path]) -> dict[str, list[dict[str, Any]]]:
+    """Scan each script for source patterns that can bypass the tracer."""
+
+    report: dict[str, list[dict[str, Any]]] = {}
+    for script in scripts:
+        if not script.is_file():
+            raise FileNotFoundError(f"target script does not exist: {script}")
+        report[str(script)] = [risk.as_dict() for risk in scan_file(script)]
+    return report
+
+
+def coverage_report(
+    bundles: Sequence[Path],
+    *,
+    scan_sources: bool,
+) -> list[dict[str, Any]]:
+    """Classify each run bundle; scan its recorded entrypoint when available."""
+
+    rows: list[dict[str, Any]] = []
+    for bundle in bundles:
+        trace = _mapping(load_json_file(bundle / "trace.json"), str(bundle / "trace.json"))
+        entrypoint = entrypoint_from_trace(trace)
+        risks = ()
+        if scan_sources and entrypoint is not None and entrypoint.is_file():
+            risks = scan_file(entrypoint)
+        assessment = classify_run(trace, risks=risks)
+        rows.append(report_row(bundle, trace, assessment, entrypoint=entrypoint))
+    return rows
+
+
+def export_findings(
+    bundles: Sequence[Path],
+    output: Path,
+    *,
+    allow_unscanned: bool,
+) -> dict[str, Any]:
+    """Merge findings from COMPLETE real bundles into output without losing verdicts."""
+
+    exports: list[BundleExport] = []
+    for bundle in bundles:
+        failures = validate_bundle(bundle)
+        if failures:
+            exports.append(
+                BundleExport(
+                    bundle.resolve(),
+                    bundle.resolve().name,
+                    excluded_reason="bundle failed validation: " + "; ".join(failures),
+                )
+            )
+            continue
+        exports.append(export_bundle(bundle, allow_unscanned=allow_unscanned))
+
+    summary: dict[str, Any] = {
+        "output": str(output),
+        "exported": {
+            export.workload_id: len(export.rows)
+            for export in exports
+            if export.excluded_reason is None
+        },
+        "excluded": {
+            str(export.bundle): export.excluded_reason
+            for export in exports
+            if export.excluded_reason is not None
+        },
+    }
+    if not summary["exported"]:
+        summary["written"] = False
+        return summary
+
+    existing = read_findings(output) if output.exists() else []
+    merged = merge_findings(existing, exports)
+    write_findings(merged.rows, output)
+    if merged.stale:
+        stale_path = output.with_name(output.stem + ".stale" + output.suffix)
+        append_stale(merged.stale, stale_path)
+        summary["stale_moved_to"] = str(stale_path)
+    summary.update(
+        {
+            "written": True,
+            "rows": len(merged.rows),
+            "added": merged.added,
+            "carried_verdicts": merged.carried,
+            "untouched_other_workloads": merged.untouched,
+            "stale": len(merged.stale),
+        }
+    )
+    return summary
+
+
+def run_seeded(
+    ground_truth: Path,
+    output: Path,
+    *,
+    python: str,
+    from_bundles: bool,
+) -> dict[str, Any]:
+    """Run (or re-evaluate) every seeded case and write the recall table."""
+
+    cases = load_ground_truth(ground_truth)
+    if not from_bundles:
+        require_openfhe(python)
+    results = []
+    for case in cases:
+        if from_bundles:
+            bundle, code = bundle_path(output, case), None
+        else:
+            bundle, code = run_case(case, output=output, python=python)
+        results.append(evaluate_case(case, bundle, exit_code=code))
+    table = recall_table(results)
+    json_path, csv_path = write_results(results, table, output)
+    failures = {
+        result.case_id: (
+            result.invalid_reason
+            or [
+                f"{rule.rule_id}: {rule.outcome}" + (f" ({rule.detail})" if rule.detail else "")
+                for rule in result.rules
+                if rule.outcome not in {"hit", "true_negative", "expected_not_applicable"}
+            ]
+        )
+        for result in results
+        if not result.matched
+    }
+    return {
+        "all_matched": all_matched(results),
+        "cases": len(results),
+        "failures": failures,
+        "unexpected_positives": {
+            result.case_id: list(result.unexpected_positives)
+            for result in results
+            if result.unexpected_positives
+        },
+        "table": table,
+        "case_results": str(json_path),
+        "recall_table": str(csv_path),
+    }
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="cipherscope", description=__doc__)
     subcommands = parser.add_subparsers(dest="command", required=True)
@@ -218,6 +394,20 @@ def _parser() -> argparse.ArgumentParser:
         "--permissive",
         action="store_true",
         help="forward unclassified proxy calls and mark coverage incomplete",
+    )
+    run.add_argument(
+        "--allow-testing-security",
+        action="store_true",
+        help="acknowledge HEStd_NotSet so the configuration rule reports it as information",
+    )
+    run.add_argument(
+        "--max-events", type=int, default=None, help="stop recording after this many events"
+    )
+    run.add_argument(
+        "--max-trace-bytes",
+        type=int,
+        default=None,
+        help="stop recording once the serialized events reach this many bytes",
     )
     run.add_argument("script", type=Path)
     run.add_argument("script_args", nargs=argparse.REMAINDER)
@@ -233,6 +423,64 @@ def _parser() -> argparse.ArgumentParser:
 
     view = subcommands.add_parser("view", help="locate a validated static report")
     view.add_argument("bundle", type=Path)
+
+    preflight = subcommands.add_parser(
+        "preflight", help="scan scripts for source patterns that bypass the tracer"
+    )
+    preflight.add_argument("scripts", type=Path, nargs="+")
+
+    coverage = subcommands.add_parser(
+        "coverage", help="classify run bundles as COMPLETE, PARTIAL-PERMISSIVE, or UNSUPPORTED"
+    )
+    coverage.add_argument("bundles", type=Path, nargs="+")
+    coverage.add_argument("--output", type=Path, help="write coverage_report.csv here")
+    coverage.add_argument(
+        "--no-scan",
+        action="store_true",
+        help="classify from the trace only; skip scanning each run's entrypoint",
+    )
+
+    findings = subcommands.add_parser(
+        "findings",
+        help="export findings from COMPLETE real bundles for human adjudication",
+    )
+    findings.add_argument("bundles", type=Path, nargs="+")
+    findings.add_argument(
+        "--output", type=Path, required=True, help="findings.csv to create or merge into"
+    )
+    findings.add_argument(
+        "--allow-unscanned",
+        action="store_true",
+        help="accept bundles whose entrypoint source cannot be scanned for bypasses",
+    )
+
+    precision = subcommands.add_parser(
+        "precision", help="report adjudication counts and precision from findings.csv"
+    )
+    precision.add_argument("findings", type=Path)
+    precision.add_argument("--output", type=Path, help="write the per-rule table here")
+
+    ablate_parser = subcommands.add_parser(
+        "ablate", help="re-analyze bundles under TIMING_ONLY / STATE / FULL observability"
+    )
+    ablate_parser.add_argument("bundles", type=Path, nargs="+")
+    ablate_parser.add_argument("--output", type=Path, help="write semantic_ablation.csv here")
+
+    seeded = subcommands.add_parser(
+        "seeded", help="run the seeded pathology benchmark and report per-rule recall"
+    )
+    seeded.add_argument("ground_truth", type=Path)
+    seeded.add_argument("--output", type=Path, required=True)
+    seeded.add_argument(
+        "--python",
+        default=sys.executable,
+        help="interpreter with the real OpenFHE binding (default: this one)",
+    )
+    seeded.add_argument(
+        "--from-bundles",
+        action="store_true",
+        help="re-evaluate bundles already under OUTPUT/bundles instead of running cases",
+    )
     return parser
 
 
@@ -255,6 +503,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             forwarded,
             output=args.output,
             strict=not args.permissive,
+            allow_testing_security=args.allow_testing_security,
+            max_events=args.max_events,
+            max_trace_bytes=args.max_trace_bytes,
         )
     if args.command == "analyze":
         try:
@@ -296,6 +547,92 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             print((args.bundle / "summary.html").resolve())
         return 0
+    if args.command == "preflight":
+        try:
+            report = preflight_targets(args.scripts)
+        except (OSError, SyntaxError, UnicodeError) as error:
+            print(f"cipherscope: preflight failed: {error}", file=sys.stderr)
+            return 2
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 1 if any(risk["bypasses_tracer"] for risks in report.values() for risk in risks) else 0
+    if args.command == "coverage":
+        try:
+            rows = coverage_report(args.bundles, scan_sources=not args.no_scan)
+            if args.output is not None:
+                write_coverage_report(rows, args.output)
+        except (OSError, StrictJSONError, SyntaxError, UnicodeError, ValueError) as error:
+            print(f"cipherscope: coverage failed: {error}", file=sys.stderr)
+            return 2
+        summary = summarize_report(rows)
+        print(json.dumps(summary, indent=2, sort_keys=True))
+        return 0
+    if args.command == "findings":
+        try:
+            summary = export_findings(
+                args.bundles, args.output, allow_unscanned=args.allow_unscanned
+            )
+        except (OSError, StrictJSONError, SyntaxError, UnicodeError, ValueError) as error:
+            print(f"cipherscope: findings export failed: {error}", file=sys.stderr)
+            return 2
+        print(json.dumps(summary, indent=2, sort_keys=True))
+        if not summary["written"]:
+            print(
+                "cipherscope: no bundle qualified; findings.csv was not touched",
+                file=sys.stderr,
+            )
+            return 1
+        return 0
+    if args.command == "precision":
+        try:
+            report = precision_report(read_findings(args.findings))
+            if args.output is not None:
+                write_precision_table(report, args.output)
+        except (OSError, UnicodeError, ValueError) as error:
+            print(f"cipherscope: precision report failed: {error}", file=sys.stderr)
+            return 2
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ablate":
+        rows: list[dict[str, Any]] = []
+        try:
+            for bundle in args.bundles:
+                trace = _mapping(load_json_file(bundle / "trace.json"), str(bundle / "trace.json"))
+                rows.extend(ablate(trace, bundle=bundle.name, name=trace["run"].get("name")))
+            if args.output is not None:
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                with args.output.open("w", encoding="utf-8", newline="") as stream:
+                    writer = csv.DictWriter(stream, fieldnames=list(ABLATION_COLUMNS))
+                    writer.writeheader()
+                    writer.writerows(
+                        {column: ("" if row.get(column) is None else row.get(column)) for column in ABLATION_COLUMNS}
+                        for row in rows
+                    )
+        except (OSError, StrictJSONError, ValueError, ValidationError) as error:
+            print(f"cipherscope: ablation failed: {error}", file=sys.stderr)
+            return 2
+        print(json.dumps({"rows": len(rows), "minimum_modes": minimum_modes(rows)}, indent=2, sort_keys=True))
+        return 0
+    if args.command == "seeded":
+        try:
+            summary = run_seeded(
+                args.ground_truth,
+                args.output,
+                python=args.python,
+                from_bundles=args.from_bundles,
+            )
+        except (
+            OSError,
+            RuntimeError,
+            StrictJSONError,
+            TypeError,
+            UnicodeError,
+            ValueError,
+            subprocess.TimeoutExpired,
+        ) as error:
+            print(f"cipherscope: seeded benchmark failed: {error}", file=sys.stderr)
+            return 2
+        print(json.dumps(summary, indent=2, sort_keys=True))
+        return 0 if summary["all_matched"] else 1
     raise AssertionError(f"unhandled command {args.command!r}")
 
 

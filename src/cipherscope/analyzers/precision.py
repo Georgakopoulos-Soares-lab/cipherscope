@@ -11,6 +11,9 @@ from typing import Any
 from ._shared import event_order, finalize, require_valid_trace
 
 RULE_ID = "precision.checkpoint_drop.v1"
+TOLERANCE_RULE_ID = "precision.tolerance_violated.v1"
+# CKKS decryption is noise-flooded: re-decrypting one ciphertext jitters by ~0.6 bits.
+MIN_BITS_LOST = 1.0
 
 
 def _checkpoint_record(event: Mapping[str, Any]) -> dict[str, Any] | None:
@@ -95,7 +98,7 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
         if earlier["slot_count"] != later["slot_count"]:
             continue
         bits_lost = earlier["absolute_bits"] - later["absolute_bits"]
-        if bits_lost > 0:
+        if bits_lost >= MIN_BITS_LOST:
             drops.append(
                 {
                     "from_checkpoint": earlier["checkpoint_name"],
@@ -112,7 +115,11 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
         return {
             **base,
             "analysis_status": "clean",
-            "inventory": {"checkpoints": len(checkpoints), "drops": []},
+            "inventory": {
+                "checkpoints": len(checkpoints),
+                "drops": [],
+                "min_bits_lost_threshold": MIN_BITS_LOST,
+            },
             "findings": [],
         }
 
@@ -127,11 +134,11 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
             "confidence": "measured",
             "source_sites": [],
             "evidence_event_ids": drop["evidence_event_ids"],
-            "evidence": drop,
+            "evidence": {**drop, "min_bits_lost_threshold": MIN_BITS_LOST},
             "applicability": [
                 "a run created with shadow_mode=True",
                 "two compatible checkpoints with the same slot count",
-                "a decrease in absolute precision bits between them",
+                f"a decrease of at least {MIN_BITS_LOST:g} absolute precision bits between them",
             ],
             "estimated_impact": {
                 "absolute_bits_lost": drop["absolute_bits_lost"],
@@ -152,10 +159,132 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
     result = {
         **base,
         "analysis_status": "positive",
-        "inventory": {"checkpoints": len(checkpoints), "drops": drops},
+        "inventory": {
+            "checkpoints": len(checkpoints),
+            "drops": drops,
+            "min_bits_lost_threshold": MIN_BITS_LOST,
+        },
         "findings": findings,
     }
     return finalize(result, trace=trace)
 
 
-__all__ = ["RULE_ID", "analyze_precision"]
+def _tolerance_record(event: Mapping[str, Any]) -> dict[str, Any] | None:
+    semantic = event.get("semantic_arguments")
+    if not isinstance(semantic, Mapping) or semantic.get("status") != "ok":
+        return None
+    status = semantic.get("tolerance_status")
+    if status not in {"within", "violated"} or not isinstance(semantic.get("tolerance"), Mapping):
+        return None
+    return {
+        "event_id": str(event["event_id"]),
+        "sequence": event.get("sequence"),
+        "checkpoint_name": str(semantic.get("checkpoint_name", "")),
+        "tolerance": dict(semantic["tolerance"]),
+        "tolerance_status": status,
+        "violated": list(semantic.get("violated") or []),
+        "max_abs_error": semantic.get("max_abs_error"),
+        "max_rel_error": semantic.get("max_rel_error"),
+        "absolute_bits": semantic.get("absolute_bits"),
+    }
+
+
+def analyze_tolerance(trace: Mapping[str, Any]) -> dict[str, Any]:
+    """Report the first checkpoint that breaks its declared tolerance, with the region before it."""
+
+    require_valid_trace(trace)
+    base = {
+        "schema_version": trace["schema_version"],
+        "run_id": trace["run"]["run_id"],
+    }
+    events = sorted(
+        (event for event in trace["events"] if isinstance(event, Mapping)),
+        key=event_order,
+    )
+    declared = [
+        record
+        for event in events
+        if event.get("kind") == "checkpoint"
+        for record in [_tolerance_record(event)]
+        if record is not None
+    ]
+    if not declared:
+        return {
+            **base,
+            "analysis_status": "not_applicable",
+            "not_applicable_reasons": [
+                "No precision checkpoint declared a tolerance (checkpoint(..., tolerance=...))."
+            ],
+            "findings": [],
+        }
+    violated = [record for record in declared if record["tolerance_status"] == "violated"]
+    inventory = {"declared_checkpoints": len(declared), "violated_checkpoints": len(violated)}
+    if not violated:
+        return {**base, "analysis_status": "clean", "inventory": inventory, "findings": []}
+
+    first = violated[0]
+    previous = None
+    for record in declared:
+        if record is first:
+            break
+        previous = record
+    start = -1 if previous is None else int(previous["sequence"])
+    end = int(first["sequence"])
+    region_ids = [
+        str(event["event_id"])
+        for event in events
+        if event.get("kind") == "crypto_operation"
+        and isinstance(event.get("sequence"), int)
+        and start < event["sequence"] < end
+    ]
+    sites = sorted(
+        {
+            str(event["source"]["call_site_id"])
+            for event in events
+            if event.get("event_id") in set(region_ids)
+            and isinstance(event.get("source"), Mapping)
+            and isinstance(event["source"].get("call_site_id"), str)
+        }
+    )
+    evidence = {
+        "violated_checkpoint": first["checkpoint_name"],
+        "previous_checkpoint": None if previous is None else previous["checkpoint_name"],
+        "tolerance": first["tolerance"],
+        "violated": first["violated"],
+        "max_abs_error": first["max_abs_error"],
+        "max_rel_error": first["max_rel_error"],
+        "absolute_bits": first["absolute_bits"],
+        "region_event_ids": region_ids,
+        "later_violations": [record["checkpoint_name"] for record in violated[1:]],
+    }
+    finding = {
+        "finding_id": "finding_tolerance_0001",
+        "rule_id": TOLERANCE_RULE_ID,
+        "analyzer": "PrecisionAnalyzer",
+        "category": "precision",
+        "severity": "warning",
+        "confidence": "measured",
+        "source_sites": sites,
+        "evidence_event_ids": [first["event_id"], *region_ids],
+        "evidence": evidence,
+        "applicability": [
+            "a run created with shadow_mode=True",
+            "a checkpoint with a developer-declared tolerance",
+            "an observed error outside that tolerance",
+        ],
+        "recommendation": (
+            f"Checkpoint {first['checkpoint_name']!r} is the first to exceed its declared "
+            "tolerance; review the operations between it and the previous checkpoint for "
+            "the source of the loss."
+        ),
+        "limitations": [
+            "The tolerance is the developer's contract, not a correctness proof.",
+            "Localization is to the region between checkpoints, not to one operation.",
+            "Recorded values may reveal the data processed by the workload.",
+        ],
+    }
+    result = {**base, "analysis_status": "positive", "inventory": inventory, "findings": [finding]}
+    return finalize(result, trace=trace)
+
+
+__all__ = ["MIN_BITS_LOST", "RULE_ID", "TOLERANCE_RULE_ID", "analyze_precision", "analyze_tolerance"]

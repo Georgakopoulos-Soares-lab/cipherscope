@@ -108,6 +108,18 @@ encoding) before `EvalBootstrapKeyGen`. CipherScope observes the real calls and
 preserves any failure as an error event instead of rewriting the
 program.
 
+`profile_unmodified.py` is the canonical launcher for corpus runs. After a batch
+of runs, classify every bundle and keep only `COMPLETE` ones for analyzer-quality
+tables:
+
+```bash
+PYTHONPATH=src python -m cipherscope coverage /tmp/cipherscope-*-* \
+  --output /tmp/coverage_report.csv
+```
+
+Run `cipherscope preflight target.py` first to see whether a script calls the
+raw context or a free function that the proxy cannot observe.
+
 ## Synthetic example gallery (`examples/synthetic/`)
 
 `examples/synthetic/` contains twelve additional real OpenFHE programs, each
@@ -190,7 +202,11 @@ PYTHONPATH=src python -m cipherscope run \
 PYTHONPATH=src python -m cipherscope validate "$OUTPUT"
 ```
 
-`precision_checkpoints.py` must be run directly: shadow mode holds the secret key
-in-process to decrypt at each checkpoint and is off by default, so it is not
-enabled by the `cipherscope run` runner. It computes aggregate precision metrics
-only and never serializes the compared values.
+`precision_checkpoints.py` opts into shadow mode itself: `trace(...,
+shadow_mode=True, secret_key=...)` holds the secret key in-process to decrypt at
+each checkpoint, and that opt-in is honored both when the script runs directly
+and when it joins the `cipherscope run` runner. Checkpoints record the expected
+and observed values, so a trace from a shadow-mode run contains plaintext data.
+The example squares values above 1 so that the absolute error grows and the
+second checkpoint measurably loses bits; squaring values below 1 shrinks the
+error instead and reports `clean`.

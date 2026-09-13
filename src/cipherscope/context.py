@@ -178,14 +178,14 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
             return allowed
 
         if self._session.strict:
-            self._session.recorder.count_rejected_unclassified()
+            self._session.recorder.count_rejected_unclassified(name)
             raise UnsupportedOperationError(
                 f"native callable {name!r} is not covered by this CipherScope version"
             )
 
         def permissive(*args: Any, **kwargs: Any) -> Any:
             self._session._require_active()
-            self._session.recorder.count_unclassified_passthrough()
+            self._session.recorder.count_unclassified_passthrough(name)
             return attribute(*args, **kwargs)
 
         return permissive
@@ -202,6 +202,10 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         spec = compatibility.operation(operation)
         if spec is None:
             raise UnsupportedOperationError(f"operation {operation!r} is not covered")
+        if not recorder.accepting:
+            # Past a size limit: run the call untouched and count it, record nothing.
+            recorder.count_dropped_call()
+            return getattr(self._context, operation)(*args, **dict(kwargs))
 
         sequence, event_id = recorder.next_identity()
         source = self._session.source_resolver.capture(operation)

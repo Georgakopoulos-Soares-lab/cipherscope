@@ -41,13 +41,30 @@ class CiphertextRegistry(Generic[CiphertextT]):
     def __init__(
         self,
         snapshotter: Callable[[CiphertextT], CiphertextMetadata],
+        *,
+        sink: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
         self._snapshotter = snapshotter
+        self._sink = sink
         self._next_id = 1
         self._identities: dict[int, _IdentityEntry[CiphertextT]] = {}
         self._states: dict[str, CiphertextState] = {}
         self._annotations: dict[str, dict[str, Any]] = {}
         self._lock = threading.RLock()
+
+    def _finalize_locked(self, ciphertext_id: str) -> None:
+        """Hand a version that can no longer change to the sink, if there is one."""
+
+        if self._sink is None:
+            return
+        state = self._states.pop(ciphertext_id, None)
+        if state is None:
+            return
+        item = state.to_dict()
+        annotation = self._annotations.pop(ciphertext_id, None)
+        if annotation:
+            item["annotations"] = dict(annotation)
+        self._sink(item)
 
     def _make_entry_locked(
         self,
@@ -62,6 +79,7 @@ class CiphertextRegistry(Generic[CiphertextT]):
                 current = self._identities.get(lookup_key)
                 if current is not None and current.ref is dead_ref:
                     del self._identities[lookup_key]
+                    self._finalize_locked(current.ciphertext_id)
 
         try:
             ref = weakref.ref(value, _on_collected)
@@ -120,9 +138,11 @@ class CiphertextRegistry(Generic[CiphertextT]):
         with self._lock:
             entry = self._identities.get(lookup_key)
             if entry is not None and entry.value is value:
+                superseded = entry.ciphertext_id
                 entry.version += 1
                 ciphertext_id = f"{entry.base_id}:v{entry.version}"
                 entry.ciphertext_id = ciphertext_id
+                self._finalize_locked(superseded)
                 self._states[ciphertext_id] = CiphertextState(
                     ciphertext_id=ciphertext_id,
                     created_by_event=event_id,
@@ -189,7 +209,8 @@ class CiphertextRegistry(Generic[CiphertextT]):
 
         with self._lock:
             result: list[dict[str, Any]] = []
-            for state in self._states.values():
+            # A weakref callback may finalize a state while this loop allocates.
+            for state in list(self._states.values()):
                 item = state.to_dict()
                 annotation = self._annotations.get(state.ciphertext_id)
                 if annotation:
