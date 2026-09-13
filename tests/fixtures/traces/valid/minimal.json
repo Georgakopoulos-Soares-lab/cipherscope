@@ -6,14 +6,13 @@
     "status": "completed",
     "synthetic_contract": true,
     "runtime": {"backend": "SyntheticContext", "openfhe_compatibility_target": "1.5.1.x", "platform": "fixture"},
-    "coverage": {"traced_semantic_calls": 1, "allowed_passthrough_calls": 0, "unclassified_proxy_passthrough_calls": 0, "operator_overload_coverage": false, "original_reference_bypass_observable": false},
-    "privacy": {"plaintext_serialized": false, "key_material_serialized": false, "object_repr_serialized": false}
+    "coverage": {"traced_semantic_calls": 1, "allowed_passthrough_calls": 0, "unclassified_proxy_passthrough_calls": 0, "operator_overload_coverage": false, "original_reference_bypass_observable": false}
   },
   "context": {"scheme": "CKKS", "ring_dimension": 8192, "available_slots": 4096, "configured_multiplicative_depth": 3},
   "events": [
     {
       "event_id": "event_0001", "sequence": 1, "kind": "crypto_operation", "operation": "EvalRotate", "overload": "ct_index", "granularity": "openfhe_api_inclusive", "status": "ok",
-      "source": {"file": "minimal.py", "line": 7, "function": "run", "qualified_function": "run", "source_sha256": "synthetic-minimal", "call_site_id": "site_minimal"},
+      "source": {"file": "minimal.py", "line": 7, "function": "run", "qualified_function": "run", "call_site_id": "site_minimal"},
       "input_ciphertexts": ["ct_0001:v0"], "output_ciphertexts": ["ct_0002:v0"], "operand_kinds": ["ciphertext", "integer"],
       "timing": {"start_ns": 100, "wall_duration_ns": 10, "process_cpu_duration_ns": 8, "thread_cpu_duration_ns": null},
       "input_states": [{"id": "ct_0001:v0", "level": 0, "noise_scale_degree": 1}],

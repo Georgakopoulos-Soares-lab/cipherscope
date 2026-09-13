@@ -1,4 +1,4 @@
-"""Deterministic projections and secure run-bundle publication."""
+"""Export trace data as JSON, CSV, Perfetto, and HTML files."""
 
 from .csv import operations_csv
 from .perfetto import perfetto_document

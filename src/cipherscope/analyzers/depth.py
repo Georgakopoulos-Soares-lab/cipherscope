@@ -6,14 +6,7 @@ from collections.abc import Mapping
 from copy import deepcopy
 from typing import Any
 
-from ..graph import build_graph
-from ..validation import (
-    ValidationError,
-    validate_graph,
-    validate_recommendations,
-    validate_trace,
-)
-
+from ._shared import finalize, resolve_graph
 
 RULE_ID = "depth.critical_path.v1"
 
@@ -36,14 +29,7 @@ def analyze_depth(
 ) -> dict[str, Any]:
     """Return a recommendations-shaped report of both supported depth metrics."""
 
-    trace_result = validate_trace(trace)
-    if not trace_result.valid:
-        raise ValidationError("trace", trace_result.errors)
-    if graph is None:
-        graph = build_graph(trace)
-    graph_result = validate_graph(graph, trace=trace)
-    if not graph_result.valid:
-        raise ValidationError("graph", graph_result.errors)
+    graph = resolve_graph(trace, graph)
 
     critical_paths = graph.get("critical_paths", {})
     nonlinear = critical_paths.get("nonlinear_ciphertext")
@@ -123,22 +109,7 @@ def analyze_depth(
         "analysis_status": "positive",
         "findings": [finding],
     }
-    result_validation = validate_recommendations(result, trace=trace, graph=graph)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace, graph=graph)
 
 
-class DepthAnalyzer:
-    """Small analyzer object for plugin-style orchestration."""
-
-    rule_id = RULE_ID
-    required_fields = ("events", "ciphertexts")
-
-    def analyze(
-        self, trace: Mapping[str, Any], graph: Mapping[str, Any] | None = None
-    ) -> dict[str, Any]:
-        return analyze_depth(trace, graph)
-
-
-__all__ = ["DepthAnalyzer", "RULE_ID", "analyze_depth"]
+__all__ = ["RULE_ID", "analyze_depth"]

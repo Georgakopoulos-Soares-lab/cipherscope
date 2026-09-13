@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import contextvars
+import math
+import sys
 import threading
 import time
+from collections.abc import Mapping
+from contextlib import AbstractContextManager
 from dataclasses import dataclass
-from typing import Any, ContextManager, Generic, Literal, TypeVar
+from types import TracebackType
+from typing import Any, Generic, Literal, TypeVar
 
 from .compatibility import DEFAULT_COMPATIBILITY, CompatibilityRegistry
 from .context import TracedCryptoContext
@@ -19,17 +24,96 @@ from .errors import (
     ShadowModeError,
 )
 from .recorder import EventRecorder
-from .shadow import decode_real, precision_metrics
 from .source import SourceResolver
 
-
 ContextT = TypeVar("ContextT")
+
+
+def _real_values(values: Any) -> list[float]:
+    """Convert decoded CKKS values to JSON numbers."""
+
+    return [
+        float(value.real if isinstance(value, complex) else value) for value in values
+    ]
+
+
+def _decode_real(plaintext: Any, length: int) -> list[float]:
+    """Read real packed values from an OpenFHE plaintext."""
+
+    set_length = getattr(plaintext, "SetLength", None)
+    if callable(set_length):
+        set_length(length)
+    for getter_name in ("GetRealPackedValue", "GetCKKSPackedValue"):
+        getter = getattr(plaintext, getter_name, None)
+        if callable(getter):
+            return _real_values(list(getter())[:length])
+    raise TypeError("the plaintext exposes no supported packed-value getter")
+
+
+TOLERANCE_KEYS = ("absolute", "relative", "min_bits")
+
+
+def _tolerance_contract(tolerance: Any) -> dict[str, float] | None:
+    """Validate a checkpoint tolerance: absolute and/or relative error, or a bits floor."""
+
+    if tolerance is None:
+        return None
+    if not isinstance(tolerance, Mapping) or not tolerance:
+        raise AnnotationError(
+            "tolerance must be a non-empty mapping with absolute, relative, or min_bits"
+        )
+    contract: dict[str, float] = {}
+    for key, value in tolerance.items():
+        if key not in TOLERANCE_KEYS:
+            raise AnnotationError(f"unknown tolerance key {key!r}")
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise AnnotationError(f"tolerance {key} must be a number")
+        if not math.isfinite(value) or value < 0:
+            raise AnnotationError(f"tolerance {key} must be finite and non-negative")
+        contract[key] = float(value)
+    return contract
+
+
+def _precision_metrics(
+    expected: list[float], observed: list[float], contract: dict[str, float] | None
+) -> dict[str, Any]:
+    """Compare a checkpoint with its expectation and, if declared, its tolerance."""
+
+    errors = [abs(actual - wanted) for wanted, actual in zip(expected, observed)]
+    max_abs_error = max(errors, default=0.0)
+    max_rel_error = max(
+        (
+            error / max(abs(wanted), sys.float_info.epsilon)
+            for wanted, error in zip(expected, errors)
+        ),
+        default=0.0,
+    )
+    absolute_bits = -math.log2(max(max_abs_error, sys.float_info.epsilon))
+    metrics: dict[str, Any] = {
+        "max_abs_error": max_abs_error,
+        "max_rel_error": max_rel_error,
+        "absolute_bits": absolute_bits,
+        "tolerance_status": "undeclared",
+    }
+    if contract is None:
+        return metrics
+    violated: list[str] = []
+    if "absolute" in contract and max_abs_error > contract["absolute"]:
+        violated.append("absolute")
+    if "relative" in contract and max_rel_error > contract["relative"]:
+        violated.append("relative")
+    if "min_bits" in contract and absolute_bits < contract["min_bits"]:
+        violated.append("min_bits")
+    metrics["tolerance"] = dict(contract)
+    metrics["tolerance_status"] = "violated" if violated else "within"
+    metrics["violated"] = violated
+    return metrics
 
 
 @dataclass
 class _Ownership:
     native_context: Any
-    session: "Session[Any]"
+    session: Session[Any]
 
 
 _OWNERS: dict[int, _Ownership] = {}
@@ -42,8 +126,8 @@ _ACTIVE_SESSION: contextvars.ContextVar[Any] = contextvars.ContextVar(
 class Session(Generic[ContextT]):
     """Own one trace run and all proxies attached during that run.
 
-    Lifecycle is ``created -> active -> closed``. A session cannot be re-entered;
-    proxies deliberately stop forwarding after their owner closes.
+    A session moves from ``created`` to ``active`` to ``closed``. It cannot be
+    entered again after it closes, and its proxies stop accepting calls.
     """
 
     def __init__(
@@ -55,6 +139,10 @@ class Session(Generic[ContextT]):
         compatibility: CompatibilityRegistry | None = None,
         secret_key: Any = None,
         shadow_mode: bool = False,
+        allow_testing_security: bool = False,
+        max_events: int | None = None,
+        max_trace_bytes: int | None = None,
+        spool_dir: Any = None,
     ) -> None:
         self.strict = strict
         self.shadow_mode = shadow_mode
@@ -65,6 +153,10 @@ class Session(Generic[ContextT]):
             strict=strict,
             name=name,
             shadow_mode=shadow_mode,
+            allow_testing_security=allow_testing_security,
+            max_events=max_events,
+            max_trace_bytes=max_trace_bytes,
+            spool_dir=spool_dir,
         )
         self.source_resolver = SourceResolver()
         self._initial_context = native_context
@@ -75,6 +167,8 @@ class Session(Generic[ContextT]):
         self._scoped_ids: set[int] = set()
         self._current_context: TracedCryptoContext[Any, Any] | None = None
         self._context_metadata: dict[str, Any] | None = None
+        self._declared_parameters: dict[str, Any] | None = None
+        self._pending_parameters: Any = None
         self._lock = threading.RLock()
 
     @property
@@ -93,12 +187,12 @@ class Session(Generic[ContextT]):
 
     @property
     def has_attached_context(self) -> bool:
-        """Whether any native context participated in this run."""
+        """Return whether the session has an attached context."""
 
         with self._lock:
             return bool(self._proxies)
 
-    def __enter__(self) -> "Session[ContextT]":
+    def __enter__(self) -> Session[ContextT]:
         with self._lock:
             if self._state == "closed":
                 raise SessionClosedError(
@@ -118,21 +212,35 @@ class Session(Generic[ContextT]):
                 proxy = self.attach(self._initial_context)
                 with self._lock:
                     self._scoped_ids.add(self._native_identity(proxy))
+            if self._pending_parameters is not None:
+                self.declare_parameters(self._pending_parameters)
+                self._pending_parameters = None
             return self
         except BaseException:
             self._abort_enter()
             raise
 
-    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> Literal[False]:
+    def with_parameters(self, parameters: Any) -> Session[ContextT]:
+        """Declare CCParams once the session is entered; returns self for chaining."""
+
+        self._pending_parameters = parameters
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> Literal[False]:
         del exc_type, traceback
         self.close(status="failed" if exc is not None else "completed")
         return False
 
     def close(self, *, status: str = "completed") -> None:
-        """Close the active session and release native-context ownership.
+        """Close the session and release its attached native contexts.
 
-        The status is accepted for lifecycle symmetry; callers choose the status
-        emitted later by :meth:`to_trace`.
+        ``status`` remains accepted for API compatibility. :meth:`to_trace`
+        chooses the status written to the trace.
         """
 
         del status
@@ -156,9 +264,27 @@ class Session(Generic[ContextT]):
         if token is not None:
             _ACTIVE_SESSION.reset(token)
 
-    def attach(self, native_context: Any) -> TracedCryptoContext[Any, Any]:
-        """Attach one native context, idempotently within this active session."""
+    def declare_parameters(self, parameters: Any) -> None:
+        """Record CCParams fields (security level, ring size) the context cannot expose."""
 
+        self._require_active()
+        snapshot = self.compatibility.snapshot_parameters(parameters)
+        with self._lock:
+            self._declared_parameters = snapshot
+            if self._context_metadata is not None:
+                self._context_metadata.update(snapshot)
+
+    def attach(
+        self, native_context: Any, *, parameters: Any = None
+    ) -> TracedCryptoContext[Any, Any]:
+        """Attach a context, or return its existing proxy if already attached."""
+
+        proxy = self._attach(native_context)
+        if parameters is not None:
+            self.declare_parameters(parameters)
+        return proxy
+
+    def _attach(self, native_context: Any) -> TracedCryptoContext[Any, Any]:
         self._require_active()
         if isinstance(native_context, TracedCryptoContext):
             if native_context.belongs_to(self):
@@ -176,11 +302,14 @@ class Session(Generic[ContextT]):
 
             with _OWNERS_LOCK:
                 ownership = _OWNERS.get(identity)
-                if ownership is not None and ownership.native_context is native_context:
-                    if ownership.session is not self:
-                        raise AlreadyTracedError(
-                            "the native context is already attached to another session"
-                        )
+                if (
+                    ownership is not None
+                    and ownership.native_context is native_context
+                    and ownership.session is not self
+                ):
+                    raise AlreadyTracedError(
+                        "the native context is already attached to another session"
+                    )
                 _OWNERS[identity] = _Ownership(native_context, self)
 
             proxy: TracedCryptoContext[Any, Any] = TracedCryptoContext(
@@ -194,6 +323,8 @@ class Session(Generic[ContextT]):
                 self._context_metadata = self.compatibility.snapshot_context(
                     native_context
                 )
+                if self._declared_parameters is not None:
+                    self._context_metadata.update(self._declared_parameters)
             return proxy
 
     def annotate(
@@ -205,14 +336,12 @@ class Session(Generic[ContextT]):
         meaningful_slots: int | None = None,
         provenance: str | None = None,
     ) -> Any:
-        """Attach a user assertion to a ciphertext and record it as evidence.
-
-        The ciphertext is returned unchanged so the annotation can wrap a value
-        inline. Annotations are run-local claims; they never authorize logging
-        the underlying value.
-        """
+        """Attach a user assertion and return the ciphertext unchanged."""
 
         self._require_active()
+        if not self.recorder.accepting:
+            self.recorder.count_dropped_call()
+            return ciphertext
         annotation: dict[str, Any] = {}
         if shape is not None:
             if not isinstance(shape, (list, tuple)) or any(
@@ -246,12 +375,22 @@ class Session(Generic[ContextT]):
         self._record_meta_event(
             kind="annotation",
             operation="Annotate",
-            input_ids=[observation.trace_id],
+            input_ciphertext_ids=[observation.ciphertext_id],
             input_states=[observation.event_state()],
             operand_kinds=["ciphertext"],
             semantic_arguments=annotation,
         )
         return ciphertext
+
+    def enable_shadow_mode(self, secret_key: Any) -> None:
+        """Turn on precision checkpoints for a session that started without them."""
+
+        if secret_key is None:
+            raise ShadowModeError("shadow mode requires a secret_key")
+        with self._lock:
+            self.shadow_mode = True
+            self.recorder.shadow_mode = True
+            self._secret_key = secret_key
 
     def checkpoint(
         self,
@@ -260,13 +399,9 @@ class Session(Generic[ContextT]):
         ciphertext: Any,
         expected: Any,
         decoder: Any = None,
+        tolerance: Any = None,
     ) -> dict[str, Any]:
-        """Record aggregate precision metrics for one shadow-mode checkpoint.
-
-        Requires explicitly enabled shadow mode and a secret key. The secret key
-        and expected values are used only to compute aggregate metrics and are
-        never serialized into the trace.
-        """
+        """Decrypt a checkpoint and record its expected and observed values."""
 
         self._require_active()
         if not self.shadow_mode:
@@ -274,32 +409,45 @@ class Session(Generic[ContextT]):
                 "precision checkpoints require a session created with shadow_mode=True"
             )
         if self._secret_key is None:
-            raise ShadowModeError("shadow-mode checkpoints require a secret_key")
+            raise ShadowModeError("precision checkpoints require a secret_key")
         if not isinstance(name, str) or not name:
             raise AnnotationError("checkpoint name must be a non-empty string")
+        contract = _tolerance_contract(tolerance)
+        if not self.recorder.accepting:
+            self.recorder.count_dropped_call()
+            return {"status": "dropped", "reason": "trace_truncated"}
 
-        expected_list = list(expected)
+        expected_values = _real_values(expected)
         observation = self.recorder.registry.observe_input(ciphertext)
         native = self.context._context
         plaintext = native.Decrypt(ciphertext, self._secret_key)
         if decoder is not None:
-            observed = list(decoder(plaintext))
+            observed_values = _real_values(decoder(plaintext))
         else:
-            observed = decode_real(plaintext, len(expected_list))
-        metrics = precision_metrics(expected_list, observed)
-        # Only aggregate metrics and the checkpoint name survive; the decoded and
-        # expected values are dropped as soon as this call returns.
-        del observed, expected_list, plaintext
-        semantic_arguments = {"checkpoint_name": name, "metrics": metrics}
+            observed_values = _decode_real(plaintext, len(expected_values))
+        comparison = {
+            "status": (
+                "ok"
+                if expected_values and len(expected_values) == len(observed_values)
+                else "failed"
+            ),
+            "expected_values": expected_values,
+            "observed_values": observed_values,
+        }
+        if comparison["status"] == "failed":
+            comparison["reason"] = "shape_mismatch"
+        else:
+            comparison.update(_precision_metrics(expected_values, observed_values, contract))
+        semantic_arguments = {"checkpoint_name": name, **comparison}
         self._record_meta_event(
             kind="checkpoint",
             operation="PrecisionCheckpoint",
-            input_ids=[observation.trace_id],
+            input_ciphertext_ids=[observation.ciphertext_id],
             input_states=[observation.event_state()],
             operand_kinds=["ciphertext"],
             semantic_arguments=semantic_arguments,
         )
-        return metrics
+        return comparison
 
     def annotate_plaintext(
         self,
@@ -308,18 +456,18 @@ class Session(Generic[ContextT]):
         provenance: str,
         constant_id: str | None = None,
     ) -> Any:
-        """Record a run-local plaintext provenance assertion.
+        """Record a plaintext representation and its declared provenance."""
 
-        The plaintext object stays opaque; only the user-supplied provenance and
-        optional ``constant_id`` are recorded. ``constant_id`` is a path-redacted
-        run-local label and never authorizes logging the plaintext value.
-        """
-
-        del plaintext
         self._require_active()
+        if not self.recorder.accepting:
+            self.recorder.count_dropped_call()
+            return plaintext
         if not isinstance(provenance, str) or not provenance:
             raise AnnotationError("provenance must be a non-empty string")
-        semantic_arguments: dict[str, Any] = {"provenance": provenance}
+        semantic_arguments: dict[str, Any] = {
+            "provenance": provenance,
+            "plaintext_representation": repr(plaintext),
+        }
         if constant_id is not None:
             if not isinstance(constant_id, str) or not constant_id:
                 raise AnnotationError("constant_id must be a non-empty string")
@@ -327,7 +475,7 @@ class Session(Generic[ContextT]):
         self._record_meta_event(
             kind="annotation",
             operation="AnnotatePlaintext",
-            input_ids=[],
+            input_ciphertext_ids=[],
             input_states=[],
             operand_kinds=["plaintext"],
             semantic_arguments=semantic_arguments,
@@ -341,12 +489,11 @@ class Session(Generic[ContextT]):
         operator: str,
         associative: bool = False,
         commutative: bool = False,
-    ) -> "_Region":
-        """Open a labeled span with explicit algebraic assertions.
+    ) -> _Region:
+        """Mark a named group of events and its algebraic properties.
 
-        The assertions are the user's claim about the operation reduced inside
-        the span; analyzers only propose a restructuring when the assertions make
-        it plausible.
+        The serial-reduction analyzer uses these user-provided properties before
+        suggesting a different evaluation order.
         """
 
         self._require_active()
@@ -366,6 +513,9 @@ class Session(Generic[ContextT]):
         start_sequence: int,
         end_sequence: int,
     ) -> None:
+        if not self.recorder.accepting:
+            self.recorder.count_dropped_call()
+            return
         self.recorder.record_region(
             {
                 "name": name,
@@ -382,7 +532,7 @@ class Session(Generic[ContextT]):
         *,
         kind: str,
         operation: str,
-        input_ids: list[str],
+        input_ciphertext_ids: list[str],
         input_states: list[dict[str, Any]],
         operand_kinds: list[str],
         semantic_arguments: dict[str, Any],
@@ -400,7 +550,7 @@ class Session(Generic[ContextT]):
                 "granularity": None,
                 "status": "ok",
                 "source": source.to_dict(),
-                "input_ciphertexts": list(input_ids),
+                "input_ciphertexts": list(input_ciphertext_ids),
                 "output_ciphertexts": [],
                 "operand_kinds": list(operand_kinds),
                 "timing": {
@@ -419,10 +569,9 @@ class Session(Generic[ContextT]):
         )
 
     def to_trace(self, status: str = "completed") -> dict[str, Any]:
-        """Return ``{schema_version, run, context, events, ciphertexts}``.
+        """Build and return the session's trace.
 
-        This is an in-memory operation; output writing intentionally belongs to a
-        later exporter layer.
+        This method does not write any files.
         """
 
         with self._lock:
@@ -489,8 +638,8 @@ class Session(Generic[ContextT]):
             _ACTIVE_SESSION.reset(token)
 
 
-class _Region(ContextManager["Session[Any]"]):
-    """Record the event-sequence span covered by a labeled reduction region."""
+class _Region(AbstractContextManager["Session[Any]"]):
+    """Record the events inside a named reduction region."""
 
     def __init__(
         self,
@@ -516,7 +665,12 @@ class _Region(ContextManager["Session[Any]"]):
         self._entered = True
         return self._session
 
-    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> Literal[False]:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> Literal[False]:
         del exc_type, exc, traceback
         if not self._entered or self._start_sequence is None:
             raise SessionLifecycleError("the region was not entered")
@@ -533,12 +687,15 @@ class _Region(ContextManager["Session[Any]"]):
         return False
 
 
-class _ContextScope(ContextManager[Session[Any]]):
-    """Join an active run without finalizing it when the local scope exits."""
+class _ContextScope(AbstractContextManager[Session[Any]]):
+    """Attach a context to the active session for one ``with`` block."""
 
-    def __init__(self, session: Session[Any], native_context: Any) -> None:
+    def __init__(
+        self, session: Session[Any], native_context: Any, *, parameters: Any = None
+    ) -> None:
         self._session = session
         self._native_context = native_context
+        self._parameters = parameters
         self._previous: TracedCryptoContext[Any, Any] | None = None
         self._identity: int | None = None
         self._entered = False
@@ -550,9 +707,16 @@ class _ContextScope(ContextManager[Session[Any]]):
             self._native_context
         )
         self._entered = True
+        if self._parameters is not None:
+            self._session.declare_parameters(self._parameters)
         return self._session
 
-    def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> Literal[False]:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> Literal[False]:
         del exc_type, exc, traceback
         if not self._entered or self._identity is None:
             raise SessionLifecycleError("the trace context scope was not entered")
@@ -569,6 +733,11 @@ def trace(
     compatibility: CompatibilityRegistry | None = None,
     secret_key: Any = None,
     shadow_mode: bool = False,
+    parameters: Any = None,
+    allow_testing_security: bool = False,
+    max_events: int | None = None,
+    max_trace_bytes: int | None = None,
+    spool_dir: Any = None,
 ) -> Session[ContextT] | _ContextScope:
     """Create a top-level session or join the session active in this context."""
 
@@ -581,11 +750,21 @@ def trace(
             compatibility=compatibility,
             secret_key=secret_key,
             shadow_mode=shadow_mode,
-        )
-    return _ContextScope(active, native_context)
+            allow_testing_security=allow_testing_security,
+            max_events=max_events,
+            max_trace_bytes=max_trace_bytes,
+            spool_dir=spool_dir,
+        ).with_parameters(parameters)
+    if shadow_mode and not active.shadow_mode:
+        active.enable_shadow_mode(secret_key)
+    if allow_testing_security:
+        active.recorder.allow_testing_security = True
+    return _ContextScope(active, native_context, parameters=parameters)
 
 
-def attach(native_context: ContextT) -> TracedCryptoContext[ContextT, Any]:
+def attach(
+    native_context: ContextT, *, parameters: Any = None
+) -> TracedCryptoContext[ContextT, Any]:
     """Attach to the active session, or fail with :class:`NoActiveSessionError`."""
 
     active = _ACTIVE_SESSION.get()
@@ -593,7 +772,7 @@ def attach(native_context: ContextT) -> TracedCryptoContext[ContextT, Any]:
         raise NoActiveSessionError(
             "cipherscope.attach() requires an active Session or trace() scope"
         )
-    return active.attach(native_context)
+    return active.attach(native_context, parameters=parameters)
 
 
 def runner_session(
@@ -601,12 +780,23 @@ def runner_session(
     name: str | None = None,
     strict: bool = True,
     compatibility: CompatibilityRegistry | None = None,
+    allow_testing_security: bool = False,
+    max_events: int | None = None,
+    max_trace_bytes: int | None = None,
+    spool_dir: Any = None,
 ) -> Session[Any]:
-    """Create a context-free session for a runner to activate.
+    """Create a session that waits for target code to attach a context.
 
-    While the returned session is active, target code may call :func:`attach` or
-    use :func:`trace` to join the runner-owned run. Closing a joined ``trace``
-    scope never closes this top-level session.
+    Target code may call :func:`attach` or :func:`trace` while this session is
+    active. Leaving that inner scope does not close the runner's session.
     """
 
-    return Session(name=name, strict=strict, compatibility=compatibility)
+    return Session(
+        name=name,
+        strict=strict,
+        compatibility=compatibility,
+        allow_testing_security=allow_testing_security,
+        max_events=max_events,
+        max_trace_bytes=max_trace_bytes,
+        spool_dir=spool_dir,
+    )

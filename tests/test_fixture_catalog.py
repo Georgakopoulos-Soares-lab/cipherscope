@@ -7,32 +7,18 @@ import unittest
 from collections import Counter
 from pathlib import Path, PurePosixPath
 
-
 FIXTURE_ROOT = Path(__file__).with_name("fixtures")
 CATALOG_PATH = FIXTURE_ROOT / "corpus.json"
 
-EXPECTED_TOTAL = 44
+EXPECTED_TOTAL = 26
 EXPECTED_KIND_COUNTS = {
-    "opaque_stack_text": 18,
     "ciphertext_graph_json": 12,
     "semantic_trace_json": 14,
-}
-EXPECTED_STACK_LANGUAGE_COUNTS = {
-    "python": 2,
-    "javascript": 2,
-    "typescript": 2,
-    "java": 2,
-    "go": 2,
-    "rust": 2,
-    "csharp": 2,
-    "ruby": 2,
-    "native": 2,
 }
 EXPECTED_PROVENANCE = {
     "kind": "synthetic",
     "source_url": None,
     "license": "NOASSERTION",
-    "sensitive": False,
 }
 
 
@@ -58,7 +44,7 @@ class FixtureCatalogTests(unittest.TestCase):
         for fixture_id in ids:
             self.assertRegex(fixture_id, r"^[a-z0-9]+(?:[._][a-z0-9]+)*$")
 
-    def test_catalog_paths_are_relative_safe_and_complete(self) -> None:
+    def test_catalog_paths_are_relative_and_complete(self) -> None:
         catalog_paths = set()
         for entry in self.entries:
             relative = PurePosixPath(entry["path"])
@@ -70,25 +56,23 @@ class FixtureCatalogTests(unittest.TestCase):
 
         artifact_paths = {
             path.relative_to(FIXTURE_ROOT).as_posix()
-            for directory in ("ancillary", "graphs", "traces")
+            for directory in ("graphs", "traces")
             for path in (FIXTURE_ROOT / directory).rglob("*")
             if path.is_file()
         }
         self.assertEqual(catalog_paths, artifact_paths)
 
-    def test_provenance_is_explicit_synthetic_and_non_sensitive(self) -> None:
+    def test_provenance_is_explicit_and_synthetic(self) -> None:
         for entry in self.entries:
             with self.subTest(fixture=entry["id"]):
                 self.assertEqual(entry["provenance"], EXPECTED_PROVENANCE)
-                self.assertIs(entry["provenance"]["sensitive"], False)
 
     def test_expected_stage_and_code_are_present(self) -> None:
-        allowed_outcomes = {"accept", "reject", "not_applicable"}
+        allowed_outcomes = {"accept", "reject"}
         allowed_stages = {
             "json_decode",
             "graph_validation",
             "trace_validation",
-            "opaque_text",
         }
         for entry in self.entries:
             expected = entry["expected"]
@@ -112,7 +96,7 @@ class FixtureCatalogTests(unittest.TestCase):
             for entry in self.entries
             if entry["language"] == "json" and entry["expected"]["outcome"] == "accept"
         ]
-        self.assertEqual(len(accepted), 14)
+        self.assertEqual(len(accepted), 15)
         for entry in accepted:
             with self.subTest(fixture=entry["id"]):
                 value = json.loads(
@@ -154,48 +138,7 @@ class FixtureCatalogTests(unittest.TestCase):
             with self.subTest(fixture=entry["id"]):
                 self.assertIs(marker, True)
 
-    def test_exactly_two_opaque_samples_per_language(self) -> None:
-        stacks = [
-            entry
-            for entry in self.entries
-            if entry["artifact_kind"] == "opaque_stack_text"
-        ]
-        self.assertEqual(len(stacks), 18)
-        self.assertEqual(
-            Counter(entry["language"] for entry in stacks),
-            EXPECTED_STACK_LANGUAGE_COUNTS,
-        )
-        for entry in stacks:
-            with self.subTest(fixture=entry["id"]):
-                self.assertEqual(entry["expected"]["outcome"], "not_applicable")
-                self.assertTrue(
-                    {"ancillary", "opaque", "not_supported_runtime_input"}
-                    <= set(entry["tags"])
-                )
-
-    def test_requested_stack_and_semantic_case_tags_are_covered(self) -> None:
-        stack_tags = {
-            tag
-            for entry in self.entries
-            if entry["artifact_kind"] == "opaque_stack_text"
-            for tag in entry["tags"]
-        }
-        self.assertTrue(
-            {
-                "chained",
-                "recursive",
-                "async",
-                "concurrent",
-                "repeated_frames",
-                "truncated",
-                "unicode",
-                "redacted_path",
-                "escaping",
-                "stack_limit",
-            }
-            <= stack_tags
-        )
-
+    def test_requested_semantic_case_tags_are_covered(self) -> None:
         semantic_tags = {
             tag
             for entry in self.entries
@@ -216,17 +159,15 @@ class FixtureCatalogTests(unittest.TestCase):
                 "unicode",
                 "empty",
                 "large_metadata",
-                "adversarial_metadata",
             }
             <= semantic_tags
         )
 
-    def test_readme_marks_stack_text_as_ancillary_only(self) -> None:
+    def test_readme_describes_structured_fixtures(self) -> None:
         readme = (FIXTURE_ROOT / "README.md").read_text(encoding="utf-8").lower()
-        self.assertIn("test escaping", readme)
-        self.assertIn("path redaction", readme)
-        self.assertIn("stack-size limits", readme)
-        self.assertIn("not supported cipherscope runtime inputs", readme)
+        self.assertIn("semantic json fixtures", readme)
+        self.assertIn("graph", readme)
+        self.assertIn("trace", readme)
 
 
 if __name__ == "__main__":

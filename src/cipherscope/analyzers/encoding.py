@@ -5,31 +5,19 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ..validation import ValidationError, validate_recommendations, validate_trace
-
+from ._shared import event_order, finalize, require_valid_trace
 
 RULE_ID = "encoding.repeated_public_constant.v1"
-
-
-def _event_order(event: Mapping[str, Any]) -> tuple[int, str]:
-    sequence = event.get("sequence")
-    return (
-        sequence if isinstance(sequence, int) else 2**63,
-        str(event.get("event_id", "")),
-    )
 
 
 def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
     """Flag public constants encoded more than once under the same constant ID.
 
-    CipherScope does not hash or compare unannotated plaintext values; only an
-    explicit, repeated run-local ``constant_id`` establishes that two encodings
-    denote the same public constant.
+    A repeated ``constant_id`` tells CipherScope that two encodings use the same
+    public constant. It does not infer equality for unannotated plaintexts.
     """
 
-    validation = validate_trace(trace)
-    if not validation.valid:
-        raise ValidationError("trace", validation.errors)
+    require_valid_trace(trace)
 
     base = {
         "schema_version": trace["schema_version"],
@@ -37,7 +25,7 @@ def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
     }
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
-        key=_event_order,
+        key=event_order,
     )
     groups: dict[str, list[Mapping[str, Any]]] = {}
     for event in events:
@@ -89,7 +77,7 @@ def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
                     "encoding_count": len(occurrences),
                 },
                 "applicability": [
-                    "two or more encodings sharing one explicit run-local constant_id",
+                    "two or more encodings sharing one explicit constant_id",
                     "provenance asserted by the user, not inferred from values",
                 ],
                 "estimated_impact": {
@@ -112,20 +100,7 @@ def analyze_encoding(trace: Mapping[str, Any]) -> dict[str, Any]:
         result = {**base, "analysis_status": "positive", "findings": findings}
     else:
         result = {**base, "analysis_status": "clean", "findings": []}
-    result_validation = validate_recommendations(result, trace=trace)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace)
 
 
-class EncodingAnalyzer:
-    """Plugin-style wrapper for repeated public-constant encoding analysis."""
-
-    rule_id = RULE_ID
-    required_fields = ("events[].semantic_arguments.constant_id",)
-
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_encoding(trace)
-
-
-__all__ = ["RULE_ID", "EncodingAnalyzer", "analyze_encoding"]
+__all__ = ["RULE_ID", "analyze_encoding"]

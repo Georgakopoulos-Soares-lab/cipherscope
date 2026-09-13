@@ -1,0 +1,410 @@
+{
+  "description": "Known-answer OpenFHE programs for CipherScope analyzer recall and hard-negative false positives. Every expectation below was observed on the real binding before it was written down; see README.md.",
+  "cases": [
+    {
+      "case_id": "rotation.kernel.clean",
+      "path": "cases/rotation_kernel_clean.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "rotation.hoist_same_input.v1": "clean",
+        "keys.unused_in_observed_run.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "rotation.positive.same_version",
+      "path": "cases/rotation_same_version.py",
+      "clean_kernel": "cases/rotation_kernel_clean.py",
+      "kind": "positive",
+      "mutation_id": "three-indices-one-version-plus-unused-key",
+      "expected": {
+        "rotation.hoist_same_input.v1": "positive",
+        "keys.unused_in_observed_run.v1": "positive"
+      },
+      "expected_source_lines": {
+        "rotation.hoist_same_input.v1": [
+          21,
+          22,
+          23
+        ],
+        "keys.unused_in_observed_run.v1": [
+          19
+        ]
+      },
+      "expected_evidence": {
+        "keys.unused_in_observed_run.v1": {
+          "unused_generated_indices": [
+            5
+          ]
+        }
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "rotation.negative.different_versions",
+      "path": "cases/rotation_different_versions.py",
+      "clean_kernel": "cases/rotation_kernel_clean.py",
+      "kind": "hard_negative",
+      "mutation_id": "three-indices-three-versions",
+      "expected": {
+        "rotation.hoist_same_input.v1": "clean",
+        "keys.unused_in_observed_run.v1": "clean"
+      },
+      "hard_negative_reason": "each rotation reads a different ciphertext version, so no shared precompute exists; every generated key is used",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "rotation.negative.single_index",
+      "path": "cases/rotation_single_index.py",
+      "clean_kernel": "cases/rotation_kernel_clean.py",
+      "kind": "hard_negative",
+      "mutation_id": "one-index-three-times",
+      "expected": {
+        "rotation.hoist_same_input.v1": "clean",
+        "keys.unused_in_observed_run.v1": "clean"
+      },
+      "hard_negative_reason": "same version, but only one distinct rotation index",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "parameters.kernel.full_use",
+      "path": "cases/parameters_full_use.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "parameters.depth_headroom_observed.v1": "clean"
+      },
+      "numerical_validity_expected": true,
+      "notes": "FIXEDMANUAL with explicit Rescale so each multiplication consumes exactly one observable level"
+    },
+    {
+      "case_id": "parameters.positive.headroom",
+      "path": "cases/parameters_headroom.py",
+      "clean_kernel": "cases/parameters_full_use.py",
+      "kind": "positive",
+      "mutation_id": "configured-depth-4-consumed-1",
+      "expected": {
+        "parameters.depth_headroom_observed.v1": "positive"
+      },
+      "expected_evidence": {
+        "parameters.depth_headroom_observed.v1": {
+          "configured_multiplicative_depth": 4,
+          "observed_max_levels_consumed_in_epoch": 1,
+          "observed_depth_headroom": 3
+        }
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "depth.positive.horner",
+      "path": "cases/depth_horner.py",
+      "kind": "positive",
+      "mutation_id": "",
+      "expected": {
+        "depth.critical_path.v1": "positive"
+      },
+      "expected_evidence": {
+        "depth.critical_path.v1": {
+          "nonlinear_ciphertext.max_depth": 3,
+          "nonlinear_ciphertext.confidence": "inferred"
+        }
+      },
+      "numerical_validity_expected": true,
+      "notes": "hand-derived: scalar multiply (depth 0) then three chained ciphertext-ciphertext multiplies"
+    },
+    {
+      "case_id": "depth.positive.opaque_inner_product",
+      "path": "cases/depth_inner_product.py",
+      "kind": "positive",
+      "mutation_id": "",
+      "expected": {
+        "depth.critical_path.v1": "positive"
+      },
+      "expected_evidence": {
+        "depth.critical_path.v1": {
+          "nonlinear_ciphertext.confidence": "unknown"
+        }
+      },
+      "numerical_validity_expected": true,
+      "notes": "EvalInnerProduct is opaque; the rule must report unknown depth rather than a number"
+    },
+    {
+      "case_id": "depth.negative.linear_only",
+      "path": "cases/depth_linear_only.py",
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "expected": {
+        "depth.critical_path.v1": "positive"
+      },
+      "expected_evidence": {
+        "depth.critical_path.v1": {
+          "nonlinear_ciphertext.max_depth": 0,
+          "nonlinear_ciphertext.confidence": "inferred"
+        }
+      },
+      "hard_negative_reason": "additions and a rotation only; the rule must not count them as depth",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "packing.kernel.full_utilization",
+      "path": "cases/packing_full_utilization.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "packing.low_utilization_annotated.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "packing.positive.low_utilization",
+      "path": "cases/packing_low_utilization.py",
+      "clean_kernel": "cases/packing_full_utilization.py",
+      "kind": "positive",
+      "mutation_id": "eight-meaningful-slots",
+      "expected": {
+        "packing.low_utilization_annotated.v1": "positive"
+      },
+      "expected_evidence": {
+        "packing.low_utilization_annotated.v1": {
+          "meaningful_slots": 8
+        }
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "provenance.positive.public_ct_mult",
+      "path": "cases/provenance_public_ct_mult.py",
+      "clean_kernel": "cases/provenance_public_pt_only.py",
+      "kind": "positive",
+      "mutation_id": "public-constant-as-ciphertext-operand",
+      "expected": {
+        "provenance.public_value_ciphertext_mult.v1": "positive"
+      },
+      "expected_source_lines": {
+        "provenance.public_value_ciphertext_mult.v1": [
+          22
+        ]
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "provenance.negative.public_pt_only",
+      "path": "cases/provenance_public_pt_only.py",
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "expected": {
+        "provenance.public_value_ciphertext_mult.v1": "clean"
+      },
+      "hard_negative_reason": "the public-constant ciphertext is only added and multiplied by a plaintext, never used in a ciphertext-ciphertext product",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "encoding.positive.repeated_constant",
+      "path": "cases/encoding_repeated_constant.py",
+      "clean_kernel": "cases/encoding_distinct_constants.py",
+      "kind": "positive",
+      "mutation_id": "same-constant-id-twice",
+      "expected": {
+        "encoding.repeated_public_constant.v1": "positive"
+      },
+      "expected_source_lines": {
+        "encoding.repeated_public_constant.v1": [
+          21,
+          25
+        ]
+      },
+      "expected_evidence": {
+        "encoding.repeated_public_constant.v1": {
+          "constant_id": "layer0",
+          "encoding_count": 2
+        }
+      },
+      "numerical_validity_expected": true,
+      "notes": "the rule attributes the finding to the two annotate_plaintext lines, where the constant_id was asserted"
+    },
+    {
+      "case_id": "encoding.negative.distinct_constants",
+      "path": "cases/encoding_distinct_constants.py",
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "expected": {
+        "encoding.repeated_public_constant.v1": "clean"
+      },
+      "hard_negative_reason": "two encodings, two different constant_ids",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "serial.positive.long_chain",
+      "path": "cases/serial_long_chain.py",
+      "clean_kernel": "cases/serial_short_chain.py",
+      "kind": "positive",
+      "mutation_id": "five-factor-serial-fold",
+      "expected": {
+        "multiplication.serial_reduction_review.v1": "positive"
+      },
+      "expected_source_lines": {
+        "multiplication.serial_reduction_review.v1": [
+          24
+        ]
+      },
+      "expected_evidence": {
+        "multiplication.serial_reduction_review.v1": {
+          "serial_multiplicative_depth": 4,
+          "balanced_multiplicative_depth": 3
+        }
+      },
+      "numerical_validity_expected": true,
+      "notes": "hand-derived: five factors fold serially in four multiplies; a balanced tree needs ceil(log2 5) = 3"
+    },
+    {
+      "case_id": "serial.negative.short_chain",
+      "path": "cases/serial_short_chain.py",
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "expected": {
+        "multiplication.serial_reduction_review.v1": "clean"
+      },
+      "hard_negative_reason": "associative region assessed, but a two-multiply fold is already balanced",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "serial.negative.non_associative",
+      "path": "cases/serial_non_associative.py",
+      "clean_kernel": "cases/serial_long_chain.py",
+      "kind": "hard_negative",
+      "mutation_id": "region-declared-non-associative",
+      "expected": {
+        "multiplication.serial_reduction_review.v1": "not_applicable"
+      },
+      "hard_negative_reason": "same long chain, but without an associativity assertion the rule must decline to assess",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "precision.positive.drop",
+      "path": "cases/precision_drop.py",
+      "clean_kernel": "cases/precision_no_drop.py",
+      "kind": "positive",
+      "mutation_id": "three-squarings-of-values-above-one",
+      "expected": {
+        "precision.checkpoint_drop.v1": "positive"
+      },
+      "expected_evidence": {
+        "precision.checkpoint_drop.v1": {
+          "from_checkpoint": "fresh",
+          "to_checkpoint": "after_three_squarings"
+        }
+      },
+      "numerical_validity_expected": true,
+      "notes": "loses 11-14 absolute bits on this build; the exact count varies with encryption noise and is not pinned"
+    },
+    {
+      "case_id": "precision.negative.recovered",
+      "path": "cases/precision_no_drop.py",
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "expected": {
+        "precision.checkpoint_drop.v1": "clean"
+      },
+      "hard_negative_reason": "the later checkpoint is a fresh re-encryption and is ~14 bits more precise than the earlier one; an improvement is not a drop",
+      "numerical_validity_expected": true,
+      "notes": "two checkpoints on one unchanged ciphertext are not usable as a negative: decryption noise flooding makes the rule fire on sub-bit differences about half the time (see README.md)"
+    },
+    {
+      "case_id": "bootstrap.limitation.underused_real",
+      "path": "cases/bootstrap_underused_real.py",
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "expected": {
+        "bootstrap.restored_levels_underused.v1": "clean"
+      },
+      "hard_negative_reason": "the refresh is underused, but GetLevel() is unchanged by EvalBootstrap on OpenFHE Python 1.5.1.0, so the rule has no level delta and must not fabricate one",
+      "numerical_validity_expected": true,
+      "notes": "no real-binding positive exists for this rule; see README.md and tests/golden/test_bootstrap.py"
+    },
+    {
+      "case_id": "configuration.positive.not_set",
+      "path": "cases/security_not_set.py",
+      "clean_kernel": "cases/security_default.py",
+      "kind": "positive",
+      "mutation_id": "hestd-notset-ring-64",
+      "expected": {
+        "configuration.testing_only_security.v1": "positive"
+      },
+      "expected_evidence": {
+        "configuration.testing_only_security.v1": {
+          "security_level": "HEStd_NotSet",
+          "declared_ring_dimension": 64,
+          "acknowledged": false
+        }
+      },
+      "numerical_validity_expected": true,
+      "notes": "parameters= declared; the run is not acknowledged, so the finding is a warning"
+    },
+    {
+      "case_id": "configuration.kernel.default",
+      "path": "cases/security_default.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "configuration.testing_only_security.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "configuration.negative.undeclared",
+      "path": "cases/security_undeclared.py",
+      "clean_kernel": "cases/security_not_set.py",
+      "kind": "hard_negative",
+      "mutation_id": "parameters-not-declared",
+      "expected": {
+        "configuration.testing_only_security.v1": "not_applicable"
+      },
+      "hard_negative_reason": "HEStd_NotSet is in use but undeclared; the rule must decline rather than infer it from the 64-slot ring",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "precision.negative.same_ciphertext",
+      "path": "cases/precision_same_ciphertext.py",
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "expected": {
+        "precision.checkpoint_drop.v1": "clean"
+      },
+      "hard_negative_reason": "two decryptions of one ciphertext differ only by noise flooding (about half a bit), below the one-bit minimum",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "precision.positive.tolerance_violated",
+      "path": "cases/precision_tolerance_violated.py",
+      "clean_kernel": "cases/precision_tolerance_within.py",
+      "kind": "positive",
+      "mutation_id": "absolute-tolerance-1e-11",
+      "expected": {
+        "precision.tolerance_violated.v1": "positive"
+      },
+      "expected_evidence": {
+        "precision.tolerance_violated.v1": {
+          "violated_checkpoint": "after_three_squarings",
+          "previous_checkpoint": "fresh",
+          "violated": [
+            "absolute"
+          ]
+        }
+      },
+      "numerical_validity_expected": true,
+      "notes": "fresh error ~1e-13 is within 1e-11; after three squarings the error is ~1e-9 and the contract breaks"
+    },
+    {
+      "case_id": "precision.negative.tolerance_within",
+      "path": "cases/precision_tolerance_within.py",
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "expected": {
+        "precision.tolerance_violated.v1": "clean"
+      },
+      "hard_negative_reason": "same computation and loss, but the declared 1e-3 tolerance is far looser than the ~1e-9 error",
+      "numerical_validity_expected": true
+    }
+  ]
+}

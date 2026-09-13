@@ -1,0 +1,912 @@
+{
+  "all_matched": true,
+  "cases": [
+    {
+      "bundle": "bundles/rotation.kernel.clean",
+      "case_id": "rotation.kernel.clean",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "keys.unused_in_observed_run.v1"
+        },
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "rotation.hoist_same_input.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/rotation.positive.same_version",
+      "case_id": "rotation.positive.same_version",
+      "clean_kernel": "rotation_kernel_clean.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {
+        "keys.unused_in_observed_run.v1": [
+          19
+        ],
+        "rotation.hoist_same_input.v1": [
+          21,
+          22,
+          23
+        ]
+      },
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "three-indices-one-version-plus-unused-key",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "keys.unused_in_observed_run.v1"
+        },
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "rotation.hoist_same_input.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/rotation.negative.different_versions",
+      "case_id": "rotation.negative.different_versions",
+      "clean_kernel": "rotation_kernel_clean.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "each rotation reads a different ciphertext version, so no shared precompute exists; every generated key is used",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "three-indices-three-versions",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "keys.unused_in_observed_run.v1"
+        },
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "rotation.hoist_same_input.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/rotation.negative.single_index",
+      "case_id": "rotation.negative.single_index",
+      "clean_kernel": "rotation_kernel_clean.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "same version, but only one distinct rotation index",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "one-index-three-times",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "keys.unused_in_observed_run.v1"
+        },
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "rotation.hoist_same_input.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/parameters.kernel.full_use",
+      "case_id": "parameters.kernel.full_use",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "parameters.depth_headroom_observed.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/parameters.positive.headroom",
+      "case_id": "parameters.positive.headroom",
+      "clean_kernel": "parameters_full_use.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "configured-depth-4-consumed-1",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "parameters.depth_headroom_observed.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/depth.positive.horner",
+      "case_id": "depth.positive.horner",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "depth.critical_path.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/depth.positive.opaque_inner_product",
+      "case_id": "depth.positive.opaque_inner_product",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "depth.critical_path.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/depth.negative.linear_only",
+      "case_id": "depth.negative.linear_only",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "additions and a rotation only; the rule must not count them as depth",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "depth.critical_path.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/packing.kernel.full_utilization",
+      "case_id": "packing.kernel.full_utilization",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "packing.low_utilization_annotated.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/packing.positive.low_utilization",
+      "case_id": "packing.positive.low_utilization",
+      "clean_kernel": "packing_full_utilization.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "eight-meaningful-slots",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "packing.low_utilization_annotated.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/provenance.positive.public_ct_mult",
+      "case_id": "provenance.positive.public_ct_mult",
+      "clean_kernel": "provenance_public_pt_only.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {
+        "provenance.public_value_ciphertext_mult.v1": [
+          22
+        ]
+      },
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "public-constant-as-ciphertext-operand",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "provenance.public_value_ciphertext_mult.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/provenance.negative.public_pt_only",
+      "case_id": "provenance.negative.public_pt_only",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "the public-constant ciphertext is only added and multiplied by a plaintext, never used in a ciphertext-ciphertext product",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "provenance.public_value_ciphertext_mult.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/encoding.positive.repeated_constant",
+      "case_id": "encoding.positive.repeated_constant",
+      "clean_kernel": "encoding_distinct_constants.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {
+        "encoding.repeated_public_constant.v1": [
+          21,
+          25
+        ]
+      },
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "same-constant-id-twice",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "encoding.repeated_public_constant.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/encoding.negative.distinct_constants",
+      "case_id": "encoding.negative.distinct_constants",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "two encodings, two different constant_ids",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "encoding.repeated_public_constant.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/serial.positive.long_chain",
+      "case_id": "serial.positive.long_chain",
+      "clean_kernel": "serial_short_chain.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {
+        "multiplication.serial_reduction_review.v1": [
+          24
+        ]
+      },
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "five-factor-serial-fold",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "multiplication.serial_reduction_review.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/serial.negative.short_chain",
+      "case_id": "serial.negative.short_chain",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "associative region assessed, but a two-multiply fold is already balanced",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "multiplication.serial_reduction_review.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/serial.negative.non_associative",
+      "case_id": "serial.negative.non_associative",
+      "clean_kernel": "serial_long_chain.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "same long chain, but without an associativity assertion the rule must decline to assess",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "region-declared-non-associative",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "not_applicable",
+          "observed": "not_applicable",
+          "outcome": "expected_not_applicable",
+          "rule_id": "multiplication.serial_reduction_review.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/precision.positive.drop",
+      "case_id": "precision.positive.drop",
+      "clean_kernel": "precision_no_drop.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "three-squarings-of-values-above-one",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "precision.checkpoint_drop.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/precision.negative.recovered",
+      "case_id": "precision.negative.recovered",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "the later checkpoint is a fresh re-encryption and is ~14 bits more precise than the earlier one; an improvement is not a drop",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "precision.checkpoint_drop.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/bootstrap.limitation.underused_real",
+      "case_id": "bootstrap.limitation.underused_real",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "the refresh is underused, but GetLevel() is unchanged by EvalBootstrap on OpenFHE Python 1.5.1.0, so the rule has no level delta and must not fabricate one",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "bootstrap.restored_levels_underused.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/configuration.positive.not_set",
+      "case_id": "configuration.positive.not_set",
+      "clean_kernel": "security_default.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "hestd-notset-ring-64",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "configuration.testing_only_security.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/configuration.kernel.default",
+      "case_id": "configuration.kernel.default",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "configuration.testing_only_security.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/configuration.negative.undeclared",
+      "case_id": "configuration.negative.undeclared",
+      "clean_kernel": "security_not_set.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "HEStd_NotSet is in use but undeclared; the rule must decline rather than infer it from the 64-slot ring",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "parameters-not-declared",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "not_applicable",
+          "observed": "not_applicable",
+          "outcome": "expected_not_applicable",
+          "rule_id": "configuration.testing_only_security.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/precision.negative.same_ciphertext",
+      "case_id": "precision.negative.same_ciphertext",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "two decryptions of one ciphertext differ only by noise flooding (about half a bit), below the one-bit minimum",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "precision.checkpoint_drop.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/precision.positive.tolerance_violated",
+      "case_id": "precision.positive.tolerance_violated",
+      "clean_kernel": "precision_tolerance_within.py",
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "absolute-tolerance-1e-11",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "precision.tolerance_violated.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1",
+        "precision.checkpoint_drop.v1"
+      ]
+    },
+    {
+      "bundle": "bundles/precision.negative.tolerance_within",
+      "case_id": "precision.negative.tolerance_within",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "same computation and loss, but the declared 1e-3 tolerance is far looser than the ~1e-9 error",
+      "invalid_reason": null,
+      "kind": "hard_negative",
+      "mutation_id": "",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "clean",
+          "observed": "clean",
+          "outcome": "true_negative",
+          "rule_id": "precision.tolerance_violated.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1",
+        "precision.checkpoint_drop.v1"
+      ]
+    }
+  ],
+  "table": [
+    {
+      "detected": 0,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 0,
+      "recall": null,
+      "rule_id": "bootstrap.restored_levels_underused.v1",
+      "seeded_negatives": 1,
+      "seeded_positives": 0
+    },
+    {
+      "detected": 1,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 1,
+      "recall": 1.0,
+      "rule_id": "configuration.testing_only_security.v1",
+      "seeded_negatives": 2,
+      "seeded_positives": 1
+    },
+    {
+      "detected": 3,
+      "false_positives": 0,
+      "fp_rate": null,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 0,
+      "recall": 1.0,
+      "rule_id": "depth.critical_path.v1",
+      "seeded_negatives": 0,
+      "seeded_positives": 3
+    },
+    {
+      "detected": 1,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 0,
+      "recall": 1.0,
+      "rule_id": "encoding.repeated_public_constant.v1",
+      "seeded_negatives": 1,
+      "seeded_positives": 1
+    },
+    {
+      "detected": 1,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 0,
+      "recall": 1.0,
+      "rule_id": "keys.unused_in_observed_run.v1",
+      "seeded_negatives": 3,
+      "seeded_positives": 1
+    },
+    {
+      "detected": 1,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 1,
+      "recall": 1.0,
+      "rule_id": "multiplication.serial_reduction_review.v1",
+      "seeded_negatives": 2,
+      "seeded_positives": 1
+    },
+    {
+      "detected": 1,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 0,
+      "recall": 1.0,
+      "rule_id": "packing.low_utilization_annotated.v1",
+      "seeded_negatives": 1,
+      "seeded_positives": 1
+    },
+    {
+      "detected": 1,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 0,
+      "recall": 1.0,
+      "rule_id": "parameters.depth_headroom_observed.v1",
+      "seeded_negatives": 1,
+      "seeded_positives": 1
+    },
+    {
+      "detected": 1,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 0,
+      "recall": 1.0,
+      "rule_id": "precision.checkpoint_drop.v1",
+      "seeded_negatives": 2,
+      "seeded_positives": 1
+    },
+    {
+      "detected": 1,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 0,
+      "recall": 1.0,
+      "rule_id": "precision.tolerance_violated.v1",
+      "seeded_negatives": 1,
+      "seeded_positives": 1
+    },
+    {
+      "detected": 1,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 0,
+      "recall": 1.0,
+      "rule_id": "provenance.public_value_ciphertext_mult.v1",
+      "seeded_negatives": 1,
+      "seeded_positives": 1
+    },
+    {
+      "detected": 1,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 0,
+      "recall": 1.0,
+      "rule_id": "rotation.hoist_same_input.v1",
+      "seeded_negatives": 3,
+      "seeded_positives": 1
+    },
+    {
+      "detected": 13,
+      "false_positives": 0,
+      "fp_rate": 0.0,
+      "invalid_runs": 0,
+      "mismatches": 0,
+      "not_applicable_cases": 2,
+      "recall": 1.0,
+      "rule_id": "ALL",
+      "seeded_negatives": 18,
+      "seeded_positives": 13
+    }
+  ]
+}

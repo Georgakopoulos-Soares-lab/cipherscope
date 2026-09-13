@@ -1,9 +1,8 @@
-"""Tests for deterministic and privacy-conscious bundle projections."""
+"""Tests for deterministic bundle projections."""
 
 from __future__ import annotations
 
 import json
-import stat
 import tempfile
 import unittest
 from pathlib import Path
@@ -36,12 +35,6 @@ def sample_artifacts() -> tuple[dict, dict, dict]:
                 "operator_overload_coverage": False,
                 "original_reference_bypass_observable": False,
             },
-            "privacy": {
-                "paths": "basename_hash",
-                "plaintext_serialized": False,
-                "key_material_serialized": False,
-                "object_repr_serialized": False,
-            },
         },
         "context": {
             "scheme": "CKKS",
@@ -63,7 +56,6 @@ def sample_artifacts() -> tuple[dict, dict, dict]:
                     "line": 7,
                     "function": "workload",
                     "qualified_function": "workload",
-                    "source_sha256": "a" * 64,
                     "call_site_id": "site_test",
                 },
                 "input_ciphertexts": ["ct_0001:v0"],
@@ -140,9 +132,8 @@ class ExporterTests(unittest.TestCase):
         self.assertNotIn("<script>alert", html)
         self.assertNotIn("<script>bad", html)
         self.assertIn("&lt;script&gt;alert", html)
-        self.assertIn("Sensitive artifact", html)
 
-    def test_complete_bundle_is_private_parseable_and_collision_safe(self) -> None:
+    def test_complete_bundle_is_parseable_and_collision_safe(self) -> None:
         trace, graph, recommendations = sample_artifacts()
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "run"
@@ -165,10 +156,6 @@ class ExporterTests(unittest.TestCase):
                 "schemas",
             }
             self.assertEqual({path.name for path in output.iterdir()}, expected)
-            self.assertEqual(stat.S_IMODE(output.stat().st_mode), 0o700)
-            for path in output.iterdir():
-                if path.is_file():
-                    self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
             json.loads((output / "manifest.json").read_text(encoding="utf-8"))
             json.loads((output / "trace.json").read_text(encoding="utf-8"))
             json.loads((output / "perfetto-trace.json").read_text(encoding="utf-8"))

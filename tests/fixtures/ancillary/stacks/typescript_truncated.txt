@@ -1,5 +1,0 @@
-RangeError: synthetic metadata exceeds test boundary
-    at normalize (/repo/src/normalizer.ts:12:17)
-    at collect (/repo/src/collector.ts:88:22)
-    at collect (/repo/src/collector.ts:88:22)
-... 96 frames omitted by synthetic truncation ...

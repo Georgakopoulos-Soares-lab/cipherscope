@@ -1,17 +1,18 @@
-"""Compatibility descriptions for the covered OpenFHE-shaped API slice."""
+"""Describe and inspect the supported OpenFHE API calls."""
 
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any, Callable, Iterable, Mapping
+from typing import Any
 
 from .state import CiphertextMetadata
 
 
 @dataclass(frozen=True)
 class OperationSpec:
-    """Declarative coverage information for one native context method."""
+    """Tracing settings for one OpenFHE context method."""
 
     name: str
     default_overload: str
@@ -118,10 +119,10 @@ CORE_OPERATIONS: dict[str, OperationSpec] = {
 
 
 class CompatibilityRegistry:
-    """Classify calls and safely inspect OpenFHE-shaped objects.
+    """Classify calls and read supported fields from OpenFHE objects.
 
     Applications can provide an explicit ``ciphertext_type`` or predicate. The
-    default shape check requires the two metadata getters used by the MVP.
+    default check looks for the level and noise-scale getters.
     """
 
     def __init__(
@@ -148,8 +149,8 @@ class CompatibilityRegistry:
         self.scheme = scheme
         self._contexts: dict[int, tuple[Any, str]] = {}
 
-    def for_session(self) -> "CompatibilityRegistry":
-        """Return an equivalent registry with fresh run-local object identities."""
+    def for_session(self) -> CompatibilityRegistry:
+        """Return the same configuration with no previously seen contexts."""
 
         return CompatibilityRegistry(
             ciphertext_type=self._ciphertext_type,
@@ -170,7 +171,7 @@ class CompatibilityRegistry:
         return "unclassified"
 
     def is_ciphertext(self, value: Any) -> bool:
-        """Identify ciphertexts without hashing or representing them."""
+        """Return whether a value has the expected ciphertext type or methods."""
 
         if self._ciphertext_predicate is not None:
             try:
@@ -187,7 +188,7 @@ class CompatibilityRegistry:
             return False
 
     def collect_ciphertexts(self, *values: Any) -> list[Any]:
-        """Traverse supported containers and preserve observed alias order."""
+        """Find ciphertexts in arguments while preserving their order."""
 
         found: list[Any] = []
         seen_containers: set[int] = set()
@@ -282,8 +283,39 @@ class CompatibilityRegistry:
             missing_fields=tuple(missing),
         )
 
+    def snapshot_parameters(self, parameters: Any) -> dict[str, Any]:
+        """Read the declared CCParams fields the live context cannot expose."""
+
+        missing: list[str] = []
+        security_level = self._read(
+            parameters, "security_level", ("GetSecurityLevel",), ("security_level",), missing
+        )
+        ring_dimension = self._read(
+            parameters, "declared_ring_dimension", ("GetRingDim",), ("ring_dim",), missing
+        )
+        depth = self._read(
+            parameters,
+            "declared_multiplicative_depth",
+            ("GetMultiplicativeDepth",),
+            ("multiplicative_depth",),
+            missing,
+        )
+        scaling_mod_size = self._read(
+            parameters, "scaling_mod_size", ("GetScalingModSize",), ("scaling_mod_size",), missing
+        )
+        # OpenFHE reports 0 when the library chose the ring dimension itself.
+        if ring_dimension == 0:
+            ring_dimension = None
+        return {
+            "security_level": security_level,
+            "declared_ring_dimension": ring_dimension,
+            "declared_multiplicative_depth": depth,
+            "scaling_mod_size": scaling_mod_size,
+            "parameters_missing": sorted(set(missing)),
+        }
+
     def snapshot_context(self, context: Any) -> dict[str, Any]:
-        """Capture a minimal, privacy-safe context description."""
+        """Read the supported context metadata fields."""
 
         missing: list[str] = []
         context_id = self._register_context(context)
@@ -303,8 +335,7 @@ class CompatibilityRegistry:
         )
         scheme = self._read(context, "scheme", (), ("scheme",), [])
         if scheme is None:
-            # The pinned wrapper has no GetScheme(). This value comes from the
-            # CKKS-only compatibility contract, not from a fabricated getter.
+            # The supported wrapper has no GetScheme(), so use the configured scheme.
             scheme = self.scheme
         depth = self._read(
             context,
@@ -356,9 +387,9 @@ class CompatibilityRegistry:
         existing = self._contexts.get(identity)
         if existing is not None and existing[0] is context:
             return existing[1]
-        trace_id = f"context_{len(self._contexts) + 1:04d}"
-        self._contexts[identity] = (context, trace_id)
-        return trace_id
+        context_id = f"context_{len(self._contexts) + 1:04d}"
+        self._contexts[identity] = (context, context_id)
+        return context_id
 
     def _context_id_for(self, context: Any) -> str | None:
         if context is None:
@@ -366,8 +397,7 @@ class CompatibilityRegistry:
         existing = self._contexts.get(id(context))
         if existing is not None and existing[0] is context:
             return existing[1]
-        # pybind may materialize a new Python wrapper for the same shared native
-        # context. A single-context session can still attribute it unambiguously.
+        # pybind may return a new Python object for the session's native context.
         if len(self._contexts) == 1:
             return next(iter(self._contexts.values()))[1]
         return None
@@ -391,12 +421,10 @@ class CompatibilityRegistry:
         args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
     ) -> list[str]:
-        """Classify operands using safe values and covered API argument roles.
+        """Classify operands from their types and documented argument positions.
 
-        Key and plaintext binding objects intentionally have no structural
-        inspection fallback: their role is known only where the pinned method
-        contract makes it explicit. This avoids calling representations or
-        probing arbitrary attributes on sensitive objects.
+        Key and plaintext types vary across bindings, so their positions in the
+        supported method signatures determine their labels.
         """
 
         values = [*args, *kwargs.values()]
@@ -570,7 +598,7 @@ class CompatibilityRegistry:
                 continue
             try:
                 raw = getter()
-                normalized = CompatibilityRegistry._safe_scalar(raw)
+                normalized = CompatibilityRegistry._scalar_value(raw)
                 if normalized is not None or raw is None:
                     return normalized
             except Exception:
@@ -579,7 +607,7 @@ class CompatibilityRegistry:
         for attribute_name in attributes:
             try:
                 raw = getattr(owner, attribute_name)
-                normalized = CompatibilityRegistry._safe_scalar(raw)
+                normalized = CompatibilityRegistry._scalar_value(raw)
                 if normalized is not None or raw is None:
                     return normalized
             except AttributeError:
@@ -592,7 +620,7 @@ class CompatibilityRegistry:
 
     @staticmethod
     def _read_object(owner: Any, getters: tuple[str, ...]) -> Any:
-        """Read an opaque related object without converting or representing it."""
+        """Read a related object returned by one of the named getters."""
 
         for getter_name in getters:
             try:
@@ -604,15 +632,14 @@ class CompatibilityRegistry:
         return None
 
     @staticmethod
-    def _safe_scalar(value: Any) -> int | float | str | bool | None:
+    def _scalar_value(value: Any) -> int | float | str | bool | None:
         if value is None or isinstance(value, (str, bool, int)):
             return value
         if isinstance(value, float) and math.isfinite(value):
             return value
-        # pybind11 enums expose a bounded symbolic ``name``. Reading the name is
-        # safe; calling str()/repr() on an arbitrary native object is not.
+        # pybind11 enums expose their string value through ``name``.
         try:
-            enum_name = getattr(value, "name")
+            enum_name = value.name
         except Exception:
             return None
         if isinstance(enum_name, str) and enum_name:

@@ -1,22 +1,17 @@
-"""Privacy-bounded source attribution for traced calls."""
+"""Find the Python source location for traced calls."""
 
 from __future__ import annotations
 
-import hashlib
 import inspect
 import threading
 from pathlib import Path
 from types import CodeType, FrameType
 
-from .state import SourceAttribution, UNKNOWN_SOURCE
+from .state import UNKNOWN_SOURCE, SourceAttribution
 
 
 class SourceResolver:
-    """Resolve and cache the first frame outside configured internal packages.
-
-    Only a basename is emitted. The absolute path is used transiently to hash the
-    source file and is never retained in the returned trace value.
-    """
+    """Find and cache the Python caller outside CipherScope."""
 
     def __init__(self, internal_modules: tuple[str, ...] = ("cipherscope",)) -> None:
         self._internal_modules = internal_modules
@@ -24,7 +19,7 @@ class SourceResolver:
         self._lock = threading.Lock()
 
     def capture(self, operation: str) -> SourceAttribution:
-        """Capture the first external Python frame for ``operation``."""
+        """Return the first Python caller outside CipherScope."""
 
         frame = inspect.currentframe()
         try:
@@ -57,33 +52,23 @@ class SourceResolver:
     def _resolve_frame(frame: FrameType, operation: str) -> SourceAttribution:
         code = frame.f_code
         filename = code.co_filename
-        basename = Path(filename).name if filename else None
-        source_hash: str | None = None
-        if filename and not (filename.startswith("<") and filename.endswith(">")):
-            try:
-                source_hash = hashlib.sha256(Path(filename).read_bytes()).hexdigest()
-            except OSError:
-                source_hash = None
+        file = None
+        if filename:
+            file = (
+                filename
+                if filename.startswith("<") and filename.endswith(">")
+                else str(Path(filename).resolve())
+            )
 
         qualified_name = getattr(code, "co_qualname", code.co_name)
         line = frame.f_lineno
-        material = "\0".join(
-            (
-                source_hash or "unknown",
-                basename or "unknown",
-                qualified_name,
-                str(line),
-                operation,
-            )
-        )
-        call_site_id = (
-            "site_" + hashlib.sha256(material.encode("utf-8")).hexdigest()[:12]
+        call_site_id = ":".join(
+            ("site", file or "unknown", str(line), qualified_name, operation)
         )
         return SourceAttribution(
-            file=basename,
+            file=file,
             line=line,
             function=code.co_name,
             qualified_function=qualified_name,
-            source_sha256=source_hash,
             call_site_id=call_site_id,
         )

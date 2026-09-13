@@ -5,18 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ..validation import ValidationError, validate_recommendations, validate_trace
-
+from ._shared import event_order, finalize, require_valid_trace
 
 RULE_ID = "keys.unused_in_observed_run.v1"
-
-
-def _event_order(event: Mapping[str, Any]) -> tuple[int, str]:
-    sequence = event.get("sequence")
-    return (
-        sequence if isinstance(sequence, int) else 2**63,
-        str(event.get("event_id", "")),
-    )
 
 
 def _integer_list(value: Any) -> list[int] | None:
@@ -35,12 +26,10 @@ def analyze_keys(trace: Mapping[str, Any]) -> dict[str, Any]:
     applicable rather than turning unknown key use into an "unused" claim.
     """
 
-    validation = validate_trace(trace)
-    if not validation.valid:
-        raise ValidationError("trace", validation.errors)
+    require_valid_trace(trace)
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
-        key=_event_order,
+        key=event_order,
     )
     base = {
         "schema_version": trace["schema_version"],
@@ -184,23 +173,8 @@ def analyze_keys(trace: Mapping[str, Any]) -> dict[str, Any]:
         "inventory": inventory,
         "findings": [finding],
     }
-    result_validation = validate_recommendations(result, trace=trace)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace)
 
 
-class KeyUsageAnalyzer:
-    """Plugin-style wrapper for observed-run key analysis."""
 
-    rule_id = RULE_ID
-    required_fields = (
-        "events[].semantic_arguments.rotation_indices_requested",
-        "events[].semantic_arguments.rotation_index_requested",
-    )
-
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_keys(trace)
-
-
-__all__ = ["KeyUsageAnalyzer", "RULE_ID", "analyze_keys"]
+__all__ = ["RULE_ID", "analyze_keys"]

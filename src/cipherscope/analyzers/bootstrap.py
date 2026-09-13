@@ -5,24 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ..graph import build_graph
-from ..validation import (
-    ValidationError,
-    validate_graph,
-    validate_recommendations,
-    validate_trace,
-)
-
+from ._shared import event_order, finalize, resolve_graph
 
 RULE_ID = "bootstrap.restored_levels_underused.v1"
-
-
-def _event_order(event: Mapping[str, Any]) -> tuple[int, str]:
-    sequence = event.get("sequence")
-    return (
-        sequence if isinstance(sequence, int) else 2**63,
-        str(event.get("event_id", "")),
-    )
 
 
 def _snapshot_level(states: Any, ciphertext_id: str) -> int | None:
@@ -59,14 +44,7 @@ def analyze_bootstrap(
     correctly placed for noise reasons this executed run cannot observe.
     """
 
-    trace_result = validate_trace(trace)
-    if not trace_result.valid:
-        raise ValidationError("trace", trace_result.errors)
-    if graph is None:
-        graph = build_graph(trace)
-    graph_result = validate_graph(graph, trace=trace)
-    if not graph_result.valid:
-        raise ValidationError("graph", graph_result.errors)
+    graph = resolve_graph(trace, graph)
 
     base = {
         "schema_version": trace["schema_version"],
@@ -74,7 +52,7 @@ def analyze_bootstrap(
     }
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
-        key=_event_order,
+        key=event_order,
     )
     bootstraps = [
         event
@@ -212,26 +190,7 @@ def analyze_bootstrap(
             "inventory": inventory,
             "findings": [],
         }
-    result_validation = validate_recommendations(result, trace=trace, graph=graph)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace, graph=graph)
 
 
-class BootstrapAnalyzer:
-    """Plugin-style wrapper for observed-run bootstrap analysis."""
-
-    rule_id = RULE_ID
-    required_fields = (
-        "events[].operation == EvalBootstrap",
-        "events[].input_states[].level",
-        "events[].output_states[].level",
-    )
-
-    def analyze(
-        self, trace: Mapping[str, Any], graph: Mapping[str, Any] | None = None
-    ) -> dict[str, Any]:
-        return analyze_bootstrap(trace, graph)
-
-
-__all__ = ["RULE_ID", "BootstrapAnalyzer", "analyze_bootstrap"]
+__all__ = ["RULE_ID", "analyze_bootstrap"]

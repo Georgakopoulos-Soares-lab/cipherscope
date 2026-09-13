@@ -1,8 +1,8 @@
 # Examples
 
-`mvp_demo.py` runs the first CipherScope vertical slice against a deterministic,
-metadata-only fake context. It is an end-to-end instrumentation example, not
-cryptography and not evidence of OpenFHE compatibility.
+`mvp_demo.py` runs a small CipherScope example against a deterministic,
+metadata-only fake context. It demonstrates the complete tracing workflow, not
+cryptography or OpenFHE compatibility.
 
 Run it from the implementation repository:
 
@@ -12,10 +12,11 @@ PYTHONPATH=src python3 -m cipherscope.cli validate /tmp/cipherscope-demo
 ```
 
 The workload intentionally generates the four required rotation keys, performs
-four rotations of one immutable ciphertext, an addition, a ciphertext-ciphertext
-multiplication, and a bootstrap. Its output should contain a versioned graph, a
-nonlinear-depth path, one conservative `rotation.hoist_same_input.v1` finding,
-and a clean `keys.unused_in_observed_run.v1` result.
+four rotations of one recorded ciphertext version, an addition, a
+ciphertext-ciphertext multiplication, and a bootstrap. Its output should contain
+a versioned graph, a nonlinear-depth path, one conservative
+`rotation.hoist_same_input.v1` finding, and a clean
+`keys.unused_in_observed_run.v1` result.
 
 ## Profile a small program with `cipherscope run`
 
@@ -62,7 +63,7 @@ The bundle contains `trace.json`, `ciphertext_graph.json`,
 `summary.html`. With the arguments above, the recommendations include a
 repeated-rotation opportunity and report generated rotation index `4` as unused
 in this observed run. The trace and timings come from actual OpenFHE calls; this
-local macOS ARM64 developer build is not a substitute for the canonical Linux
+local macOS ARM64 developer build is not a substitute for the required Linux
 compatibility gate.
 
 ## Profile existing scripts without editing them
@@ -104,8 +105,20 @@ All three complete unchanged and produce validated bundles. `dot_product.py`
 enables `ADVANCEDSHE` before `EvalSumKeyGen`, and `bootstrapping.py` performs an
 eight-slot `EvalBootstrapSetup` (with a matching level budget and slot-count
 encoding) before `EvalBootstrapKeyGen`. CipherScope observes the real calls and
-preserves any failure as a sanitized error event instead of rewriting the
+preserves any failure as an error event instead of rewriting the
 program.
+
+`profile_unmodified.py` is the canonical launcher for corpus runs. After a batch
+of runs, classify every bundle and keep only `COMPLETE` ones for analyzer-quality
+tables:
+
+```bash
+PYTHONPATH=src python -m cipherscope coverage /tmp/cipherscope-*-* \
+  --output /tmp/coverage_report.csv
+```
+
+Run `cipherscope preflight target.py` first to see whether a script calls the
+raw context or a free function that the proxy cannot observe.
 
 ## Synthetic example gallery (`examples/synthetic/`)
 
@@ -157,7 +170,7 @@ delta and reports `clean`. The underuse finding itself is exercised by the
 fake-model golden test (`tests/golden/test_bootstrap.py`); observing bootstrap
 restoration from real ciphertext getters alone is a documented limitation.
 
-### Instrumented programs (CipherScope annotation and shadow-mode API)
+### Instrumented programs (CipherScope annotations and precision checkpoints)
 
 These use CipherScope's session API (`annotate`, `annotate_plaintext`, `region`,
 `checkpoint`) to supply the explicit assertions that packing, provenance,
@@ -168,7 +181,7 @@ directly:
 | Program | Assertion used | Diagnostic exercised |
 |---|---|---|
 | `annotate_packing.py` | `annotate(meaningful_slots=...)` | packing low utilization |
-| `public_constant_mult.py` | `annotate(provenance="public_constant")` | public-value ct-ct multiply |
+| `public_constant_mult.py` | `annotate(provenance="public_constant")` | public-value ciphertext multiply |
 | `repeated_public_constant.py` | `annotate_plaintext(constant_id=...)` | repeated public-constant encoding |
 | `serial_reduction_region.py` | `region(operator="multiply", associative=True)` | serial multiplication reduction |
 | `precision_checkpoints.py` | `checkpoint(...)` in `shadow_mode=True` | precision checkpoint drop |
@@ -189,7 +202,11 @@ PYTHONPATH=src python -m cipherscope run \
 PYTHONPATH=src python -m cipherscope validate "$OUTPUT"
 ```
 
-`precision_checkpoints.py` must be run directly: shadow mode holds the secret key
-in-process to decrypt at each checkpoint and is off by default, so it is not
-enabled by the `cipherscope run` runner. It computes aggregate precision metrics
-only and never serializes the compared values.
+`precision_checkpoints.py` opts into shadow mode itself: `trace(...,
+shadow_mode=True, secret_key=...)` holds the secret key in-process to decrypt at
+each checkpoint, and that opt-in is honored both when the script runs directly
+and when it joins the `cipherscope run` runner. Checkpoints record the expected
+and observed values, so a trace from a shadow-mode run contains plaintext data.
+The example squares values above 1 so that the absolute error grows and the
+second checkpoint measurably loses bits; squaring values below 1 shrinks the
+error instead and reports `clean`.

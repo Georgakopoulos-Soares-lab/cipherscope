@@ -1,4 +1,0 @@
-<redacted>/worker.rb:18:in `decode': synthetic inner failure (ArgumentError)
-	from <redacted>/worker.rb:27:in `run'
-<redacted>/main.rb:5:in `rescue in main': synthetic outer failure (RuntimeError)
-	from <redacted>/main.rb:2:in `main'

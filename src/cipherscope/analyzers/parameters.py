@@ -5,14 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ..graph import build_graph
-from ..validation import (
-    ValidationError,
-    validate_graph,
-    validate_recommendations,
-    validate_trace,
-)
-
+from ._shared import finalize, resolve_graph
 
 RULE_ID = "parameters.depth_headroom_observed.v1"
 
@@ -25,24 +18,26 @@ def _observed_level_use(graph: Mapping[str, Any]) -> Mapping[str, Any] | None:
     return observed if isinstance(observed, Mapping) else None
 
 
+def _has_level_metadata(trace: Mapping[str, Any]) -> bool:
+    """Zero consumed levels is only a measurement if at least one level was read."""
+
+    for state in trace.get("ciphertexts", []):
+        if isinstance(state, Mapping) and isinstance(state.get("level"), int):
+            return True
+    return False
+
+
 def analyze_parameters(
     trace: Mapping[str, Any], graph: Mapping[str, Any] | None = None
 ) -> dict[str, Any]:
     """Compare the configured multiplicative depth with fully modeled level use.
 
     The rule is not applicable whenever the observed level requirement is not
-    fully measured (opaque or unresolved paths), because unused headroom cannot
+    fully measured (no missing or unresolved paths), because unused headroom cannot
     be claimed from an incomplete depth model. The result is limited to this run.
     """
 
-    trace_result = validate_trace(trace)
-    if not trace_result.valid:
-        raise ValidationError("trace", trace_result.errors)
-    if graph is None:
-        graph = build_graph(trace)
-    graph_result = validate_graph(graph, trace=trace)
-    if not graph_result.valid:
-        raise ValidationError("graph", graph_result.errors)
+    graph = resolve_graph(trace, graph)
 
     base = {
         "schema_version": trace["schema_version"],
@@ -64,13 +59,22 @@ def analyze_parameters(
             "findings": [],
         }
 
+    if not _has_level_metadata(trace):
+        return {
+            **base,
+            "analysis_status": "not_applicable",
+            "not_applicable_reasons": [
+                "No ciphertext state with a level was recorded, so level use cannot be observed."
+            ],
+            "findings": [],
+        }
     observed = _observed_level_use(graph)
     if observed is None or observed.get("confidence") != "measured":
         return {
             **base,
             "analysis_status": "not_applicable",
             "not_applicable_reasons": [
-                "Observed level use is not fully measured; opaque or unresolved paths remain."
+                "Observed level use is not fully measured; missing or unresolved paths remain."
             ],
             "findings": [],
         }
@@ -114,7 +118,7 @@ def analyze_parameters(
         "evidence": inventory,
         "applicability": [
             "a known configured multiplicative depth for this run",
-            "fully measured observed level use with no opaque or unresolved paths",
+            "fully measured observed level use with no missing or unresolved paths",
             "observed per-epoch level use below the configured depth",
         ],
         "estimated_impact": {
@@ -137,25 +141,7 @@ def analyze_parameters(
         "inventory": inventory,
         "findings": [finding],
     }
-    result_validation = validate_recommendations(result, trace=trace, graph=graph)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace, graph=graph)
 
 
-class ParameterAnalyzer:
-    """Plugin-style wrapper for observed depth-headroom analysis."""
-
-    rule_id = RULE_ID
-    required_fields = (
-        "context.configured_multiplicative_depth",
-        "critical_paths.observed_level_use.max_levels_consumed_in_epoch",
-    )
-
-    def analyze(
-        self, trace: Mapping[str, Any], graph: Mapping[str, Any] | None = None
-    ) -> dict[str, Any]:
-        return analyze_parameters(trace, graph)
-
-
-__all__ = ["RULE_ID", "ParameterAnalyzer", "analyze_parameters"]
+__all__ = ["RULE_ID", "analyze_parameters"]

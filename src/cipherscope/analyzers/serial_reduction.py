@@ -6,8 +6,7 @@ from collections.abc import Mapping
 from math import ceil, log2
 from typing import Any
 
-from ..validation import ValidationError, validate_recommendations, validate_trace
-
+from ._shared import event_order, finalize, require_valid_trace
 
 RULE_ID = "multiplication.serial_reduction_review.v1"
 _MIN_SERIAL_MULTS = 3
@@ -15,16 +14,8 @@ _MULT_OPERATIONS = {"EvalMult", "EvalMultNoRelin"}
 _CT_CT_OVERLOADS = {"ct_ct", "ciphertext_ciphertext"}
 
 
-def _event_order(event: Mapping[str, Any]) -> tuple[int, str]:
-    sequence = event.get("sequence")
-    return (
-        sequence if isinstance(sequence, int) else 2**63,
-        str(event.get("event_id", "")),
-    )
-
-
 def _longest_chain(mults: list[Mapping[str, Any]]) -> list[str]:
-    """Return the event IDs of the longest ct-ct product dependency chain.
+    """Return the event IDs of the longest ciphertext product chain.
 
     An edge exists when one multiplication consumes an output produced by an
     earlier multiplication in the same region, which is exactly a serial fold.
@@ -32,17 +23,18 @@ def _longest_chain(mults: list[Mapping[str, Any]]) -> list[str]:
 
     producers: dict[str, str] = {}
     for event in mults:
-        for output_id in event.get("output_ciphertexts", []):
-            producers[str(output_id)] = str(event["event_id"])
+        for output_ciphertext_id in event.get("output_ciphertexts", []):
+            producers[str(output_ciphertext_id)] = str(event["event_id"])
 
     best_chain: dict[str, list[str]] = {}
     longest: list[str] = []
     for event in mults:
         event_id = str(event["event_id"])
         parents = [
-            producers[str(input_id)]
-            for input_id in event.get("input_ciphertexts", [])
-            if str(input_id) in producers and producers[str(input_id)] != event_id
+            producers[str(input_ciphertext_id)]
+            for input_ciphertext_id in event.get("input_ciphertexts", [])
+            if str(input_ciphertext_id) in producers
+            and producers[str(input_ciphertext_id)] != event_id
         ]
         best_parent: list[str] = []
         for parent_id in parents:
@@ -63,9 +55,7 @@ def analyze_serial_reductions(trace: Mapping[str, Any]) -> dict[str, Any]:
     not applicable: CipherScope will not assume a balanced tree is equivalent.
     """
 
-    validation = validate_trace(trace)
-    if not validation.valid:
-        raise ValidationError("trace", validation.errors)
+    require_valid_trace(trace)
 
     base = {
         "schema_version": trace["schema_version"],
@@ -91,7 +81,7 @@ def analyze_serial_reductions(trace: Mapping[str, Any]) -> dict[str, Any]:
 
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
-        key=_event_order,
+        key=event_order,
     )
     findings: list[dict[str, Any]] = []
     evaluated = 0
@@ -177,24 +167,7 @@ def analyze_serial_reductions(trace: Mapping[str, Any]) -> dict[str, Any]:
             ],
             "findings": [],
         }
-    result_validation = validate_recommendations(result, trace=trace)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace)
 
 
-class SerialReductionAnalyzer:
-    """Plugin-style wrapper for the region-gated serial-reduction review."""
-
-    rule_id = RULE_ID
-    required_fields = (
-        "regions[].operator == multiply",
-        "regions[].associative",
-        "events[].operation in {EvalMult, EvalMultNoRelin}",
-    )
-
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_serial_reductions(trace)
-
-
-__all__ = ["RULE_ID", "SerialReductionAnalyzer", "analyze_serial_reductions"]
+__all__ = ["RULE_ID", "analyze_serial_reductions"]

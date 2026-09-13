@@ -1,77 +1,80 @@
-"""Shadow-mode precision-checkpoint drop analysis."""
+"""Measure precision loss between recorded checkpoints."""
 
 from __future__ import annotations
 
+import math
+import sys
 from collections.abc import Mapping
+from itertools import pairwise
 from typing import Any
 
-from ..validation import ValidationError, validate_recommendations, validate_trace
-
+from ._shared import event_order, finalize, require_valid_trace
 
 RULE_ID = "precision.checkpoint_drop.v1"
-
-
-def _event_order(event: Mapping[str, Any]) -> tuple[int, str]:
-    sequence = event.get("sequence")
-    return (
-        sequence if isinstance(sequence, int) else 2**63,
-        str(event.get("event_id", "")),
-    )
+TOLERANCE_RULE_ID = "precision.tolerance_violated.v1"
+# CKKS decryption is noise-flooded: re-decrypting one ciphertext jitters by ~0.6 bits.
+MIN_BITS_LOST = 1.0
 
 
 def _checkpoint_record(event: Mapping[str, Any]) -> dict[str, Any] | None:
     semantic = event.get("semantic_arguments")
     if not isinstance(semantic, Mapping):
         return None
-    metrics = semantic.get("metrics")
     name = semantic.get("checkpoint_name")
-    if not isinstance(metrics, Mapping) or not isinstance(name, str):
+    expected = semantic.get("expected_values")
+    observed = semantic.get("observed_values")
+    if (
+        not isinstance(name, str)
+        or not isinstance(expected, list)
+        or not isinstance(observed, list)
+    ):
         return None
-    if metrics.get("status") != "ok":
+    if (
+        semantic.get("status") != "ok"
+        or not expected
+        or len(expected) != len(observed)
+        or any(
+            not isinstance(value, (int, float))
+            or isinstance(value, bool)
+            or not math.isfinite(value)
+            for value in [*expected, *observed]
+        )
+    ):
         return None
-    absolute_bits = metrics.get("absolute_bits")
-    slot_count = metrics.get("slot_count")
-    if not isinstance(absolute_bits, (int, float)) or isinstance(absolute_bits, bool):
-        return None
-    if not isinstance(slot_count, int) or isinstance(slot_count, bool):
-        return None
+    max_error = max(
+        abs(float(actual) - float(wanted)) for wanted, actual in zip(expected, observed)
+    )
+    absolute_bits = -math.log2(max(max_error, sys.float_info.epsilon))
     return {
         "event_id": str(event["event_id"]),
         "checkpoint_name": name,
-        "absolute_bits": float(absolute_bits),
-        "slot_count": slot_count,
+        "absolute_bits": absolute_bits,
+        "slot_count": len(expected),
     }
 
 
 def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
-    """Rank precision drops between compatible shadow-mode checkpoints.
+    """Rank precision drops between compatible checkpoints."""
 
-    The rule is not applicable outside enabled shadow mode or with fewer than two
-    compatible checkpoints; it never reconstructs the compared values.
-    """
-
-    validation = validate_trace(trace)
-    if not validation.valid:
-        raise ValidationError("trace", validation.errors)
+    require_valid_trace(trace)
 
     base = {
         "schema_version": trace["schema_version"],
         "run_id": trace["run"]["run_id"],
     }
-    privacy = trace["run"].get("privacy", {})
-    if not (isinstance(privacy, Mapping) and privacy.get("shadow_mode") is True):
+    if trace["run"].get("shadow_mode") is not True:
         return {
             **base,
             "analysis_status": "not_applicable",
             "not_applicable_reasons": [
-                "Precision analysis requires an explicitly enabled shadow-mode run."
+                "Precision analysis requires a run created with shadow_mode=True."
             ],
             "findings": [],
         }
 
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
-        key=_event_order,
+        key=event_order,
     )
     checkpoints = [
         record
@@ -91,11 +94,11 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
         }
 
     drops: list[dict[str, Any]] = []
-    for earlier, later in zip(checkpoints, checkpoints[1:]):
+    for earlier, later in pairwise(checkpoints):
         if earlier["slot_count"] != later["slot_count"]:
             continue
         bits_lost = earlier["absolute_bits"] - later["absolute_bits"]
-        if bits_lost > 0:
+        if bits_lost >= MIN_BITS_LOST:
             drops.append(
                 {
                     "from_checkpoint": earlier["checkpoint_name"],
@@ -112,7 +115,11 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
         return {
             **base,
             "analysis_status": "clean",
-            "inventory": {"checkpoints": len(checkpoints), "drops": []},
+            "inventory": {
+                "checkpoints": len(checkpoints),
+                "drops": [],
+                "min_bits_lost_threshold": MIN_BITS_LOST,
+            },
             "findings": [],
         }
 
@@ -127,11 +134,11 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
             "confidence": "measured",
             "source_sites": [],
             "evidence_event_ids": drop["evidence_event_ids"],
-            "evidence": drop,
+            "evidence": {**drop, "min_bits_lost_threshold": MIN_BITS_LOST},
             "applicability": [
-                "an explicitly enabled shadow-mode run",
+                "a run created with shadow_mode=True",
                 "two compatible checkpoints with the same slot count",
-                "a decrease in absolute precision bits between them",
+                f"a decrease of at least {MIN_BITS_LOST:g} absolute precision bits between them",
             ],
             "estimated_impact": {
                 "absolute_bits_lost": drop["absolute_bits_lost"],
@@ -142,9 +149,9 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
                 "source of precision loss before adjusting scale or depth."
             ),
             "limitations": [
-                "Precision is measured on the shadow-mode inputs only, not all inputs.",
+                "Precision is measured only at the configured checkpoints.",
                 "A drop can be expected for the computation and is not always a defect.",
-                "Aggregate metrics are reported; the compared values are not retained.",
+                "Recorded values may reveal the data processed by the workload.",
             ],
         }
         for index, drop in enumerate(drops)
@@ -152,26 +159,132 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
     result = {
         **base,
         "analysis_status": "positive",
-        "inventory": {"checkpoints": len(checkpoints), "drops": drops},
+        "inventory": {
+            "checkpoints": len(checkpoints),
+            "drops": drops,
+            "min_bits_lost_threshold": MIN_BITS_LOST,
+        },
         "findings": findings,
     }
-    result_validation = validate_recommendations(result, trace=trace)
-    if not result_validation.valid:
-        raise ValidationError("recommendations", result_validation.errors)
-    return result
+    return finalize(result, trace=trace)
 
 
-class PrecisionAnalyzer:
-    """Plugin-style wrapper for shadow-mode precision-drop analysis."""
+def _tolerance_record(event: Mapping[str, Any]) -> dict[str, Any] | None:
+    semantic = event.get("semantic_arguments")
+    if not isinstance(semantic, Mapping) or semantic.get("status") != "ok":
+        return None
+    status = semantic.get("tolerance_status")
+    if status not in {"within", "violated"} or not isinstance(semantic.get("tolerance"), Mapping):
+        return None
+    return {
+        "event_id": str(event["event_id"]),
+        "sequence": event.get("sequence"),
+        "checkpoint_name": str(semantic.get("checkpoint_name", "")),
+        "tolerance": dict(semantic["tolerance"]),
+        "tolerance_status": status,
+        "violated": list(semantic.get("violated") or []),
+        "max_abs_error": semantic.get("max_abs_error"),
+        "max_rel_error": semantic.get("max_rel_error"),
+        "absolute_bits": semantic.get("absolute_bits"),
+    }
 
-    rule_id = RULE_ID
-    required_fields = (
-        "run.privacy.shadow_mode",
-        "events[].kind == checkpoint",
+
+def analyze_tolerance(trace: Mapping[str, Any]) -> dict[str, Any]:
+    """Report the first checkpoint that breaks its declared tolerance, with the region before it."""
+
+    require_valid_trace(trace)
+    base = {
+        "schema_version": trace["schema_version"],
+        "run_id": trace["run"]["run_id"],
+    }
+    events = sorted(
+        (event for event in trace["events"] if isinstance(event, Mapping)),
+        key=event_order,
     )
+    declared = [
+        record
+        for event in events
+        if event.get("kind") == "checkpoint"
+        for record in [_tolerance_record(event)]
+        if record is not None
+    ]
+    if not declared:
+        return {
+            **base,
+            "analysis_status": "not_applicable",
+            "not_applicable_reasons": [
+                "No precision checkpoint declared a tolerance (checkpoint(..., tolerance=...))."
+            ],
+            "findings": [],
+        }
+    violated = [record for record in declared if record["tolerance_status"] == "violated"]
+    inventory = {"declared_checkpoints": len(declared), "violated_checkpoints": len(violated)}
+    if not violated:
+        return {**base, "analysis_status": "clean", "inventory": inventory, "findings": []}
 
-    def analyze(self, trace: Mapping[str, Any]) -> dict[str, Any]:
-        return analyze_precision(trace)
+    first = violated[0]
+    previous = None
+    for record in declared:
+        if record is first:
+            break
+        previous = record
+    start = -1 if previous is None else int(previous["sequence"])
+    end = int(first["sequence"])
+    region_ids = [
+        str(event["event_id"])
+        for event in events
+        if event.get("kind") == "crypto_operation"
+        and isinstance(event.get("sequence"), int)
+        and start < event["sequence"] < end
+    ]
+    sites = sorted(
+        {
+            str(event["source"]["call_site_id"])
+            for event in events
+            if event.get("event_id") in set(region_ids)
+            and isinstance(event.get("source"), Mapping)
+            and isinstance(event["source"].get("call_site_id"), str)
+        }
+    )
+    evidence = {
+        "violated_checkpoint": first["checkpoint_name"],
+        "previous_checkpoint": None if previous is None else previous["checkpoint_name"],
+        "tolerance": first["tolerance"],
+        "violated": first["violated"],
+        "max_abs_error": first["max_abs_error"],
+        "max_rel_error": first["max_rel_error"],
+        "absolute_bits": first["absolute_bits"],
+        "region_event_ids": region_ids,
+        "later_violations": [record["checkpoint_name"] for record in violated[1:]],
+    }
+    finding = {
+        "finding_id": "finding_tolerance_0001",
+        "rule_id": TOLERANCE_RULE_ID,
+        "analyzer": "PrecisionAnalyzer",
+        "category": "precision",
+        "severity": "warning",
+        "confidence": "measured",
+        "source_sites": sites,
+        "evidence_event_ids": [first["event_id"], *region_ids],
+        "evidence": evidence,
+        "applicability": [
+            "a run created with shadow_mode=True",
+            "a checkpoint with a developer-declared tolerance",
+            "an observed error outside that tolerance",
+        ],
+        "recommendation": (
+            f"Checkpoint {first['checkpoint_name']!r} is the first to exceed its declared "
+            "tolerance; review the operations between it and the previous checkpoint for "
+            "the source of the loss."
+        ),
+        "limitations": [
+            "The tolerance is the developer's contract, not a correctness proof.",
+            "Localization is to the region between checkpoints, not to one operation.",
+            "Recorded values may reveal the data processed by the workload.",
+        ],
+    }
+    result = {**base, "analysis_status": "positive", "inventory": inventory, "findings": [finding]}
+    return finalize(result, trace=trace)
 
 
-__all__ = ["RULE_ID", "PrecisionAnalyzer", "analyze_precision"]
+__all__ = ["MIN_BITS_LOST", "RULE_ID", "TOLERANCE_RULE_ID", "analyze_precision", "analyze_tolerance"]

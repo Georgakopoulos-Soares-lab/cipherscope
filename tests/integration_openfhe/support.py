@@ -1,4 +1,4 @@
-"""Shared real-OpenFHE fixtures and bounded evidence collection.
+"""Shared fixtures and result collection for real OpenFHE tests.
 
 Nothing in this module treats a skipped import as compatibility evidence. The
 ordinary unittest suite may skip when OpenFHE is absent; ``run_gate.py`` turns
@@ -14,12 +14,12 @@ import platform
 import sys
 import threading
 from collections import Counter
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from functools import lru_cache
 from importlib import metadata
 from pathlib import Path
-from typing import Any, Iterable, Sequence
-
+from typing import Any
 
 try:
     import openfhe as fhe
@@ -41,7 +41,7 @@ def record(check_id: str, **observed: Any) -> None:
     """Record JSON-shaped observations for the authoritative gate artifact."""
 
     with _EVIDENCE_LOCK:
-        _EVIDENCE[check_id] = _json_safe(observed)
+        _EVIDENCE[check_id] = _json_value(observed)
 
 
 def evidence() -> dict[str, dict[str, Any]]:
@@ -49,14 +49,14 @@ def evidence() -> dict[str, dict[str, Any]]:
         return json.loads(json.dumps(_EVIDENCE, sort_keys=True))
 
 
-def _json_safe(value: Any) -> Any:
+def _json_value(value: Any) -> Any:
     if value is None or isinstance(value, (str, bool, int, float)):
         return value
     if isinstance(value, dict):
-        return {str(key): _json_safe(item) for key, item in value.items()}
+        return {str(key): _json_value(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
-        return [_json_safe(item) for item in value]
-    return type(value).__name__
+        return [_json_value(item) for item in value]
+    return repr(value)
 
 
 def require_openfhe() -> Any:

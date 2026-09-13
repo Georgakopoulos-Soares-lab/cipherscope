@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import threading
 import time
-from typing import TYPE_CHECKING, Any, Generic, Mapping, TypeVar, cast
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from .errors import UnsupportedOperationError
 
@@ -17,20 +18,20 @@ CiphertextT = TypeVar("CiphertextT")
 
 
 class TracedCryptoContext(Generic[ContextT, CiphertextT]):
-    """Proxy a native context while tracing explicit semantic operations."""
+    """Call supported context methods and record each call."""
 
-    def __init__(self, context: ContextT, session: "Session[Any]") -> None:
+    def __init__(self, context: ContextT, session: Session[Any]) -> None:
         self._context = context
         self._session = session
 
     @property
-    def session(self) -> "Session[Any]":
-        """Return the owning session without exposing the native context."""
+    def session(self) -> Session[Any]:
+        """Return the session that owns this proxy."""
 
         return self._session
 
-    def belongs_to(self, session: "Session[Any]") -> bool:
-        """Test proxy ownership by identity."""
+    def belongs_to(self, session: Session[Any]) -> bool:
+        """Return whether this proxy belongs to ``session``."""
 
         return self._session is session
 
@@ -47,7 +48,7 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
     def Decrypt(
         self, ciphertext: Any, private_key: Any, *args: Any, **kwargs: Any
     ) -> Any:
-        """Decrypt through the native context without inspecting its plaintext result."""
+        """Decrypt through the native context and record the call."""
 
         return self._record_covered("Decrypt", (ciphertext, private_key, *args), kwargs)
 
@@ -58,7 +59,7 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         )
 
     def EvalAddInPlace(self, left: Any, right: Any, *args: Any, **kwargs: Any) -> Any:
-        """Trace the binding's declared first-operand mutation exactly once."""
+        """Call EvalAddInPlace and record the first operand's new version."""
 
         return self._record_covered("EvalAddInPlace", (left, right, *args), kwargs)
 
@@ -152,7 +153,7 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         )
 
     def __getattr__(self, name: str) -> Any:
-        """Forward non-semantic attributes according to the coverage policy."""
+        """Forward supported attributes and handle unclassified methods."""
 
         self._session._require_active()
         attribute = getattr(self._context, name)
@@ -161,8 +162,7 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
 
         classification = self._session.compatibility.classify_callable(name)
         if classification == "traced":
-            # Covered methods are normally found on the class. This path
-            # also keeps subclass/dynamic method lookup within the same contract.
+            # This also handles supported methods added by a subclass at runtime.
             def traced(*args: Any, **kwargs: Any) -> Any:
                 return self._record_covered(name, args, kwargs)
 
@@ -178,14 +178,14 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
             return allowed
 
         if self._session.strict:
-            self._session.recorder.count_rejected_unclassified()
+            self._session.recorder.count_rejected_unclassified(name)
             raise UnsupportedOperationError(
                 f"native callable {name!r} is not covered by this CipherScope version"
             )
 
         def permissive(*args: Any, **kwargs: Any) -> Any:
             self._session._require_active()
-            self._session.recorder.count_unclassified_passthrough()
+            self._session.recorder.count_unclassified_passthrough(name)
             return attribute(*args, **kwargs)
 
         return permissive
@@ -202,14 +202,22 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         spec = compatibility.operation(operation)
         if spec is None:
             raise UnsupportedOperationError(f"operation {operation!r} is not covered")
+        if not recorder.accepting:
+            # Past a size limit: run the call untouched and count it, record nothing.
+            recorder.count_dropped_call()
+            return getattr(self._context, operation)(*args, **dict(kwargs))
 
         sequence, event_id = recorder.next_identity()
         source = self._session.source_resolver.capture(operation)
         operand_kinds = compatibility.operand_kinds_for(operation, args, kwargs)
         overload = compatibility.overload_for(operation, args, kwargs)
         semantic_arguments = compatibility.semantic_arguments(operation, args, kwargs)
+        argument_representations = [repr(value) for value in args]
+        keyword_argument_representations = {
+            name: repr(value) for name, value in sorted(kwargs.items())
+        }
 
-        # This complete input observation phase intentionally precedes every timer.
+        # Read inputs before timing so metadata access is not charged to OpenFHE.
         input_objects = self._unique_identities(
             compatibility.input_ciphertexts_for(spec, args, kwargs)
         )
@@ -219,7 +227,7 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
             input_observations.append(
                 recorder.registry.observe_input(value, metadata=metadata)
             )
-        input_ids = [item.trace_id for item in input_observations]
+        input_ciphertext_ids = [item.ciphertext_id for item in input_observations]
         input_states = [item.event_state() for item in input_observations]
         input_missing = [
             f"input[{index}].{field}"
@@ -236,7 +244,7 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         try:
             try:
                 native_method = getattr(self._context, operation)
-                # The bound native method is invoked at exactly this one site.
+                # Keep the native call at one site so it cannot run twice.
                 output = native_method(*args, **dict(kwargs))
             finally:
                 wall_duration_ns = time.perf_counter_ns() - start_ns
@@ -257,8 +265,8 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
                     granularity=spec.granularity,
                     status="error",
                     source=source.to_dict(),
-                    input_ids=input_ids,
-                    output_ids=[],
+                    input_ciphertext_ids=input_ciphertext_ids,
+                    output_ciphertext_ids=[],
                     operand_kinds=operand_kinds,
                     start_ns=start_ns,
                     wall_duration_ns=wall_duration_ns,
@@ -267,8 +275,11 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
                     input_states=input_states,
                     output_states=[],
                     semantic_arguments=semantic_arguments,
+                    argument_representations=argument_representations,
+                    keyword_argument_representations=keyword_argument_representations,
                     missing=input_missing,
                     error_class=type(error).__name__,
+                    error_message=str(error),
                 )
             )
             raise
@@ -291,11 +302,11 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
                 recorder.registry.observe_output(
                     value,
                     event_id=event_id,
-                    parent_ids=input_ids,
+                    parent_ids=input_ciphertext_ids,
                     metadata=metadata,
                 )
             )
-        output_ids = [item.trace_id for item in output_observations]
+        output_ciphertext_ids = [item.ciphertext_id for item in output_observations]
         output_states = [item.event_state() for item in output_observations]
         output_missing = [
             f"output[{index}].{field}"
@@ -312,8 +323,8 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
                 granularity=spec.granularity,
                 status="ok",
                 source=source.to_dict(),
-                input_ids=input_ids,
-                output_ids=output_ids,
+                input_ciphertext_ids=input_ciphertext_ids,
+                output_ciphertext_ids=output_ciphertext_ids,
                 operand_kinds=operand_kinds,
                 start_ns=start_ns,
                 wall_duration_ns=wall_duration_ns,
@@ -322,6 +333,9 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
                 input_states=input_states,
                 output_states=output_states,
                 semantic_arguments=semantic_arguments,
+                argument_representations=argument_representations,
+                keyword_argument_representations=keyword_argument_representations,
+                output_representation=repr(output),
                 missing=[*input_missing, *output_missing],
             )
         )
@@ -329,7 +343,7 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
 
     @staticmethod
     def _unique_identities(values: list[Any]) -> list[Any]:
-        """Deduplicate aliases without equality, hashing, or representation calls."""
+        """Remove repeated references to the same Python object."""
 
         unique: list[Any] = []
         seen: dict[int, Any] = {}
@@ -353,8 +367,8 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         granularity: str,
         status: str,
         source: dict[str, Any],
-        input_ids: list[str],
-        output_ids: list[str],
+        input_ciphertext_ids: list[str],
+        output_ciphertext_ids: list[str],
         operand_kinds: list[str],
         start_ns: int,
         wall_duration_ns: int,
@@ -363,8 +377,12 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         input_states: list[dict[str, Any]],
         output_states: list[dict[str, Any]],
         semantic_arguments: dict[str, Any],
+        argument_representations: list[str],
+        keyword_argument_representations: dict[str, str],
         missing: list[str],
         error_class: str | None = None,
+        error_message: str | None = None,
+        output_representation: str | None = None,
     ) -> dict[str, Any]:
         event: dict[str, Any] = {
             "event_id": event_id,
@@ -375,8 +393,8 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
             "granularity": granularity,
             "status": status,
             "source": source,
-            "input_ciphertexts": input_ids,
-            "output_ciphertexts": output_ids,
+            "input_ciphertexts": input_ciphertext_ids,
+            "output_ciphertexts": output_ciphertext_ids,
             "operand_kinds": operand_kinds,
             "timing": {
                 "start_ns": start_ns,
@@ -391,10 +409,16 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
             "input_states": input_states,
             "output_states": output_states,
             "semantic_arguments": semantic_arguments,
+            "argument_representations": argument_representations,
+            "keyword_argument_representations": keyword_argument_representations,
             "thread_id": threading.get_native_id(),
             "python_thread_id": threading.get_ident(),
             "missing": missing,
         }
         if error_class is not None:
             event["error_class"] = error_class
+        if error_message is not None:
+            event["error_message"] = error_message
+        if output_representation is not None:
+            event["output_representation"] = output_representation
         return event

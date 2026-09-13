@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Combine several distinct rotations of one encrypted vector.
 
-Real OpenFHE program. It rotates the same immutable ciphertext by indices 1, 2,
-and 3 and sums them, which is exactly the shape CipherScope's repeated-rotation
-analyzer looks for. A fourth rotation key (index 5) is generated but never used,
-so the observed-run key analyzer reports it as unused in this run.
+Real OpenFHE program. It rotates the same recorded ciphertext version by indices
+1, 2, and 3 and sums them, which is exactly the shape CipherScope's
+repeated-rotation analyzer looks for. A fourth rotation key (index 5) is generated
+but never used, so the observed-run key analyzer reports it as unused in this run.
 """
 
 from openfhe import *

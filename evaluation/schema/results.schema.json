@@ -1,0 +1,766 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cipherscope.dev/schemas/results.schema.json",
+  "title": "CipherScope evaluation records",
+  "description": "Raw records every paper table is generated from. CSV files under evaluation/raw and evaluation/adjudication hold one record per row; an empty cell is null. generate_paper_tables.py refuses inputs that violate this contract.",
+  "type": "object",
+  "properties": {
+    "workload_runs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/workload_run"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "seeded_cases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/seeded_case"
+      }
+    },
+    "coverage_runs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/coverage_run"
+      }
+    },
+    "scaling_runs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scaling_run"
+      }
+    },
+    "ablation_runs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ablation_run"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "lane": {
+      "enum": [
+        "developer",
+        "provisional-wheel-py312",
+        "primary-source-py311"
+      ]
+    },
+    "coverage_class": {
+      "enum": [
+        "COMPLETE",
+        "PARTIAL-PERMISSIVE",
+        "UNSUPPORTED"
+      ]
+    },
+    "adjudication": {
+      "enum": [
+        "TP-ACTIONABLE",
+        "TP-NONACTIONABLE",
+        "FALSE-POSITIVE",
+        "UNCERTAIN",
+        "NOT-IN-SCOPE",
+        null
+      ]
+    },
+    "workload_run": {
+      "description": "One measured repetition of one workload in one arm (PDF section 11.1). Baseline rows leave the tracing-only fields empty.",
+      "type": "object",
+      "required": [
+        "workload_id",
+        "workload_commit",
+        "cipherscope_commit",
+        "lane",
+        "repetition",
+        "arm",
+        "wall_ms",
+        "cpu_ms",
+        "peak_rss_mb",
+        "event_count",
+        "trace_bytes",
+        "graph_bytes",
+        "analyzer_ms",
+        "coverage_class",
+        "passthrough_calls",
+        "correctness_metric",
+        "correctness_value",
+        "machine_id",
+        "cpu_model",
+        "openfhe_version",
+        "python_version"
+      ],
+      "properties": {
+        "workload_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workload_commit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cipherscope_commit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lane": {
+          "$ref": "#/$defs/lane"
+        },
+        "repetition": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "arm": {
+          "enum": [
+            "baseline",
+            "traced"
+          ]
+        },
+        "wall_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cpu_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "peak_rss_mb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "event_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "trace_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "graph_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "analyzer_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "coverage_class": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/coverage_class"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "passthrough_calls": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "correctness_metric": {
+          "type": "string",
+          "minLength": 1
+        },
+        "correctness_value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "machine_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cpu_model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "openfhe_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "python_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "finding": {
+      "description": "One analyzer finding from a COMPLETE real run with its human verdict (PDF section 11.2, exported and merged by `cipherscope findings`). The five trailing columns are traceability context.",
+      "type": "object",
+      "required": [
+        "finding_id",
+        "workload_id",
+        "rule_id",
+        "source_file",
+        "source_lines",
+        "confidence",
+        "adjudication",
+        "adjudicator_1",
+        "adjudicator_2",
+        "disagreement",
+        "evidence_summary",
+        "transformation_id",
+        "transformation_status",
+        "before_wall_ms",
+        "after_wall_ms",
+        "speedup",
+        "before_rss_mb",
+        "after_rss_mb",
+        "correctness_before",
+        "correctness_after",
+        "upstream_issue_or_pr",
+        "notes",
+        "severity",
+        "recommendation",
+        "coverage_class",
+        "bundle",
+        "run_id"
+      ],
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workload_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_lines": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "confidence": {
+          "enum": [
+            "measured",
+            "inferred",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "adjudication": {
+          "$ref": "#/$defs/adjudication"
+        },
+        "adjudicator_1": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "adjudicator_2": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disagreement": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transformation_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "transformation_status": {
+          "enum": [
+            "validated_improvement",
+            "no_improvement",
+            "regression",
+            "not_attempted",
+            null
+          ]
+        },
+        "before_wall_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "after_wall_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "speedup": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "before_rss_mb": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "after_rss_mb": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "correctness_before": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "correctness_after": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "upstream_issue_or_pr": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "information",
+            "opportunity",
+            "warning",
+            "error"
+          ]
+        },
+        "recommendation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "coverage_class": {
+          "const": "COMPLETE"
+        },
+        "bundle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "seeded_case": {
+      "description": "One (case, rule) expectation from the seeded benchmark and what the runner observed (PDF section 11.3 plus outcome).",
+      "type": "object",
+      "required": [
+        "case_id",
+        "kind",
+        "clean_kernel",
+        "mutation_id",
+        "rule_id",
+        "expected",
+        "should_fire",
+        "expected_source_lines",
+        "numerical_validity_expected",
+        "hard_negative_reason",
+        "observed",
+        "outcome",
+        "coverage_class",
+        "bundle"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "positive",
+            "hard_negative",
+            "clean_kernel"
+          ]
+        },
+        "clean_kernel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mutation_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected": {
+          "enum": [
+            "positive",
+            "clean",
+            "not_applicable"
+          ]
+        },
+        "should_fire": {
+          "type": "boolean"
+        },
+        "expected_source_lines": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "numerical_validity_expected": {
+          "type": "boolean"
+        },
+        "hard_negative_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observed": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "hit",
+            "miss",
+            "false_positive",
+            "true_negative",
+            "expected_not_applicable",
+            "unexpected_applicability",
+            "source_mismatch",
+            "evidence_mismatch",
+            "invalid_run"
+          ]
+        },
+        "coverage_class": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/coverage_class"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bundle": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "coverage_run": {
+      "description": "One classified run bundle as written by `cipherscope coverage`.",
+      "type": "object",
+      "required": [
+        "bundle",
+        "run_id",
+        "name",
+        "entrypoint",
+        "status",
+        "strict",
+        "coverage_class",
+        "traced_semantic_calls",
+        "allowed_passthrough_calls",
+        "unclassified_proxy_passthrough_calls",
+        "rejected_unclassified_calls",
+        "unsupported_operations",
+        "static_risks",
+        "reasons"
+      ],
+      "properties": {
+        "bundle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "entrypoint": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "completed",
+            "incomplete",
+            "failed",
+            "interrupted"
+          ]
+        },
+        "strict": {
+          "type": "boolean"
+        },
+        "coverage_class": {
+          "$ref": "#/$defs/coverage_class"
+        },
+        "traced_semantic_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "allowed_passthrough_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unclassified_proxy_passthrough_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejected_unclassified_calls": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsupported_operations": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "static_risks": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reasons": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "scaling_run": {
+      "description": "One scaling-kernel process: N events of a fixed operation mix in one arm (baseline = untraced).",
+      "type": "object",
+      "required": [
+        "size",
+        "arm",
+        "repetition",
+        "events",
+        "run_wall_ms",
+        "rss_start_mb",
+        "rss_end_mb",
+        "rss_growth_mb",
+        "peak_rss_mb",
+        "finalize_ms",
+        "analyze_ms",
+        "trace_bytes",
+        "graph_bytes",
+        "recommendations_bytes",
+        "spooled",
+        "python_version",
+        "machine"
+      ],
+      "properties": {
+        "size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "arm": {
+          "enum": [
+            "baseline",
+            "streaming",
+            "buffered"
+          ]
+        },
+        "repetition": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "events": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "run_wall_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rss_start_mb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rss_end_mb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rss_growth_mb": {
+          "type": "number"
+        },
+        "peak_rss_mb": {
+          "type": "number",
+          "minimum": 0
+        },
+        "finalize_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "analyze_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "trace_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "graph_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "recommendations_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "spooled": {
+          "type": "boolean"
+        },
+        "python_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "machine": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "ablation_run": {
+      "description": "One (bundle, mode, rule) outcome from `cipherscope ablate`.",
+      "type": "object",
+      "required": [
+        "bundle",
+        "name",
+        "mode",
+        "rule_id",
+        "analysis_status",
+        "findings",
+        "signature"
+      ],
+      "properties": {
+        "bundle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "TIMING_ONLY",
+            "STATE",
+            "FULL"
+          ]
+        },
+        "rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "analysis_status": {
+          "enum": [
+            "positive",
+            "clean",
+            "not_applicable"
+          ]
+        },
+        "findings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "signature": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

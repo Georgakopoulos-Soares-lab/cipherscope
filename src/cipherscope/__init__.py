@@ -1,4 +1,4 @@
-"""CipherScope's dependency-free tracing vertical slice."""
+"""Trace and analyze OpenFHE workloads."""
 
 from __future__ import annotations
 
@@ -19,11 +19,11 @@ from .state import SCHEMA_VERSION, TOOL_VERSION
 __version__ = TOOL_VERSION
 
 __all__ = [
+    "SCHEMA_VERSION",
     "AlreadyTracedError",
     "AnnotationError",
     "CipherScopeError",
     "NoActiveSessionError",
-    "SCHEMA_VERSION",
     "Session",
     "SessionClosedError",
     "SessionLifecycleError",

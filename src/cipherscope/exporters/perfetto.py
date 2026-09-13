@@ -1,15 +1,15 @@
-"""Perfetto/Chrome Trace Event projection."""
+"""Export events in Perfetto's Chrome Trace Event format."""
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 
 def perfetto_document(trace: Mapping[str, Any]) -> dict[str, Any]:
-    """Project API-inclusive events into complete-duration trace events.
+    """Convert recorded calls to complete-duration Perfetto events.
 
-    Perfetto expects microseconds. The canonical trace remains nanosecond based;
-    this lossy projection exists only for visualization.
+    Perfetto uses microseconds, while the source trace uses nanoseconds.
     """
 
     projected: list[dict[str, Any]] = []

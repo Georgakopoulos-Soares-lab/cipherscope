@@ -26,7 +26,9 @@ def main() -> int:
 
     def traced_factory(*factory_args: Any, **factory_kwargs: Any) -> Any:
         native_context = original_factory(*factory_args, **factory_kwargs)
-        return cipherscope.attach(native_context)
+        # The context cannot report its security level; the params object can.
+        parameters = factory_args[0] if factory_args else factory_kwargs.get("params")
+        return cipherscope.attach(native_context, parameters=parameters)
 
     old_argv = sys.argv
     openfhe.GenCryptoContext = traced_factory

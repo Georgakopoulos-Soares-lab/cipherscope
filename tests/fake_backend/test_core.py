@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 import threading
 import unittest
 from pathlib import Path
@@ -153,7 +151,7 @@ class CoreTraceTests(unittest.TestCase):
 
     def test_in_place_failure_does_not_advance_ciphertext_version(self) -> None:
         backend = FakeCryptoContext()
-        backend.fail_operations["EvalAddInPlace"] = RuntimeError("sensitive")
+        backend.fail_operations["EvalAddInPlace"] = RuntimeError("backend failure")
         left = FakeCiphertext()
 
         with cipherscope.trace(backend) as session:
@@ -168,7 +166,7 @@ class CoreTraceTests(unittest.TestCase):
             all(state["id"].endswith(":v0") for state in trace["ciphertexts"])
         )
 
-    def test_encrypt_decrypt_forwarding_lineage_and_safe_roles(self) -> None:
+    def test_encrypt_decrypt_forwarding_lineage_and_representations(self) -> None:
         backend = FakeCryptoContext()
         public_key = object()
         private_key = object()
@@ -196,6 +194,11 @@ class CoreTraceTests(unittest.TestCase):
         self.assertEqual(trace["events"][1]["output_ciphertexts"], [])
         self.assertEqual(trace["events"][1]["operand_kinds"], ["ciphertext", "key"])
         self.assertEqual(trace["events"][1]["overload"], "ct_key")
+        self.assertEqual(
+            trace["events"][0]["argument_representations"],
+            [repr(public_key), repr(plaintext)],
+        )
+        self.assertEqual(trace["events"][1]["output_representation"], repr(decrypted))
         self.assertEqual(trace["ciphertexts"][0]["created_by_event"], "event_0001")
         self.assertEqual(trace["ciphertexts"][0]["parent_ids"], [])
         graph = build_graph(trace)
@@ -208,7 +211,7 @@ class CoreTraceTests(unittest.TestCase):
             graph["edges"],
         )
 
-    def test_four_operation_vertical_slice_and_trace_contract(self) -> None:
+    def test_four_operations_produce_a_valid_trace(self) -> None:
         backend = FakeCryptoContext()
         left = FakeCiphertext()
         right = FakeCiphertext(level=1, noise_scale_degree=2)
@@ -236,7 +239,7 @@ class CoreTraceTests(unittest.TestCase):
         self.assertEqual(trace["run"]["status"], "completed")
         self.assertEqual(trace["run"]["tool"]["name"], "cipherscope")
         self.assertIn("runtime", trace["run"])
-        self.assertIn("privacy", trace["run"])
+        self.assertIs(trace["run"]["shadow_mode"], False)
         self.assertEqual(trace["context"]["ring_dimension"], 32768)
         self.assertEqual(
             {
@@ -255,7 +258,7 @@ class CoreTraceTests(unittest.TestCase):
             self.assertLessEqual(set(event["input_ciphertexts"]), known_ids)
             self.assertLessEqual(set(event["output_ciphertexts"]), known_ids)
 
-    def test_native_failure_records_exactly_one_redacted_error_event(self) -> None:
+    def test_native_failure_records_exactly_one_error_event(self) -> None:
         backend = FakeCryptoContext()
         backend.fail_operations["EvalMult"] = RuntimeError("do-not-record-this-secret")
         left = FakeCiphertext()
@@ -272,8 +275,7 @@ class CoreTraceTests(unittest.TestCase):
         self.assertEqual(event["status"], "error")
         self.assertEqual(event["error_class"], "RuntimeError")
         self.assertEqual(event["output_ciphertexts"], [])
-        self.assertNotIn("error_message", event)
-        self.assertNotIn("do-not-record-this-secret", json.dumps(trace))
+        self.assertEqual(event["error_message"], "do-not-record-this-secret")
 
     def test_input_snapshot_precedes_timing_and_native_invocation(self) -> None:
         order: list[str] = []
@@ -300,11 +302,13 @@ class CoreTraceTests(unittest.TestCase):
             order.append("wall-clock")
             return next(clock_values)
 
-        with mock.patch(
-            "cipherscope.context.time.perf_counter_ns", side_effect=wall_clock
+        with (
+            mock.patch(
+                "cipherscope.context.time.perf_counter_ns", side_effect=wall_clock
+            ),
+            cipherscope.trace(backend) as session,
         ):
-            with cipherscope.trace(backend) as session:
-                session.context.EvalBootstrap(value)
+            session.context.EvalBootstrap(value)
 
         self.assertEqual(backend.calls["EvalBootstrap"], 1)
         native_index = order.index("native")
@@ -408,19 +412,19 @@ class CoreTraceTests(unittest.TestCase):
         self.assertEqual(coverage["allowed_passthrough_calls"], 1)
         self.assertTrue(coverage["potentially_incomplete"])
 
-    def test_source_uses_basename_and_content_hash(self) -> None:
+    def test_source_uses_absolute_path_and_function_name(self) -> None:
         backend = FakeCryptoContext()
         with cipherscope.trace(backend) as session:
             session.context.EvalBootstrap(FakeCiphertext())
         source = session.to_trace()["events"][0]["source"]
-        expected_path = Path(__file__)
-        self.assertEqual(source["file"], expected_path.name)
+        expected_path = Path(__file__).resolve()
+        self.assertEqual(source["file"], str(expected_path))
         self.assertEqual(
-            source["source_sha256"],
-            hashlib.sha256(expected_path.read_bytes()).hexdigest(),
+            source["function"],
+            self.test_source_uses_absolute_path_and_function_name.__name__,
         )
-        self.assertNotIn(str(expected_path.parent), json.dumps(source))
-        self.assertTrue(source["call_site_id"].startswith("site_"))
+        self.assertNotIn("source_sha256", source)
+        self.assertTrue(source["call_site_id"].startswith(f"site:{expected_path}:"))
 
     def test_active_session_attach_and_lifecycle_errors(self) -> None:
         backend = FakeCryptoContext()

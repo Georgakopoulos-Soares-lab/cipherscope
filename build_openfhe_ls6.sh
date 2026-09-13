@@ -52,14 +52,9 @@ test -d "$CIPHERSCOPE_DIR/src/cipherscope" || {
 # 2. Toolchain -- module-based, no apt/root. gcc module gives a real modern
 #    GNU toolchain (avoid the bare system gcc, which is old on Rocky 8).
 # ---------------------------------------------------------------------------
-# Pinned to 15.2.0: this is the version actually confirmed (empirically, on
-# this cluster) to compile this exact OpenFHE commit's composite-scaling code
-# cleanly once CMake is forced to use it explicitly (see CMAKE_CXX_COMPILER
-# below). Do not silently downgrade this -- an older gcc module loaded here
-# will also put an OLDER libstdc++.so.6 on LD_LIBRARY_PATH, which is
-# ABI-incompatible with a core library already built against a newer one,
-# and causes a GLIBCXX_3.4.x "version not found" import error at runtime.
-GCC_MODULE="${GCC_MODULE:-gcc/15.2.0}"
+# Use the same compiler module as every runtime script. Mixing versions can
+# load a different libstdc++.so.6 and make the OpenFHE extension fail to import.
+GCC_MODULE="${GCC_MODULE:-gcc/15.1.0}"
 
 module purge
 module load TACC

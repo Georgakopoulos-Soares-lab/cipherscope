@@ -1,28 +1,20 @@
-"""Built-in CipherScope analyzers for the first vertical slice."""
+"""Built-in CipherScope analyzers."""
 
-from .bootstrap import BootstrapAnalyzer, analyze_bootstrap
-from .depth import DepthAnalyzer, analyze_depth
-from .encoding import EncodingAnalyzer, analyze_encoding
-from .keys import KeyUsageAnalyzer, analyze_keys
-from .packing import PackingAnalyzer, analyze_packing
-from .parameters import ParameterAnalyzer, analyze_parameters
-from .precision import PrecisionAnalyzer, analyze_precision
-from .provenance import PublicValueAnalyzer, analyze_provenance
-from .rotations import RotationAnalyzer, analyze_repeated_rotations, analyze_rotations
-from .serial_reduction import SerialReductionAnalyzer, analyze_serial_reductions
+from .bootstrap import analyze_bootstrap
+from .configuration import analyze_configuration
+from .depth import analyze_depth
+from .encoding import analyze_encoding
+from .keys import analyze_keys
+from .packing import analyze_packing
+from .parameters import analyze_parameters
+from .precision import analyze_precision, analyze_tolerance
+from .provenance import analyze_provenance
+from .rotations import analyze_rotations
+from .serial_reduction import analyze_serial_reductions
 
 __all__ = [
-    "BootstrapAnalyzer",
-    "DepthAnalyzer",
-    "EncodingAnalyzer",
-    "KeyUsageAnalyzer",
-    "PackingAnalyzer",
-    "ParameterAnalyzer",
-    "PrecisionAnalyzer",
-    "PublicValueAnalyzer",
-    "RotationAnalyzer",
-    "SerialReductionAnalyzer",
     "analyze_bootstrap",
+    "analyze_configuration",
     "analyze_depth",
     "analyze_encoding",
     "analyze_keys",
@@ -30,7 +22,7 @@ __all__ = [
     "analyze_parameters",
     "analyze_precision",
     "analyze_provenance",
-    "analyze_repeated_rotations",
     "analyze_rotations",
     "analyze_serial_reductions",
+    "analyze_tolerance",
 ]

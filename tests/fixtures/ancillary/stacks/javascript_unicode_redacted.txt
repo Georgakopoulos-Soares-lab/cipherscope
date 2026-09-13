@@ -1,4 +1,0 @@
-TypeError: synthetic value is not callable <script>alert(1)</script>
-    at χειριστής (<redacted>/δοκιμή.js:7:13)
-    at Object.<anonymous> (<redacted>/entry.js:2:1)
-    at Module._compile (node:internal/modules/cjs/loader:000:00)

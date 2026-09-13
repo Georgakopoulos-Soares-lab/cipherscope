@@ -1,5 +1,0 @@
-synthetic_app!evaluate_block+0x21 [0x0000000000401021]
-synthetic_app!evaluate_block+0x21 [0x0000000000401021]
-synthetic_app!evaluate_block+0x21 [0x0000000000401021]
-libsynthetic.so!dispatch+0x0f [0x000000000000200f]
-<redacted>!main+0x09 [address-redacted]

@@ -1,11 +1,11 @@
-"""CSV projection of canonical semantic events."""
+"""Export recorded events as CSV."""
 
 from __future__ import annotations
 
 import csv
 import io
-from typing import Any, Mapping
-
+from collections.abc import Mapping
+from typing import Any
 
 FIELDS = (
     "sequence",
@@ -25,7 +25,7 @@ FIELDS = (
 
 
 def _spreadsheet_safe(value: object) -> object:
-    """Prevent common CSV formula prefixes in human-opened projections."""
+    """Keep spreadsheet programs from treating trace text as a formula."""
 
     if isinstance(value, str) and value.startswith(("=", "+", "-", "@", "\t", "\r")):
         return "'" + value
@@ -33,7 +33,7 @@ def _spreadsheet_safe(value: object) -> object:
 
 
 def operations_csv(trace: Mapping[str, Any]) -> str:
-    """Return a stable flat event table without serializing operand values."""
+    """Return a CSV table of recorded events."""
 
     stream = io.StringIO(newline="")
     writer = csv.DictWriter(stream, fieldnames=FIELDS, lineterminator="\n")

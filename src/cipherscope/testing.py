@@ -12,9 +12,8 @@ from typing import Any
 class FakeCiphertext:
     """Metadata-only ciphertext stand-in; it performs no cryptography.
 
-    ``decoded_values`` is an optional developer aid: it lets the metadata-only
-    fake stand in for a decrypted plaintext during shadow-mode checkpoint tests.
-    It is never read by the tracing proxy or emitted into a trace.
+    ``decoded_values`` lets the fake stand in for a decrypted plaintext during
+    precision-checkpoint tests.
     """
 
     level: int = 0
@@ -37,7 +36,7 @@ class FakeCiphertext:
 
 @dataclass(eq=False)
 class FakePlaintext:
-    """Opaque plaintext-shaped result used for forwarding and shadow decoding."""
+    """Plaintext-shaped result used for forwarding and shadow decoding."""
 
     marker: str = "fake_plaintext"
     values: list[float] | None = None
@@ -51,6 +50,28 @@ class FakePlaintext:
         if self._length is not None:
             return values[: self._length]
         return values
+
+
+@dataclass(eq=False)
+class FakeParameters:
+    """CCParams stand-in exposing the getters the real context cannot."""
+
+    security_level: str = "HEStd_128_classic"
+    ring_dim: int = 0
+    multiplicative_depth: int = 8
+    scaling_mod_size: int = 50
+
+    def GetSecurityLevel(self) -> str:
+        return self.security_level
+
+    def GetRingDim(self) -> int:
+        return self.ring_dim
+
+    def GetMultiplicativeDepth(self) -> int:
+        return self.multiplicative_depth
+
+    def GetScalingModSize(self) -> int:
+        return self.scaling_mod_size
 
 
 class FakeCryptoContext:

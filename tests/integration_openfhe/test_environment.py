@@ -48,16 +48,21 @@ class EnvironmentTests(unittest.TestCase):
         """ENV-03: installed wrapper provenance matches the selected lane."""
 
         installed = support.distribution_version()
+        wrapper_commit = os.environ.get("CIPHERSCOPE_OPENFHE_WRAPPER_COMMIT")
         if support.LANE == "provisional-wheel-py312":
             self.assertEqual(installed, support.GOLDEN["provisional_distribution"])
         elif support.LANE == "primary-source-py311":
-            self.assertEqual(
-                os.environ.get("CIPHERSCOPE_OPENFHE_WRAPPER_COMMIT"),
-                support.GOLDEN["wrapper_commit"],
-            )
-        else:
-            self.assertIsNotNone(installed)
-        support.record("ENV-03", lane=support.LANE, distribution_version=installed)
+            self.assertEqual(wrapper_commit, support.GOLDEN["wrapper_commit"])
+        elif installed is None:
+            # A source-built developer wrapper has no pip metadata; the pinned
+            # commit is its provenance, exactly as in the primary lane.
+            self.assertEqual(wrapper_commit, support.GOLDEN["wrapper_commit"])
+        support.record(
+            "ENV-03",
+            lane=support.LANE,
+            distribution_version=installed,
+            wrapper_commit=wrapper_commit,
+        )
 
     def test_env_04_build_inputs_are_pinned(self) -> None:
         """ENV-04: exact wheel hash or source commits are fixed and recorded."""

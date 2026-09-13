@@ -1,4 +1,4 @@
-"""Deterministic construction of CipherScope's executed computation graph."""
+"""Build a graph of the operations and ciphertexts in a trace."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ from copy import deepcopy
 from typing import Any
 
 from .validation import ValidationError, validate_graph, validate_trace
-
 
 _ZERO_WEIGHT_OPERATIONS = {
     "Decrypt",
@@ -128,7 +127,7 @@ def _epoch_record(
 def _compute_depth_metrics(
     events: list[Mapping[str, Any]], states: list[Mapping[str, Any]]
 ) -> tuple[dict[str, int | None], dict[str, int | None], dict[str, Any]]:
-    state_by_id = {str(state["id"]): state for state in states}
+    ciphertext_by_id = {str(state["id"]): state for state in states}
     roots = [
         str(state["id"]) for state in states if state.get("created_by_event") is None
     ]
@@ -163,8 +162,12 @@ def _compute_depth_metrics(
             continue
         event_id = str(event["event_id"])
         operation = event.get("operation")
-        input_ids = [str(item) for item in event.get("input_ciphertexts", [])]
-        output_ids = [str(item) for item in event.get("output_ciphertexts", [])]
+        input_ciphertext_ids = [
+            str(item) for item in event.get("input_ciphertexts", [])
+        ]
+        output_ciphertext_ids = [
+            str(item) for item in event.get("output_ciphertexts", [])
+        ]
         sequence = event.get("sequence")
         epoch_last_sequence = (
             sequence if isinstance(sequence, int) else epoch_last_sequence
@@ -204,11 +207,11 @@ def _compute_depth_metrics(
                     confidence="unknown" if epoch_level_unknown else "measured",
                 )
             )
-            for output_id in output_ids:
-                nonlinear[output_id] = 0
-                nonlinear_paths[output_id] = []
-                level_use[output_id] = 0
-                level_paths[output_id] = []
+            for output_ciphertext_id in output_ciphertext_ids:
+                nonlinear[output_ciphertext_id] = 0
+                nonlinear_paths[output_ciphertext_id] = []
+                level_use[output_ciphertext_id] = 0
+                level_paths[output_ciphertext_id] = []
             epoch_index += 1
             epoch_start = sequence + 1 if isinstance(sequence, int) else None
             epoch_nonlinear_max = 0
@@ -220,9 +223,9 @@ def _compute_depth_metrics(
             continue
 
         weight = _nonlinear_weight(event)
-        if input_ids:
+        if input_ciphertext_ids:
             parent_depths = [
-                nonlinear.get(ciphertext_id) for ciphertext_id in input_ids
+                nonlinear.get(ciphertext_id) for ciphertext_id in input_ciphertext_ids
             ]
             depth_is_unknown = weight is None or any(
                 value is None for value in parent_depths
@@ -234,7 +237,7 @@ def _compute_depth_metrics(
                 epoch_nonlinear_unknown = True
             else:
                 best_parent = min(
-                    input_ids,
+                    input_ciphertext_ids,
                     key=lambda item: (
                         -(nonlinear.get(item) or 0),
                         item,
@@ -252,9 +255,9 @@ def _compute_depth_metrics(
                 nonlinear_unknown = True
                 epoch_nonlinear_unknown = True
 
-        for output_id in output_ids:
-            nonlinear[output_id] = next_depth
-            nonlinear_paths[output_id] = list(next_nonlinear_path)
+        for output_ciphertext_id in output_ciphertext_ids:
+            nonlinear[output_ciphertext_id] = next_depth
+            nonlinear_paths[output_ciphertext_id] = list(next_nonlinear_path)
         if next_depth is not None and next_depth > maximum_nonlinear:
             maximum_nonlinear = next_depth
             maximum_nonlinear_path = list(next_nonlinear_path)
@@ -262,14 +265,18 @@ def _compute_depth_metrics(
             epoch_nonlinear_max = next_depth
             epoch_nonlinear_path = list(next_nonlinear_path)
 
-        for output_id in output_ids:
-            if not input_ids:
+        for output_ciphertext_id in output_ciphertext_ids:
+            if not input_ciphertext_ids:
                 next_level_use: int | None = 0
                 next_level_path: list[str] = []
             else:
-                output_level = _snapshot_level(event, "output_states", output_id)
+                output_level = _snapshot_level(
+                    event, "output_states", output_ciphertext_id
+                )
                 if output_level is None:
-                    state_level = state_by_id.get(output_id, {}).get("level")
+                    state_level = ciphertext_by_id.get(output_ciphertext_id, {}).get(
+                        "level"
+                    )
                     output_level = (
                         state_level
                         if isinstance(state_level, int)
@@ -278,17 +285,21 @@ def _compute_depth_metrics(
                     )
                 candidates: list[tuple[int, str, int, list[str]]] = []
                 unresolved = output_level is None
-                for input_id in input_ids:
-                    input_level = _snapshot_level(event, "input_states", input_id)
+                for input_ciphertext_id in input_ciphertext_ids:
+                    input_level = _snapshot_level(
+                        event, "input_states", input_ciphertext_id
+                    )
                     if input_level is None:
-                        state_level = state_by_id.get(input_id, {}).get("level")
+                        state_level = ciphertext_by_id.get(input_ciphertext_id, {}).get(
+                            "level"
+                        )
                         input_level = (
                             state_level
                             if isinstance(state_level, int)
                             and not isinstance(state_level, bool)
                             else None
                         )
-                    parent_use = level_use.get(input_id)
+                    parent_use = level_use.get(input_ciphertext_id)
                     if (
                         input_level is None
                         or output_level is None
@@ -300,26 +311,26 @@ def _compute_depth_metrics(
                     if delta < 0:
                         unresolved = True
                         continue
-                    path = list(level_paths.get(input_id, []))
+                    path = list(level_paths.get(input_ciphertext_id, []))
                     if delta:
                         path.append(event_id)
-                    candidates.append((parent_use + delta, input_id, delta, path))
+                    candidates.append(
+                        (parent_use + delta, input_ciphertext_id, delta, path)
+                    )
                 if unresolved or not candidates:
                     next_level_use = None
                     next_level_path = []
                     level_unknown = True
                     epoch_level_unknown = True
                 else:
-                    # Prefer the parent needing the smallest observed transition when
-                    # totals tie; this avoids attributing an add's level alignment to
-                    # an otherwise shallower branch.
+                    # On ties, avoid charging level alignment to a shallower branch.
                     best = min(
                         candidates, key=lambda item: (-item[0], item[2], item[1])
                     )
                     next_level_use = best[0]
                     next_level_path = best[3]
-            level_use[output_id] = next_level_use
-            level_paths[output_id] = list(next_level_path)
+            level_use[output_ciphertext_id] = next_level_use
+            level_paths[output_ciphertext_id] = list(next_level_path)
             if next_level_use is not None and next_level_use > maximum_levels:
                 maximum_levels = next_level_use
                 maximum_level_path = list(next_level_path)
@@ -379,12 +390,10 @@ def _compute_depth_metrics(
 
 
 def build_graph(trace: Mapping[str, Any]) -> dict[str, Any]:
-    """Build a deterministic typed graph from one validated semantic trace.
+    """Build a graph from one validated trace.
 
-    Nonlinear depth and observed level use reset for bootstrap outputs, while their
-    historical maxima remain in ``critical_paths``.  Unknown operation semantics or
-    missing level observations are represented as ``None``/``"unknown"`` rather than
-    silently guessed.
+    Bootstrap outputs start new depth and level counts, while ``critical_paths``
+    keeps earlier maximums. Missing data produces ``None`` or ``"unknown"``.
     """
 
     trace_result = validate_trace(trace)
@@ -403,9 +412,9 @@ def build_graph(trace: Mapping[str, Any]) -> dict[str, Any]:
 
     ciphertext_nodes: list[dict[str, Any]] = []
     for state in states:
-        state_id = str(state["id"])
+        ciphertext_id = str(state["id"])
         node = {
-            "id": state_id,
+            "id": ciphertext_id,
             "node_type": "CiphertextVersion",
             **{
                 key: deepcopy(value)
@@ -418,8 +427,8 @@ def build_graph(trace: Mapping[str, Any]) -> dict[str, Any]:
                     "observed_level_use_in_epoch",
                 }
             },
-            "observed_nonlinear_depth": nonlinear.get(state_id),
-            "observed_level_use_in_epoch": level_use.get(state_id),
+            "observed_nonlinear_depth": nonlinear.get(ciphertext_id),
+            "observed_level_use_in_epoch": level_use.get(ciphertext_id),
         }
         ciphertext_nodes.append(node)
 
@@ -461,16 +470,20 @@ def build_graph(trace: Mapping[str, Any]) -> dict[str, Any]:
                 )
         inputs = [str(item) for item in event.get("input_ciphertexts", [])]
         outputs = [str(item) for item in event.get("output_ciphertexts", [])]
-        for input_id in inputs:
-            edges.append({"edge_type": "consumes", "from": input_id, "to": event_id})
-        for output_id in outputs:
-            edges.append({"edge_type": "produces", "from": event_id, "to": output_id})
-            for input_id in inputs:
+        for input_ciphertext_id in inputs:
+            edges.append(
+                {"edge_type": "consumes", "from": input_ciphertext_id, "to": event_id}
+            )
+        for output_ciphertext_id in outputs:
+            edges.append(
+                {"edge_type": "produces", "from": event_id, "to": output_ciphertext_id}
+            )
+            for input_ciphertext_id in inputs:
                 edges.append(
                     {
                         "edge_type": "derived_from",
-                        "from": output_id,
-                        "to": input_id,
+                        "from": output_ciphertext_id,
+                        "to": input_ciphertext_id,
                     }
                 )
 
@@ -514,9 +527,9 @@ def build_graph(trace: Mapping[str, Any]) -> dict[str, Any]:
     source_nodes = [source_nodes_by_id[key] for key in sorted(source_nodes_by_id)]
     key_nodes = [key_nodes_by_id[key] for key in sorted(key_nodes_by_id)]
     consumed = {
-        str(input_id)
+        str(input_ciphertext_id)
         for event in events
-        for input_id in event.get("input_ciphertexts", [])
+        for input_ciphertext_id in event.get("input_ciphertexts", [])
     }
     roots = sorted(
         str(state["id"]) for state in states if state.get("created_by_event") is None

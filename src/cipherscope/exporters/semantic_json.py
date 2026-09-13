@@ -1,14 +1,14 @@
-"""Secure, collision-safe publication of a complete CipherScope bundle."""
+"""Write a complete CipherScope bundle without replacing existing output."""
 
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import sysconfig
 import tempfile
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from ..validation import assert_valid
 from .csv import operations_csv
@@ -17,7 +17,7 @@ from .report import render_summary_html
 
 
 def build_manifest(trace: Mapping[str, Any]) -> dict[str, Any]:
-    """Build the standalone manifest from canonical run metadata."""
+    """Build the bundle manifest from the recorded run metadata."""
 
     run = trace.get("run") or {}
     context = trace.get("context") or {}
@@ -28,7 +28,6 @@ def build_manifest(trace: Mapping[str, Any]) -> dict[str, Any]:
         "tool": run.get("tool") or {"name": "cipherscope", "version": "0.1.0"},
         "runtime": run.get("runtime") or {},
         "coverage": run.get("coverage") or {},
-        "privacy": run.get("privacy") or {},
         "clocks": {
             "wall": "time.perf_counter_ns",
             "cpu": "time.process_time_ns",
@@ -49,15 +48,7 @@ def build_manifest(trace: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _write_bytes(path: Path, payload: bytes) -> None:
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-    descriptor = os.open(path, flags, 0o600)
-    try:
-        with os.fdopen(descriptor, "wb", closefd=False) as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
-    finally:
-        os.close(descriptor)
+    path.write_bytes(payload)
 
 
 def _write_text(path: Path, payload: str) -> None:
@@ -98,11 +89,7 @@ def write_bundle(
     recommendations: Mapping[str, Any],
     manifest: Mapping[str, Any] | None = None,
 ) -> Path:
-    """Stage a complete bundle and atomically publish it without overwriting.
-
-    Directory and file modes are restrictive from creation time. If any
-    projection fails, only the private staging directory is removed.
-    """
+    """Write a complete bundle without replacing an existing directory."""
 
     destination = Path(output_dir)
     if destination.exists():
@@ -117,14 +104,13 @@ def write_bundle(
         graph=graph,
     )
     assert_valid("manifest", resolved_manifest, trace=trace)
-    destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    destination.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(
         tempfile.mkdtemp(
             prefix=f".{destination.name}.tmp-",
             dir=destination.parent,
         )
     )
-    os.chmod(staging, 0o700)
     try:
         _write_text(staging / "manifest.json", _json_text(resolved_manifest))
         _write_text(staging / "trace.json", _json_text(trace))
@@ -141,11 +127,11 @@ def write_bundle(
         )
 
         schema_output = staging / "schemas"
-        schema_output.mkdir(mode=0o700)
+        schema_output.mkdir()
         for source in sorted(_schema_directory().glob("*.schema.json")):
             _write_bytes(schema_output / source.name, source.read_bytes())
 
-        os.rename(staging, destination)
+        staging.rename(destination)
     except BaseException:
         shutil.rmtree(staging, ignore_errors=True)
         raise

@@ -29,7 +29,7 @@ Run standalone (no CipherScope, plain correctness check, untraced):
     python3 prs_dot_product.py
 
 Run instrumented (produces a full CipherScope analysis bundle):
-    cipherscope run prs_dot_product.py --output prs_run/
+    cipherscope run --output prs_run/ prs_dot_product.py
     cipherscope view prs_run/          # path to summary.html
     cat prs_run/recommendations.json   # analyzer findings
 
@@ -47,8 +47,8 @@ import openfhe
 import cipherscope
 
 BLOCK_SIZE = 8192  # SNPs packed per ciphertext slot-block (<= ring_dim / 2)
-NUM_BLOCKS = 122  # 977 * 1024 2248 1,000,448 SNPs
-NUM_PATIENTS = 1  # single patient, keep runtime bounded
+NUM_BLOCKS = 122  # 999,424 SNPs
+NUM_PATIENTS = 2  # repeated patients expose repeated weight encoding
 
 random.seed(0)
 
@@ -63,7 +63,10 @@ weight_blocks: list[list[float]] = [
     [random.gauss(0.0, 0.05) for _ in range(BLOCK_SIZE)] for _ in range(NUM_BLOCKS)
 ]
 cohort_genotypes: list[list[list[float]]] = [
-    [[float(random.randint(0, 2)) for _ in range(BLOCK_SIZE)] for _ in range(NUM_BLOCKS)]
+    [
+        [float(random.randint(0, 2)) for _ in range(BLOCK_SIZE)]
+        for _ in range(NUM_BLOCKS)
+    ]
     for _ in range(NUM_PATIENTS)
 ]
 

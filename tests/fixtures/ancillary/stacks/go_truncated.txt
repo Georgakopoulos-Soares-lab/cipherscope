@@ -1,8 +1,0 @@
-panic: synthetic bounded stack
-
-goroutine 7 [running]:
-example.invalid/tree.walk(0x0)
-	/src/tree.go:51 +0x35
-example.invalid/tree.walk(0x1)
-	/src/tree.go:55 +0x51
-... additional synthetic goroutines truncated ...

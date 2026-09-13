@@ -1,4 +1,4 @@
-"""Offline validation, graph construction, and analyzer orchestration."""
+"""Validate a trace, build its graph, and run every analyzer."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from typing import Any
 
 from .analyzers import (
     analyze_bootstrap,
+    analyze_configuration,
     analyze_depth,
     analyze_encoding,
     analyze_keys,
@@ -16,6 +17,7 @@ from .analyzers import (
     analyze_provenance,
     analyze_rotations,
     analyze_serial_reductions,
+    analyze_tolerance,
 )
 from .exporters import build_manifest
 from .graph import build_graph
@@ -26,7 +28,7 @@ def analyze_trace(
     trace: Mapping[str, Any],
     graph: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Run the first-slice analyzers and merge their validated findings."""
+    """Run every analyzer and merge their validated findings."""
 
     trace_validation = validate_trace(trace)
     if not trace_validation.valid:
@@ -47,6 +49,8 @@ def analyze_trace(
         "precision.checkpoint_drop.v1": analyze_precision(trace),
         "encoding.repeated_public_constant.v1": analyze_encoding(trace),
         "multiplication.serial_reduction_review.v1": analyze_serial_reductions(trace),
+        "precision.tolerance_violated.v1": analyze_tolerance(trace),
+        "configuration.testing_only_security.v1": analyze_configuration(trace),
     }
     findings = [
         finding for report in reports.values() for finding in report.get("findings", [])
@@ -84,7 +88,7 @@ def analyze_trace(
 
 
 def build_analysis_bundle(trace: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
-    """Return all canonical in-memory artifacts for one semantic trace."""
+    """Build the manifest, graph, and recommendations for a trace."""
 
     graph = build_graph(trace)
     recommendations = analyze_trace(trace, graph)

@@ -2,9 +2,9 @@
 """Encode the same public constant twice under one explicit constant_id.
 
 Real OpenFHE program using CipherScope's plaintext-provenance API. The same model
-weights are encoded on two occasions; tagging both encodings with one run-local
+weights are encoded on two occasions; tagging both encodings with one shared
 ``constant_id`` lets the encoding analyzer flag the redundant work. CipherScope
-does not hash or compare plaintext values to detect this.
+uses that ID instead of trying to infer whether two plaintexts are equal.
 """
 
 from __future__ import annotations

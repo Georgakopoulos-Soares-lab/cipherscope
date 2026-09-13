@@ -9,8 +9,8 @@
     {"id": "ct_0102:v0", "node_type": "CiphertextVersion", "created_by_event": "event_0002", "parent_ids": ["ct_0101:v0"], "origin": "derived", "level": 2, "noise_scale_degree": 1, "observed_nonlinear_depth": 0},
     {"id": "event_0001", "node_type": "RuntimeEvent", "operation": "EvalRotate", "status": "ok"},
     {"id": "event_0002", "node_type": "RuntimeEvent", "operation": "EvalRotate", "status": "ok"},
-    {"id": "site_a", "node_type": "SourceSite", "file": "component_a.py", "line": 4, "function": "a", "qualified_function": "a", "source_sha256": "synthetic-component-a"},
-    {"id": "site_b", "node_type": "SourceSite", "file": "component_b.py", "line": 5, "function": "b", "qualified_function": "b", "source_sha256": "synthetic-component-b"}
+    {"id": "site_a", "node_type": "SourceSite", "file": "component_a.py", "line": 4, "function": "a", "qualified_function": "a"},
+    {"id": "site_b", "node_type": "SourceSite", "file": "component_b.py", "line": 5, "function": "b", "qualified_function": "b"}
   ],
   "edges": [
     {"edge_type": "consumes", "from": "ct_0001:v0", "to": "event_0001"},

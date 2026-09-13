@@ -10,7 +10,7 @@
     {"id": "event_0001", "node_type": "RuntimeEvent", "operation": "EvalRotate", "status": "ok"},
     {"id": "event_0002", "node_type": "RuntimeEvent", "operation": "EvalRotate", "status": "ok"},
     {"id": "event_0003", "node_type": "RuntimeEvent", "operation": "EvalRotate", "status": "ok"},
-    {"id": "site_repeat", "node_type": "SourceSite", "file": "rotate.py", "line": 19, "function": "fanout", "qualified_function": "fanout", "source_sha256": "synthetic-repeat"}
+    {"id": "site_repeat", "node_type": "SourceSite", "file": "rotate.py", "line": 19, "function": "fanout", "qualified_function": "fanout"}
   ],
   "edges": [
     {"edge_type": "consumes", "from": "ct_0001:v0", "to": "event_0001"},
