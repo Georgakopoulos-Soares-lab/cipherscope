@@ -72,6 +72,7 @@ OVERHEAD_COLUMNS = (
 )
 
 SCALING_COLUMNS = (
+    "machine",
     "size",
     "arm",
     "runs",
@@ -420,19 +421,27 @@ def overhead_rows(runs: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
 
 
 def scaling_rows(runs: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
-    """Per (size, arm) medians with the untraced baseline arm as the reference."""
+    """Per (machine, size, arm) medians with that machine's untraced baseline as the reference.
 
-    groups: dict[tuple[int, str], list[Mapping[str, Any]]] = {}
+    Machines are never pooled: an arm64 laptop and an x86_64 cluster node produce
+    different absolute times and memory, so each gets its own rows and its own
+    baseline.
+    """
+
+    groups: dict[tuple[str, int, str], list[Mapping[str, Any]]] = {}
     for run in runs:
-        groups.setdefault((int(run["size"]), str(run["arm"])), []).append(run)
+        groups.setdefault((str(run["machine"]), int(run["size"]), str(run["arm"])), []).append(run)
 
     def median_of(records: Sequence[Mapping[str, Any]], column: str) -> float | None:
         values = [float(record[column]) for record in records if record.get(column) is not None]
         return statistics.median(values) if values else None
 
     rows: list[dict[str, Any]] = []
-    for (size, arm), records in sorted(groups.items(), key=lambda item: (item[0][0], ("baseline", "streaming", "buffered").index(item[0][1]))):
-        baseline = groups.get((size, "baseline"), [])
+    for (machine, size, arm), records in sorted(
+        groups.items(),
+        key=lambda item: (item[0][0], item[0][1], ("baseline", "streaming", "buffered").index(item[0][2])),
+    ):
+        baseline = groups.get((machine, size, "baseline"), [])
         wall = median_of(records, "run_wall_ms")
         base_wall = median_of(baseline, "run_wall_ms")
         growth = median_of(records, "rss_growth_mb")
@@ -444,6 +453,7 @@ def scaling_rows(runs: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         analyze = median_of(records, "analyze_ms")
         rows.append(
             {
+                "machine": machine,
                 "size": size,
                 "arm": arm,
                 "runs": len(records),
@@ -482,7 +492,9 @@ def generate_tables(
     contract = load_contract(schema)
 
     present = {name: root / relative for name, relative in INPUTS.items() if (root / relative).is_file()}
-    skipped = {name: str(root / relative) for name, relative in INPUTS.items() if name not in present}
+    # Repository-relative on purpose: an absolute path would make MANIFEST.json
+    # differ between machines even when every input and table is identical.
+    skipped = {name: str(relative) for name, relative in INPUTS.items() if name not in present}
 
     findings = read_findings(present["findings"]) if "findings" in present else None
     if findings is not None:

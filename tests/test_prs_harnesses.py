@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import contextlib
 import io
+import re
 import sys
 import tempfile
 import unittest
@@ -62,17 +63,34 @@ class PrsScriptTests(unittest.TestCase):
         ):
             with self.subTest(script=name):
                 script = (ROOT / name).read_text(encoding="utf-8")
-                self.assertIn('cd "$WORK/python-log-reg-examples"', script)
+                self.assertIn('REPO="${LOG_REG_EXAMPLES:-$WORK/python-log-reg-examples}"', script)
+                self.assertIn('cd "$REPO"', script)
                 self.assertNotIn("/work/11681/", script)
 
     def test_build_and_runtime_scripts_use_the_same_gcc_module(self) -> None:
-        build = (ROOT / "build_openfhe_ls6.sh").read_text(encoding="utf-8")
-        self.assertIn('GCC_MODULE="${GCC_MODULE:-gcc/15.1.0}"', build)
-        self.assertNotIn("gcc/15.2.0", build)
+        """Runtime scripts must load the module the extension was compiled with.
 
-        run_build = (ROOT / "run_build.slurm").read_text(encoding="utf-8")
-        self.assertIn("export GCC_MODULE=gcc/15.1.0", run_build)
+        A different gcc module puts a different libstdc++.so.6 first on
+        LD_LIBRARY_PATH and the OpenFHE extension fails to import. The build
+        script declares the module once; every launcher sources ls6_env.sh,
+        which loads the same one, and none loads a compiler module itself.
+        """
+
+        build = (ROOT / "build_openfhe_ls6.sh").read_text(encoding="utf-8")
+        build_module = re.search(r'GCC_MODULE="\$\{GCC_MODULE:-(gcc/[0-9.]+)\}"', build)
+        self.assertIsNotNone(build_module, "build_openfhe_ls6.sh must default GCC_MODULE")
+
+        env = (ROOT / "ls6_env.sh").read_text(encoding="utf-8")
+        env_module = re.search(r"module load TACC (gcc/[0-9.]+)", env)
+        self.assertIsNotNone(env_module, "ls6_env.sh must load a gcc module")
+        self.assertEqual(env_module.group(1), build_module.group(1))
+        # Both derive the runtime library path from the module, never a hard-coded /home1/apps path.
+        self.assertIn("TACC_GCC_LIB64", env)
+        self.assertIn("TACC_GCC_LIB64", build)
+        self.assertNotIn("/home1/apps/gcc", build)
+
         for name in (
+            "run_build.slurm",
             "run_analysis.slurm",
             "run_external_suite.slurm",
             "run_memory.slurm",
@@ -83,8 +101,12 @@ class PrsScriptTests(unittest.TestCase):
         ):
             with self.subTest(script=name):
                 script = (ROOT / name).read_text(encoding="utf-8")
-                self.assertIn("module load gcc/15.1.0", script)
-                self.assertNotIn("gcc/15.2.0", script)
+                self.assertIn('source "$CIPHERSCOPE_DIR/ls6_env.sh"', script)
+                self.assertNotIn("module load gcc", script)
+                self.assertNotIn("/home1/apps/gcc", script)
+                # LS6 partitions only; gh-dev is a Vista (aarch64) queue.
+                self.assertNotIn("gh-dev", script)
+                self.assertRegex(script, r"#SBATCH -p (vm-small|development|normal)")
 
     def test_gitignore_has_no_duplicate_patterns(self) -> None:
         patterns = [

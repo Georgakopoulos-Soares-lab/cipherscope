@@ -1,0 +1,873 @@
+{
+  "authoritative_for_primary_target": false,
+  "checks": [
+    {
+      "description": "ENV-01: the declared Linux lane has its exact OS and architecture.",
+      "duration_ns": 6720874,
+      "id": "ENV-01",
+      "observed": {
+        "distribution_version": null,
+        "executable": "python3.11",
+        "lane": "ls6-native-py311",
+        "machine": "x86_64",
+        "native_int": 64,
+        "native_module_hashes": {
+          "openfhe.cpython-311-x86_64-linux-gnu.so": "429513c3add220b9ca493e3d626c7e20adb4b18609c836804d9bbe2a1e6e3a06"
+        },
+        "os_release": {
+          "ANSI_COLOR": "0;32",
+          "BUG_REPORT_URL": "https://bugs.rockylinux.org/",
+          "CPE_NAME": "cpe:/o:rocky:rocky:8:GA",
+          "HOME_URL": "https://rockylinux.org/",
+          "ID": "rocky",
+          "ID_LIKE": "rhel centos fedora",
+          "LOGO": "fedora-logo-icon",
+          "NAME": "Rocky Linux",
+          "PLATFORM_ID": "platform:el8",
+          "PRETTY_NAME": "Rocky Linux 8.10 (Green Obsidian)",
+          "REDHAT_SUPPORT_PRODUCT": "Rocky Linux",
+          "REDHAT_SUPPORT_PRODUCT_VERSION": "8.10",
+          "ROCKY_SUPPORT_PRODUCT": "Rocky-Linux-8",
+          "ROCKY_SUPPORT_PRODUCT_VERSION": "8.10",
+          "SUPPORT_END": "2029-05-31",
+          "VERSION": "8.10 (Green Obsidian)",
+          "VERSION_ID": "8.10"
+        },
+        "platform": "Linux",
+        "python": "3.11.15",
+        "python_implementation": "CPython"
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_environment.EnvironmentTests.test_env_01_primary_os_and_architecture"
+    },
+    {
+      "description": "ENV-02: CPython matches the selected evidence lane.",
+      "duration_ns": 52618,
+      "id": "ENV-02",
+      "observed": {
+        "expected_minor": [
+          3,
+          11
+        ],
+        "implementation": "CPython",
+        "version": "3.11.15"
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_environment.EnvironmentTests.test_env_02_cpython_version"
+    },
+    {
+      "description": "ENV-03: installed wrapper provenance matches the selected lane.",
+      "duration_ns": 222028,
+      "id": "ENV-03",
+      "observed": {
+        "distribution_version": null,
+        "lane": "ls6-native-py311",
+        "wrapper_commit": "4f13e2c3a7e35f73f4816904dabd3a3db47b6e51"
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_environment.EnvironmentTests.test_env_03_distribution_or_source_pin"
+    },
+    {
+      "description": "ENV-04: exact wheel hash or source commits are fixed and recorded.",
+      "duration_ns": 3872941,
+      "id": "ENV-04",
+      "observed": {
+        "build_manifest": {
+          "base_platform": {
+            "architecture": "x86_64",
+            "kernel": "4.18.0-553.150.1.el8_10.x86_64",
+            "name": "TACC Lonestar6 (Rocky Linux host, no container)",
+            "os_release": {
+              "ANSI_COLOR": "0;32",
+              "BUG_REPORT_URL": "https://bugs.rockylinux.org/",
+              "CPE_NAME": "cpe:/o:rocky:rocky:8:GA",
+              "HOME_URL": "https://rockylinux.org/",
+              "ID": "rocky",
+              "ID_LIKE": "rhel centos fedora",
+              "LOGO": "fedora-logo-icon",
+              "NAME": "Rocky Linux",
+              "PLATFORM_ID": "platform:el8",
+              "PRETTY_NAME": "Rocky Linux 8.10 (Green Obsidian)",
+              "REDHAT_SUPPORT_PRODUCT": "Rocky Linux",
+              "REDHAT_SUPPORT_PRODUCT_VERSION": "8.10",
+              "ROCKY_SUPPORT_PRODUCT": "Rocky-Linux-8",
+              "ROCKY_SUPPORT_PRODUCT_VERSION": "8.10",
+              "SUPPORT_END": "2029-05-31",
+              "VERSION": "8.10 (Green Obsidian)",
+              "VERSION_ID": "8.10"
+            }
+          },
+          "host": {
+            "cpu_model": "AMD EPYC 7763 64-Core Processor",
+            "hostname": "v320-008.ls6.tacc.utexas.edu",
+            "make_jobs": "16",
+            "modules": [
+              "autotools/1.4",
+              "pmix/3.2.3",
+              "xalt/3.1",
+              "TACC",
+              "gcc/15.2.0",
+              "cmake/3.31.5"
+            ],
+            "omp_num_threads": "1",
+            "slurm_job_id": "3436198",
+            "slurm_partition": "vm-small"
+          },
+          "openfhe_native": {
+            "commit": "1306d14f8c26bb6150d3e6ad54f28dfe1007689e",
+            "repository": "https://github.com/openfheorg/openfhe-development.git"
+          },
+          "openfhe_python": {
+            "commit": "4f13e2c3a7e35f73f4816904dabd3a3db47b6e51",
+            "native_module_hashes": {
+              "openfhe.cpython-311-x86_64-linux-gnu.so": "429513c3add220b9ca493e3d626c7e20adb4b18609c836804d9bbe2a1e6e3a06"
+            },
+            "repository": "https://github.com/openfheorg/openfhe-python.git"
+          },
+          "python": {
+            "configure_flags": [
+              "--enable-shared",
+              "--with-ensurepip=install"
+            ],
+            "source": "https://www.python.org/ftp/python/3.11.15/Python-3.11.15.tar.xz",
+            "version": "3.11.15"
+          },
+          "schema_version": "1.0.0",
+          "toolchain": {
+            "cc": "gcc (GCC) 15.2.0",
+            "cmake": "cmake version 3.31.5",
+            "cxx": "g++ (GCC) 15.2.0"
+          }
+        },
+        "native_commit": "1306d14f8c26bb6150d3e6ad54f28dfe1007689e",
+        "native_module_hashes": {
+          "openfhe.cpython-311-x86_64-linux-gnu.so": "429513c3add220b9ca493e3d626c7e20adb4b18609c836804d9bbe2a1e6e3a06"
+        },
+        "wrapper_commit": "4f13e2c3a7e35f73f4816904dabd3a3db47b6e51"
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_environment.EnvironmentTests.test_env_04_build_inputs_are_pinned"
+    },
+    {
+      "description": "ENV-05: the native module imports and reports a supported word size.",
+      "duration_ns": 49654,
+      "id": "ENV-05",
+      "observed": {
+        "module_file": "__init__.py",
+        "native_int": 64
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_environment.EnvironmentTests.test_env_05_import_and_native_word_size"
+    },
+    {
+      "description": "API-01: setup and the core covered methods are bound and executable.",
+      "duration_ns": 138103926,
+      "id": "API-01",
+      "observed": {
+        "availability": {
+          "Decrypt": true,
+          "Encrypt": true,
+          "EvalAdd": true,
+          "EvalBootstrap": true,
+          "EvalMult": true,
+          "EvalMultKeyGen": true,
+          "EvalRotate": true,
+          "EvalRotateKeyGen": true,
+          "KeyGen": true,
+          "MakeCKKSPackedPlaintext": true
+        }
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_api_01_core_setup_and_calls_exist"
+    },
+    {
+      "description": "API-02: supported context/ciphertext getters execute with typed values.",
+      "duration_ns": 25755550,
+      "id": "API-02",
+      "observed": {
+        "ciphertext_types": {
+          "GetCryptoContext": "CryptoContext",
+          "GetElements": "list",
+          "GetKeyTag": "str",
+          "GetLevel": "int",
+          "GetNoiseScaleDeg": "int",
+          "GetScalingFactor": "float",
+          "GetSlots": "int"
+        },
+        "context_types": {
+          "GetBatchSize": "int",
+          "GetCyclotomicOrder": "int",
+          "GetKeySwitchTechnique": "KeySwitchTechnique",
+          "GetMultiplicativeDepth": "int",
+          "GetRingDimension": "int",
+          "GetScalingTechnique": "ScalingTechnique"
+        }
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_api_02_getter_inventory"
+    },
+    {
+      "description": "API-03: CipherScope state snapshots agree with direct getter evidence.",
+      "duration_ns": 24611711,
+      "id": "API-03",
+      "observed": {
+        "ciphertext_snapshot": {
+          "context_id": "context_0001",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "b82e2cdf379f010b032f19a37aabba38",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 7.205759403832115e+16,
+          "scaling_technique": "FLEXIBLEAUTO",
+          "slots": 8
+        },
+        "context_snapshot": {
+          "available_slots": 16384,
+          "batch_size": 8,
+          "configured_multiplicative_depth": 5,
+          "context_id": "context_0001",
+          "cyclotomic_order": 65536,
+          "key_switch_technique": "HYBRID",
+          "missing": [],
+          "ring_dimension": 32768,
+          "scaling_technique": "FLEXIBLEAUTO",
+          "scheme": "CKKS",
+          "scheme_evidence": "configured_ckks_contract"
+        }
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_api_03_snapshot_matches_independent_getters"
+    },
+    {
+      "description": "API-04: core result shapes and clone identity match the pinned binding.",
+      "duration_ns": 132234963,
+      "id": "API-04",
+      "observed": {
+        "clone_available": true,
+        "distinct_identities": 5,
+        "result_types": [
+          "Ciphertext",
+          "Ciphertext",
+          "Ciphertext"
+        ]
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_api_04_result_and_clone_inventory"
+    },
+    {
+      "description": "API-05: known in-place methods match the tagged binding inventory.",
+      "duration_ns": 60865,
+      "id": "API-05",
+      "observed": {
+        "availability": {
+          "EvalAddInPlace": true,
+          "EvalMultInPlace": false,
+          "EvalNegateInPlace": true,
+          "EvalSquareInPlace": true,
+          "EvalSubInPlace": true,
+          "ModReduceInPlace": true,
+          "RelinearizeInPlace": true,
+          "RescaleInPlace": true
+        }
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_api_05_in_place_inventory"
+    },
+    {
+      "description": "PROXY-01: a real context executes the non-bootstrap core through trace().",
+      "duration_ns": 131141558,
+      "id": "PROXY-01",
+      "observed": {
+        "operations": [
+          "EvalAdd",
+          "EvalMult",
+          "EvalRotate"
+        ],
+        "output_types": [
+          "Ciphertext",
+          "Ciphertext",
+          "Ciphertext"
+        ]
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_proxy_and_trace.ProxyAndTraceTests.test_proxy_01_real_context_core_calls"
+    },
+    {
+      "description": "PROXY-02: one proxy call produces one adapter call and one event.",
+      "duration_ns": 51193234,
+      "id": "PROXY-02",
+      "observed": {
+        "native_adapter_calls": 1,
+        "trace_events": 1
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_proxy_and_trace.ProxyAndTraceTests.test_proxy_02_exactly_once_delegation"
+    },
+    {
+      "description": "PROXY-03: a normal helper taking a context works without modification.",
+      "duration_ns": 57281110,
+      "id": "PROXY-03",
+      "observed": {
+        "helper": "eval_add_site",
+        "result_type": "Ciphertext"
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_proxy_and_trace.ProxyAndTraceTests.test_proxy_03_plain_python_helper_accepts_proxy"
+    },
+    {
+      "description": "PROXY-04: the proxy is not misrepresented as a native CryptoContext.",
+      "duration_ns": 27550194,
+      "id": "PROXY-04",
+      "observed": {
+        "fallback": "pass the original native context at native-only boundaries",
+        "isinstance_native": false,
+        "native_type": "CryptoContext",
+        "proxy_type": "TracedCryptoContext"
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_proxy_and_trace.ProxyAndTraceTests.test_proxy_04_proxy_type_boundary_is_explicit"
+    },
+    {
+      "description": "TRACE-01: operations resolve to exact manually inspectable source lines.",
+      "duration_ns": 291403412,
+      "id": "TRACE-01",
+      "observed": {
+        "expected": [
+          [
+            "EvalAdd",
+            "eval_add_site",
+            9
+          ],
+          [
+            "EvalMult",
+            "eval_mult_site",
+            13
+          ],
+          [
+            "EvalRotate",
+            "eval_rotate_site",
+            17
+          ]
+        ],
+        "observed": [
+          [
+            "EvalAdd",
+            "eval_add_site",
+            9
+          ],
+          [
+            "EvalMult",
+            "eval_mult_site",
+            13
+          ],
+          [
+            "EvalRotate",
+            "eval_rotate_site",
+            17
+          ]
+        ]
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_proxy_and_trace.ProxyAndTraceTests.test_trace_01_exact_golden_source_sites"
+    },
+    {
+      "description": "TRACE-02: the real trace validates and builds the same graph twice.",
+      "duration_ns": 92825152,
+      "id": "TRACE-02",
+      "observed": {
+        "edge_count": 12,
+        "node_count": 8,
+        "outputs": [
+          "ct_0004:v0"
+        ],
+        "roots": [
+          "ct_0001:v0",
+          "ct_0002:v0"
+        ],
+        "valid": true
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_proxy_and_trace.ProxyAndTraceTests.test_trace_02_valid_deterministic_graph"
+    },
+    {
+      "description": "ID-01: record whether pybind ciphertexts support weakrefs and hashing.",
+      "duration_ns": 26901745,
+      "id": "ID-01",
+      "observed": {
+        "hash_supported": true,
+        "tracking": "weak references when supported, strong references otherwise",
+        "weakref_supported": true
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_id_01_weakref_and_hash_behavior_is_classified"
+    },
+    {
+      "description": "ID-02: repeated aliases deduplicate and cyclic containers terminate.",
+      "duration_ns": 24458644,
+      "id": "ID-02",
+      "observed": {
+        "observations": 4,
+        "unique_identities": 1
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_id_02_nested_aliases_and_cycles"
+    },
+    {
+      "description": "ID-03: each new native output receives a distinct ciphertext ID.",
+      "duration_ns": 130428607,
+      "id": "ID-03",
+      "observed": {
+        "output_ids": [
+          "ct_0003:v0",
+          "ct_0004:v0",
+          "ct_0005:v0"
+        ]
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_proxy_and_trace.ProxyAndTraceTests.test_id_03_fresh_outputs_get_distinct_ciphertext_ids"
+    },
+    {
+      "description": "MUT-01: EvalAddInPlace retains identity and changes decrypted value.",
+      "duration_ns": 79795836,
+      "id": "MUT-01",
+      "observed": {
+        "identity_retained": true,
+        "max_error": 5.417888360170764e-14,
+        "returned_none": true
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_mut_01_eval_add_in_place_behavior"
+    },
+    {
+      "description": "MUT-02: the proxy records one immutable version for the mutation.",
+      "duration_ns": 813350856,
+      "id": "MUT-02",
+      "observed": {
+        "native_calls": 1,
+        "new_left_id": "ct_0001:v1",
+        "old_left_id": "ct_0001:v0"
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_mut_02_proxy_versions_supported_in_place_mutation"
+    },
+    {
+      "description": "NUM-01: traced addition agrees with direct and expected slot values.",
+      "duration_ns": 122463152,
+      "id": "NUM-01",
+      "observed": {
+        "max_direct_vs_traced_error": 7.815970093361102e-14,
+        "max_expected_error": 9.14823772291129e-14,
+        "tolerance": 0.001
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_numerical_equivalence.NumericalEquivalenceTests.test_num_01_eval_add_direct_vs_traced"
+    },
+    {
+      "description": "NUM-02: traced multiplication agrees with direct and expected values.",
+      "duration_ns": 188973601,
+      "id": "NUM-02",
+      "observed": {
+        "max_direct_vs_traced_error": 3.352873534367973e-13,
+        "max_expected_error": 1.8429702208777599e-13,
+        "tolerance": 0.001
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_numerical_equivalence.NumericalEquivalenceTests.test_num_02_eval_mult_direct_vs_traced"
+    },
+    {
+      "description": "ROT-01: +1/-2 rotations have exact trace indices and slot semantics.",
+      "duration_ns": 289915003,
+      "id": "ROT-01",
+      "observed": {
+        "distinct_outputs": true,
+        "indices": [
+          1,
+          -2
+        ],
+        "negative_direct_error": 1.0480505352461478e-13,
+        "negative_expected_error": 9.08162434143378e-14,
+        "positive_direct_error": 1.0502709812953981e-13,
+        "positive_expected_error": 6.683542608243442e-14,
+        "shared_input_version": true
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_rotations.RotationTests.test_rot_01_positive_and_negative_rotation_semantics"
+    },
+    {
+      "description": "ROT-02: fast rotations with one precompute agree with regular rotations.",
+      "duration_ns": 400849080,
+      "id": "ROT-02",
+      "observed": {
+        "cyclotomic_order": 65536,
+        "indices": [
+          1,
+          2,
+          3
+        ],
+        "max_errors": {
+          "1": 9.325873406851315e-14,
+          "2": 2.4868995751603507e-14,
+          "3": 5.573319583618286e-14
+        }
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_rotations.RotationTests.test_rot_02_fast_rotation_matches_regular"
+    },
+    {
+      "description": "BOOT-01: official tagged setup, key generation, and bootstrap execute.",
+      "duration_ns": 2856401180,
+      "id": "BOOT-01",
+      "observed": {
+        "after_level": 21,
+        "before_level": 31,
+        "configured_depth": 32,
+        "level_budget": [
+          4,
+          4
+        ],
+        "ring_dimension": 4096,
+        "security_level": "HEStd_NotSet",
+        "testing_only_insecure": true
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_bootstrap.BootstrapTests.test_boot_01_official_setup_executes"
+    },
+    {
+      "description": "BOOT-02: traced bootstrap agrees with direct output and source values.",
+      "duration_ns": 5859595413,
+      "id": "BOOT-02",
+      "observed": {
+        "direct_vs_traced_max_error": 2.230124657742749e-05,
+        "input_state": {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "7ec5bc90de3da078bfa056226e944108",
+          "level": 31,
+          "noise_scale_degree": 1,
+          "scale": 5.7646075229709926e+17,
+          "scaling_technique": "FLEXIBLEAUTO",
+          "slots": 2048
+        },
+        "output_state": {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "7ec5bc90de3da078bfa056226e944108",
+          "level": 21,
+          "noise_scale_degree": 2,
+          "scale": 3.3230699894369778e+35,
+          "scaling_technique": "FLEXIBLEAUTO",
+          "slots": 2048
+        },
+        "source": {
+          "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/integration_openfhe/golden_calls.py:21:eval_bootstrap_site:EvalBootstrap",
+          "file": "/scratch/10899/kimopro/cipherscope/tests/integration_openfhe/golden_calls.py",
+          "function": "eval_bootstrap_site",
+          "line": 21,
+          "qualified_function": "eval_bootstrap_site"
+        },
+        "source_max_error": 1.4189506121642381e-05,
+        "tolerance": 0.005
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_bootstrap.BootstrapTests.test_boot_02_direct_vs_traced_equivalence"
+    },
+    {
+      "description": "GAP-01: ciphertext addition overload executes but emits no proxy event.",
+      "duration_ns": 50441040,
+      "id": "GAP-01",
+      "observed": {
+        "emitted_events": 0,
+        "operator": "ciphertext.__add__",
+        "result_type": "Ciphertext"
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_coverage_gaps.CoverageGapTests.test_gap_01_operator_overload_bypasses_proxy"
+    },
+    {
+      "description": "GAP-02: a raw-context call executes but is not observable by the proxy.",
+      "duration_ns": 49390915,
+      "id": "GAP-02",
+      "observed": {
+        "emitted_events": 0,
+        "raw_call_succeeded": true
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_coverage_gaps.CoverageGapTests.test_gap_02_original_context_reference_bypasses_proxy"
+    },
+    {
+      "description": "GAP-03: module-level FHE callables are inventoried without coverage claims.",
+      "duration_ns": 93195,
+      "id": "GAP-03",
+      "observed": {
+        "free_function_coverage": false,
+        "module_level_eval_callables": [
+          "EvalChebyshevCoefficients",
+          "EvalChebyshevFunctionPtxt",
+          "EvalKey",
+          "EvalKeyMap"
+        ]
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_coverage_gaps.CoverageGapTests.test_gap_03_module_level_callable_inventory"
+    },
+    {
+      "description": "GAP-04: an uncovered composite rejects or is counted as passthrough.",
+      "duration_ns": 49217370,
+      "id": "GAP-04",
+      "observed": {
+        "permissive_events": 0,
+        "permissive_native_calls": 1,
+        "potentially_incomplete": true,
+        "strict_native_calls": 0,
+        "strict_rejections": 1
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_coverage_gaps.CoverageGapTests.test_gap_04_strict_and_permissive_eval_add_many"
+    },
+    {
+      "description": "RES-01: event wall/CPU timings are nonnegative and externally bounded.",
+      "duration_ns": 89340511,
+      "id": "RES-01",
+      "observed": {
+        "event": {
+          "process_cpu_duration_ns": 40069003,
+          "start_ns": 1581072892131981,
+          "thread_cpu_duration_ns": 40070417,
+          "wall_duration_ns": 40067056
+        },
+        "outer_process_cpu_duration_ns": 40762404,
+        "outer_thread_cpu_duration_ns": 40760831,
+        "outer_wall_duration_ns": 41038844
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_resources.ResourceTests.test_res_01_event_clocks_fit_external_envelope"
+    },
+    {
+      "description": "RES-02: /proc and getrusage memory samples use explicit units.",
+      "duration_ns": 206808,
+      "id": "RES-02",
+      "observed": {
+        "getrusage_maxrss_kib": 648880,
+        "proc_hwm_bytes": 664453120,
+        "proc_rss_bytes": 616411136
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_resources.ResourceTests.test_res_02_linux_rss_and_hwm_are_positive"
+    },
+    {
+      "description": "API-06: every declared non-mutating state/depth method is bound.",
+      "duration_ns": 40085,
+      "id": "API-06",
+      "observed": {
+        "availability": {
+          "EvalMultNoRelin": true,
+          "EvalNegate": true,
+          "EvalSquare": true,
+          "EvalSub": true,
+          "ModReduce": true,
+          "Relinearize": true,
+          "Rescale": true
+        }
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_api_06_state_depth_method_inventory"
+    },
+    {
+      "description": "MUT-03: every declared mutation emits one next state version.",
+      "duration_ns": 198488011,
+      "id": "MUT-03",
+      "observed": {
+        "transitions": [
+          [
+            "EvalSubInPlace",
+            "ct_0001:v0",
+            "ct_0001:v1"
+          ],
+          [
+            "EvalSquareInPlace",
+            "ct_0003:v0",
+            "ct_0003:v1"
+          ],
+          [
+            "RelinearizeInPlace",
+            "ct_0004:v0",
+            "ct_0004:v1"
+          ],
+          [
+            "EvalNegateInPlace",
+            "ct_0005:v0",
+            "ct_0005:v1"
+          ],
+          [
+            "ModReduceInPlace",
+            "ct_0006:v0",
+            "ct_0006:v1"
+          ],
+          [
+            "RescaleInPlace",
+            "ct_0007:v0",
+            "ct_0007:v1"
+          ]
+        ]
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_api_surface.APISurfaceTests.test_mut_03_proxy_versions_declared_in_place_matrix"
+    },
+    {
+      "description": "PROXY-05: encryption and decryption preserve native result behavior.",
+      "duration_ns": 61020600,
+      "id": "PROXY-05",
+      "observed": {
+        "max_abs_error": 4.263256414560601e-14,
+        "operations": [
+          "Encrypt",
+          "Decrypt"
+        ]
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_proxy_and_trace.ProxyAndTraceTests.test_proxy_05_real_encrypt_decrypt_calls"
+    },
+    {
+      "description": "ROT-03: generated and used indices feed the observed-run key rule.",
+      "duration_ns": 62310132,
+      "id": "ROT-03",
+      "observed": {
+        "inventory": {
+          "generated_indices": [
+            -2,
+            1
+          ],
+          "unused_generated_indices": [
+            -2
+          ],
+          "used_indices": [
+            1
+          ],
+          "used_without_observed_generation": []
+        }
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_rotations.RotationTests.test_rot_03_traced_key_generation_inventory"
+    },
+    {
+      "description": "SEED-01: seeded positives are detected and hard negatives stay silent.",
+      "duration_ns": 122960003172,
+      "id": "SEED-01",
+      "observed": {
+        "cases": 27,
+        "rules_without_real_positive": [
+          "bootstrap.restored_levels_underused.v1"
+        ],
+        "seeded_negatives": 18,
+        "seeded_positives": 13
+      },
+      "required": true,
+      "status": "pass",
+      "test": "tests.integration_openfhe.test_seeded_benchmark.SeededBenchmarkTests.test_every_case_matches_ground_truth"
+    }
+  ],
+  "duration_ns": 141364832660,
+  "environment": {
+    "distribution_version": null,
+    "executable": "python3.11",
+    "lane": "ls6-native-py311",
+    "machine": "x86_64",
+    "native_int": 64,
+    "native_module_hashes": {
+      "openfhe.cpython-311-x86_64-linux-gnu.so": "429513c3add220b9ca493e3d626c7e20adb4b18609c836804d9bbe2a1e6e3a06"
+    },
+    "os_release": {
+      "ANSI_COLOR": "0;32",
+      "BUG_REPORT_URL": "https://bugs.rockylinux.org/",
+      "CPE_NAME": "cpe:/o:rocky:rocky:8:GA",
+      "HOME_URL": "https://rockylinux.org/",
+      "ID": "rocky",
+      "ID_LIKE": "rhel centos fedora",
+      "LOGO": "fedora-logo-icon",
+      "NAME": "Rocky Linux",
+      "PLATFORM_ID": "platform:el8",
+      "PRETTY_NAME": "Rocky Linux 8.10 (Green Obsidian)",
+      "REDHAT_SUPPORT_PRODUCT": "Rocky Linux",
+      "REDHAT_SUPPORT_PRODUCT_VERSION": "8.10",
+      "ROCKY_SUPPORT_PRODUCT": "Rocky-Linux-8",
+      "ROCKY_SUPPORT_PRODUCT_VERSION": "8.10",
+      "SUPPORT_END": "2029-05-31",
+      "VERSION": "8.10 (Green Obsidian)",
+      "VERSION_ID": "8.10"
+    },
+    "platform": "Linux",
+    "python": "3.11.15",
+    "python_implementation": "CPython"
+  },
+  "gate": "OpenFHE Python v1.5.1.0 feasibility",
+  "lane": "ls6-native-py311",
+  "limitations": [
+    "A provisional Python 3.12 wheel pass is not the primary Python 3.11 source-build gate.",
+    "The bootstrap fixture uses HEStd_NotSet and ring dimension 4096 for testing tractability.",
+    "Timing and memory checks establish sane measurement mechanics, not overhead claims."
+  ],
+  "official_sources": [
+    "https://github.com/openfheorg/openfhe-python/tree/v1.5.1.0",
+    "https://github.com/openfheorg/openfhe-development/tree/v1.5.1",
+    "https://pypi.org/project/openfhe/1.5.1.0.24.4/"
+  ],
+  "pins": {
+    "native_commit": "1306d14f8c26bb6150d3e6ad54f28dfe1007689e",
+    "native_tag": "v1.5.1",
+    "provisional_distribution": "1.5.1.0.24.4",
+    "provisional_wheel_sha256": "b39f50f570ea1236dc8a8c64b01552848eb66c068592c4178fa37249f182106e",
+    "wrapper_commit": "4f13e2c3a7e35f73f4816904dabd3a3db47b6e51",
+    "wrapper_tag": "v1.5.1.0"
+  },
+  "schema_version": "1.0.0",
+  "started_unix_ns": 1789334375795344375,
+  "status": "native_pass",
+  "summary": {
+    "fail": 0,
+    "missing": 0,
+    "missing_check_ids": [],
+    "pass": 38,
+    "skip": 0,
+    "total": 38,
+    "unexpected_check_ids": []
+  }
+}

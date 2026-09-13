@@ -165,7 +165,7 @@ columns and the limits the benchmark uncovered.
 ciphertext identity), and `FULL` — and reports the weakest view under which each
 rule still produces the same diagnosis. `evaluation/scaling/run_scaling.py`
 measures memory, trace size, and analysis time from 10² to 10⁵ events against an
-untraced baseline. `ARTIFACT.md` maps every claim to its file, and the
+untraced baseline. [docs/ARTIFACT.md](docs/ARTIFACT.md) maps every claim to its file, and the
 `Makefile` provides `make artifact-smoke`, `make reproduce-small`, and
 `make verify-checksums`.
 

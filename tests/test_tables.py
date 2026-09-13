@@ -177,6 +177,7 @@ class ScalingTableTests(unittest.TestCase):
         ])
         rows = scaling_rows(runs)
         self.assertEqual([row["arm"] for row in rows], ["baseline", "streaming", "buffered"])
+        self.assertEqual({row["machine"] for row in rows}, {"arm64"})
         self.assertEqual(tuple(rows[1]), SCALING_COLUMNS)
         streaming = rows[1]
         self.assertAlmostEqual(streaming["wall_overhead_ratio_vs_baseline"], 0.2)
@@ -186,6 +187,21 @@ class ScalingTableTests(unittest.TestCase):
         self.assertEqual(streaming["analyze_ms_per_1k_events"], 200)
         self.assertIsNone(rows[0]["wall_overhead_ratio_vs_baseline"])
         self.assertEqual(scaling_rows(runs), rows)
+
+    def test_scaling_rows_never_pool_machines(self) -> None:
+        runs = validate_rows(CONTRACT["scaling_run"], [
+            self._run(1000, "baseline", 500, 10, 80),
+            self._run(1000, "streaming", 600, 30, 130, analyze_ms=200, trace_bytes=2_000_000, finalize_ms=50),
+            self._run(1000, "baseline", 250, 10, 60, machine="x86_64"),
+            self._run(1000, "streaming", 500, 30, 100, analyze_ms=100, trace_bytes=2_000_000, finalize_ms=25, machine="x86_64"),
+        ])
+        rows = scaling_rows(runs)
+        self.assertEqual([(row["machine"], row["arm"]) for row in rows],
+                         [("arm64", "baseline"), ("arm64", "streaming"), ("x86_64", "baseline"), ("x86_64", "streaming")])
+        # Each machine's overhead ratio is taken against its own baseline.
+        self.assertAlmostEqual(rows[1]["wall_overhead_ratio_vs_baseline"], 0.2)
+        self.assertAlmostEqual(rows[3]["wall_overhead_ratio_vs_baseline"], 1.0)
+        self.assertEqual(rows[3]["peak_rss_vs_baseline_mb"], 40)
 
     def test_archived_scaling_record_validates(self) -> None:
         from cipherscope.tables import read_csv
@@ -231,6 +247,11 @@ class EndToEndTests(unittest.TestCase):
             manifest = json.loads((evaluation / "tables" / "MANIFEST.json").read_text())
             self.assertIn("seed", manifest["bootstrap"])
             self.assertNotIn("generated_at", manifest)
+            # Paths are repository-relative so the manifest is identical on every machine.
+            for name, path in manifest["skipped_inputs"].items():
+                self.assertFalse(Path(path).is_absolute(), (name, path))
+            for entry in manifest["inputs"].values():
+                self.assertFalse(Path(entry["path"]).is_absolute(), entry)
 
     def test_bad_input_is_refused_before_anything_is_written(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

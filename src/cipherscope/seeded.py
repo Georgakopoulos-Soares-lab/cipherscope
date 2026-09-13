@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -548,11 +549,31 @@ def write_results(
     document = {
         "all_matched": all_matched(results),
         "cases": cases,
+        "environment": _environment(),
         "table": list(table),
     }
     json_path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     csv_path = write_recall_table(table, output / "recall_table.csv")
     return json_path, csv_path
+
+
+def _environment() -> dict[str, Any]:
+    """Which lane, platform, and interpreter produced this result.
+
+    A macOS and a Linux run of the same benchmark are otherwise
+    indistinguishable; `results_from_json` ignores this block, so tables do not
+    change.
+    """
+
+    from .fingerprint import build_fingerprint
+
+    return {
+        **build_fingerprint(),
+        "platform": platform.system(),
+        "machine": platform.machine(),
+        "python": platform.python_version(),
+        "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
+    }
 
 
 def _portable_bundle(bundle: str, output: Path) -> str:

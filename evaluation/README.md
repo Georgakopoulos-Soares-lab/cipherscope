@@ -23,7 +23,7 @@ Bootstrap confidence intervals use a fixed seed recorded in the manifest.
 | `raw/workload_runs.csv` | you (exported from the C-02 / E-01 runs) | One row per measured repetition per arm; PDF section 11.1 columns. |
 | `raw/coverage_report.csv` | `cipherscope coverage --output` | One row per classified bundle. |
 | `raw/seeded/case_results.json` | `cipherscope seeded --output` | The seeded benchmark's raw result (copy `case_results.json` here; bundles are regenerable and stay out). |
-| `raw/scaling.csv` | `scaling/run_scaling.py` | One row per (event count, arm) kernel process; `baseline` is the untraced loop. |
+| `raw/scaling.csv` | `scaling/run_scaling.py` | One row per (machine, event count, arm) kernel process; `baseline` is the untraced loop. Rows from different machines (`machine` column) coexist and are reported separately. |
 | `raw/semantic_ablation.csv` | `cipherscope ablate --output` | One row per (bundle, mode, rule). |
 | `raw/CHECKSUMS.sha256` | `make checksums` | SHA-256 of every raw file; `make verify-checksums` checks them. |
 | `adjudication/findings.csv` | `cipherscope findings` + human verdicts | One row per finding from a `COMPLETE` real run; see `adjudication/GUIDE.md`. |
@@ -72,7 +72,7 @@ to count as the same diagnosis.
 | `seeded_cases.csv` | same | The flat per-case record behind `recall.csv`. |
 | `coverage.csv` | `raw/coverage_report.csv` | Runs per coverage class and the `COMPLETE` fraction. |
 | `overhead.csv` | `raw/workload_runs.csv` | Per workload: baseline and traced medians and IQRs, overhead ratio `(traced - baseline) / baseline` with a bootstrap 95% CI, absolute overhead, RSS delta, and traced event/trace-size/analyzer medians; an `ALL` row gives the median ratio across workloads. |
-| `scaling.csv` | `raw/scaling.csv` | Per event count and arm: wall time and its ratio to the untraced baseline, RSS growth and peak RSS minus the baseline's, finalization and analysis time, bytes per event, analysis ms per 1k events. Empirical slopes over the tested range only; no asymptotic claim. |
+| `scaling.csv` | `raw/scaling.csv` | Per machine, event count, and arm (machines are never pooled; each is compared with its own baseline): wall time and its ratio to the untraced baseline, RSS growth and peak RSS minus the baseline's, finalization and analysis time, bytes per event, analysis ms per 1k events. Empirical slopes over the tested range only; no asymptotic claim. |
 | `semantic_ablation.csv` | `raw/semantic_ablation.csv` | Per rule: seeded positives reproduced under `TIMING_ONLY`, `STATE`, and `FULL`, and the weakest mode that reproduces all of them. |
 | `generic_profiler_comparison.csv` | same | Per rule: whether a timing-only view (what cProfile plus line attribution provides) can make the diagnosis. |
 

@@ -2,21 +2,27 @@
 #SBATCH -J sol_encrypted_inference
 #SBATCH -o sol_encrypted_inference.o%j
 #SBATCH -e sol_encrypted_inference.e%j
-#SBATCH -p gh-dev
+#SBATCH -p vm-small
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -t 02:00:00
 #SBATCH -A MCB25091
 
 set -uo pipefail
-module purge
-module load TACC
-module load gcc/15.1.0
-export PATH=$WORK/cipherscope-openfhe-build/opt/python311/bin:$PATH
-export LD_LIBRARY_PATH=/home1/apps/gcc/15.1.0/lib64:$WORK/cipherscope-openfhe-build/opt/python311/lib:$WORK/cipherscope-openfhe-build/opt/openfhe/lib:$WORK/cipherscope-openfhe-build/opt/openfhe/lib64
-export PYTHONPATH=$WORK/cipherscope/src:$WORK/python-log-reg-examples
+# LS6 launcher. The checkout is expected at $WORK/cipherscope unless
+# CIPHERSCOPE_DIR is exported; ls6_env.sh loads gcc/15.2.0, cmake, apptainer,
+# and the native-lane runtime under $WORK/cipherscope-openfhe-build.
+CIPHERSCOPE_DIR="${CIPHERSCOPE_DIR:-$WORK/cipherscope}"
+# shellcheck disable=SC1091
+source "$CIPHERSCOPE_DIR/ls6_env.sh"
 
-cd "$WORK/python-log-reg-examples"
-rm -rf "$WORK/cipherscope/external_suite/sol_encrypted_inference"
-python3.11 -m cipherscope.cli run --output "$WORK/cipherscope/external_suite/sol_encrypted_inference/" --permissive "sol_encrypted_inference.py"
+REPO="${LOG_REG_EXAMPLES:-$WORK/python-log-reg-examples}"
+export PYTHONPATH="$PYTHONPATH:$REPO"
+cd "$REPO"
+rm -rf "$CIPHERSCOPE_DIR/external_suite/sol_encrypted_inference"
+if ! python3.11 -m cipherscope.cli run --output "$CIPHERSCOPE_DIR/external_suite/sol_encrypted_inference/" "sol_encrypted_inference.py"; then
+  echo "strict run failed; re-running permissive for the coverage inventory"
+  rm -rf "$CIPHERSCOPE_DIR/external_suite/sol_encrypted_inference"
+  python3.11 -m cipherscope.cli run --output "$CIPHERSCOPE_DIR/external_suite/sol_encrypted_inference/" --permissive "sol_encrypted_inference.py"
+fi
 echo "exit code: $?"

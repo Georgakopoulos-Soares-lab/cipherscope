@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ARTIFACT = ROOT / "ARTIFACT.md"
+ARTIFACT = ROOT / "docs" / "ARTIFACT.md"
 MAKEFILE = ROOT / "Makefile"
 RAW = ROOT / "evaluation" / "raw"
 BACKTICK_PATH = re.compile(r"`([A-Za-z0-9_./-]+\.(?:md|json|csv|py|yaml))`")

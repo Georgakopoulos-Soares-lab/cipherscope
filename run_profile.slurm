@@ -2,20 +2,19 @@
 #SBATCH -J prs-profile
 #SBATCH -o prs-profile.o%j
 #SBATCH -e prs-profile.e%j
-#SBATCH -p gh-dev
+#SBATCH -p vm-small
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH -t 00:45:00
 #SBATCH -A MCB25091
 
 set -euo pipefail
+# LS6 launcher. The checkout is expected at $WORK/cipherscope unless
+# CIPHERSCOPE_DIR is exported; ls6_env.sh loads gcc/15.2.0, cmake, apptainer,
+# and the native-lane runtime under $WORK/cipherscope-openfhe-build.
+CIPHERSCOPE_DIR="${CIPHERSCOPE_DIR:-$WORK/cipherscope}"
+# shellcheck disable=SC1091
+source "$CIPHERSCOPE_DIR/ls6_env.sh"
 
-module purge
-module load TACC
-module load gcc/15.1.0
-export PATH=$WORK/cipherscope-openfhe-build/opt/python311/bin:$PATH
-export LD_LIBRARY_PATH=/home1/apps/gcc/15.1.0/lib64:$WORK/cipherscope-openfhe-build/opt/python311/lib:$WORK/cipherscope-openfhe-build/opt/openfhe/lib:$WORK/cipherscope-openfhe-build/opt/openfhe/lib64
-export PYTHONPATH=$WORK/cipherscope/src
-
-cd $WORK/cipherscope
+cd "$CIPHERSCOPE_DIR"
 python3.11 benchmark_prs_overhead.py --repeats 5 --warmup 1 --output prs-bench-results

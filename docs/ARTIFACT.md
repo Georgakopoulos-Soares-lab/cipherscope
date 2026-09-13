@@ -15,7 +15,7 @@ do not need to rerun them to check the artifact.
 | `make gate` | real binding; on Linux also `/proc` | ~30 s |
 | Scaling sweep (`evaluation/scaling/run_scaling.py`) | real binding; ~4 GB RAM for the 10⁵ point | ~4 min |
 
-Real-binding lanes and how to build them are in [docs/evidence.md](docs/evidence.md).
+Real-binding lanes and how to build them are in [docs/evidence.md](evidence.md).
 The Docker recipes under `artifact/docker/` build the provisional wheel lane and
 the primary source lane; the macOS conda lane used for development is described
 in the parent repository's `OPENFHE_ENVIRONMENT.md`.

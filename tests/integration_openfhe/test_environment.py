@@ -25,6 +25,13 @@ class EnvironmentTests(unittest.TestCase):
             self.assertEqual(snapshot["machine"], "x86_64")
             self.assertEqual(snapshot["os_release"].get("ID"), "ubuntu")
             self.assertEqual(snapshot["os_release"].get("VERSION_ID"), "24.04")
+        elif support.LANE == "ls6-native-py311":
+            # A bare-host lane: Linux x86_64 is required, the distribution is
+            # recorded (Rocky Linux on Lonestar6) but deliberately not asserted.
+            self.assertEqual(snapshot["platform"], "Linux")
+            self.assertEqual(snapshot["machine"], "x86_64")
+            self.assertTrue(snapshot["os_release"].get("ID"))
+            self.assertTrue(snapshot["os_release"].get("VERSION_ID"))
         support.record("ENV-01", **snapshot)
 
     def test_env_02_cpython_version(self) -> None:
@@ -32,6 +39,7 @@ class EnvironmentTests(unittest.TestCase):
 
         expected_minor = {
             "primary-source-py311": (3, 11),
+            "ls6-native-py311": (3, 11),
             "provisional-wheel-py312": (3, 12),
         }.get(support.LANE)
         self.assertEqual(platform.python_implementation(), "CPython")
@@ -51,7 +59,7 @@ class EnvironmentTests(unittest.TestCase):
         wrapper_commit = os.environ.get("CIPHERSCOPE_OPENFHE_WRAPPER_COMMIT")
         if support.LANE == "provisional-wheel-py312":
             self.assertEqual(installed, support.GOLDEN["provisional_distribution"])
-        elif support.LANE == "primary-source-py311":
+        elif support.LANE in {"primary-source-py311", "ls6-native-py311"}:
             self.assertEqual(wrapper_commit, support.GOLDEN["wrapper_commit"])
         elif installed is None:
             # A source-built developer wrapper has no pip metadata; the pinned
@@ -77,7 +85,7 @@ class EnvironmentTests(unittest.TestCase):
                 "wheel_sha256": support.GOLDEN["provisional_wheel_sha256"],
                 "native_module_hashes": support.native_module_hashes(),
             }
-        elif support.LANE == "primary-source-py311":
+        elif support.LANE in {"primary-source-py311", "ls6-native-py311"}:
             expected = {
                 "wrapper_commit": support.GOLDEN["wrapper_commit"],
                 "native_commit": support.GOLDEN["native_commit"],
