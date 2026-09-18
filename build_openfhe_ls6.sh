@@ -1,23 +1,30 @@
 #!/usr/bin/env bash
 # Build the pinned OpenFHE 1.5.1.0 Python stack on TACC Lonestar6 (x86_64,
-# Rocky Linux 8.4) and run CipherScope's tests/integration_openfhe gate.
+# Rocky Linux 8) with the module toolchain, then run CipherScope's
+# tests/integration_openfhe gate as the *native* supporting lane
+# `ls6-native-py311`.
 #
 # This is a line-by-line translation of
 #   artifact/docker/openfhe-py311-source/Dockerfile
 # to a no-root, module-based HPC environment. The pins (Python version,
 # OpenFHE commits) are copied verbatim from that Dockerfile and from
-# tests/integration_openfhe/golden_core.json -- do not change them, or your
-# results won't count as a pass of the primary gate.
+# tests/integration_openfhe/golden_core.json -- do not change them.
 #
-# USAGE (from an ls6 login node):
-#   idev -A <your_allocation> -N 1 -n 1 -p development -m 60
-#   (wait for the interactive compute-node shell, then:)
-#   cd $WORK
-#   git clone <your cipherscope fork/checkout> cipherscope
+# What this lane is and is not: it uses the same Python 3.11.15 and OpenFHE
+# commits as the primary lane, but the host is Rocky Linux with a TACC gcc
+# module rather than the pinned Ubuntu 24.04 image, so the gate's ENV-01 would
+# refuse to call it `primary-source-py311`. The authoritative primary lane is
+# built on LS6 from artifact/apptainer/openfhe-py311-source.def instead (see
+# docs/evidence.md); this script proves the gate on a second toolchain.
+#
+# USAGE (from an already-allocated compute node shell, e.g. idev or an
+# interactive job; never the login node -- it compiles Python + two C++
+# projects):
+#   cd /path/to/cipherscope
 #   bash build_openfhe_ls6.sh
 #
-# Do NOT run this on the login node -- it compiles Python + two C++ projects
-# and will get you flagged. Always request an idev/compute-node session first.
+# Everything is installed under $WORK/cipherscope-openfhe-build; rerunning
+# skips the parts that already exist.
 
 set -euo pipefail
 
@@ -52,21 +59,28 @@ test -d "$CIPHERSCOPE_DIR/src/cipherscope" || {
 # 2. Toolchain -- module-based, no apt/root. gcc module gives a real modern
 #    GNU toolchain (avoid the bare system gcc, which is old on Rocky 8).
 # ---------------------------------------------------------------------------
-# Use the same compiler module as every runtime script. Mixing versions can
-# load a different libstdc++.so.6 and make the OpenFHE extension fail to import.
-GCC_MODULE="${GCC_MODULE:-gcc/15.1.0}"
+# Use the same compiler module as ls6_env.sh (which every runtime script
+# sources). Mixing versions can load a different libstdc++.so.6 and make the
+# OpenFHE extension fail to import. gcc/15.1.0 was retired from LS6; 15.2.0 is
+# the current module.
+GCC_MODULE="${GCC_MODULE:-gcc/15.2.0}"
+CMAKE_MODULE="${CMAKE_MODULE:-cmake/3.31.5}"   # closest module to Ubuntu 24.04's 3.28
 
+if ! type module >/dev/null 2>&1; then
+  # shellcheck disable=SC1091
+  source /etc/profile.d/z01_lmod.sh
+fi
 module purge
 module load TACC
 module load "$GCC_MODULE"
-module load cmake
+module load "$CMAKE_MODULE"
 module list
 
 # Belt-and-suspenders: explicitly put this compiler's own lib64 (where its
 # matching libstdc++.so.6 lives) at the FRONT of LD_LIBRARY_PATH, so it can't
 # be shadowed by a different gcc module's runtime libs that may already be on
 # the path from an earlier `module load` in this shell.
-GCC_LIB64="$(dirname "$(dirname "$(command -v g++)")")/lib64"
+GCC_LIB64="${TACC_GCC_LIB64:-$(dirname "$(dirname "$(command -v g++)")")/lib64}"
 export LD_LIBRARY_PATH="$GCC_LIB64:${LD_LIBRARY_PATH:-}"
 echo "== Using g++ at $(command -v g++), lib64 at $GCC_LIB64 =="
 
@@ -185,9 +199,11 @@ export CIPHERSCOPE_OPENFHE_NATIVE_COMMIT="$OPENFHE_NATIVE_COMMIT"
 export CIPHERSCOPE_OPENFHE_WRAPPER_COMMIT="$OPENFHE_WRAPPER_COMMIT"
 export CIPHERSCOPE_OPENFHE_BUILD_MANIFEST="$BUILD_ROOT/cipherscope-openfhe-build-manifest.json"
 
+MAKE_JOBS="$MAKE_JOBS" OMP_NUM_THREADS="${OMP_NUM_THREADS:-}" \
 python3.11 - "$CIPHERSCOPE_OPENFHE_BUILD_MANIFEST" "$SITE_PACKAGES" "$OPENFHE_NATIVE_COMMIT" "$OPENFHE_WRAPPER_COMMIT" <<'PYEOF'
 import hashlib
 import json
+import os
 import platform
 import subprocess
 import sys
@@ -209,15 +225,49 @@ def sha256(path):
 package = Path(site_packages) / "openfhe"
 native_modules = {p.name: sha256(p) for p in sorted(package.glob("*.so"))}
 
+def os_release():
+    release = {}
+    path = Path("/etc/os-release")
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if "=" in line:
+                key, value = line.split("=", 1)
+                release[key] = value.strip().strip('"')
+    return release
+
+def cpu_model():
+    try:
+        for line in Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines():
+            if line.startswith("model name"):
+                return line.split(":", 1)[1].strip()
+    except OSError:
+        pass
+    return None
+
 manifest = {
     "schema_version": "1.0.0",
     # Honest about the actual platform -- this was built on TACC Lonestar6
     # (Rocky Linux), not the Ubuntu reference image the Dockerfile targets.
     "base_platform": {
-        "name": "TACC Lonestar6 (Rocky Linux, no container)",
+        "name": "TACC Lonestar6 (Rocky Linux host, no container)",
         "architecture": platform.machine(),
+        "os_release": os_release(),
+        "kernel": platform.release(),
     },
-    "python": {"version": platform.python_version()},
+    "host": {
+        "hostname": platform.node(),
+        "cpu_model": cpu_model(),
+        "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+        "slurm_partition": os.environ.get("SLURM_JOB_PARTITION"),
+        "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
+        "make_jobs": os.environ.get("MAKE_JOBS"),
+        "modules": os.environ.get("LOADEDMODULES", "").split(":"),
+    },
+    "python": {
+        "version": platform.python_version(),
+        "source": "https://www.python.org/ftp/python/3.11.15/Python-3.11.15.tar.xz",
+        "configure_flags": ["--enable-shared", "--with-ensurepip=install"],
+    },
     "openfhe_native": {
         "repository": "https://github.com/openfheorg/openfhe-development.git",
         "commit": native_commit,
@@ -243,20 +293,28 @@ print(f"wrote build manifest to {manifest_path}")
 PYEOF
 
 # ---------------------------------------------------------------------------
-# 6. Run CipherScope's real-binding gate. These env vars are what make the
-#    run count as the *primary* gate rather than a "developer" spot-check --
-#    they match CIPHERSCOPE_OPENFHE_LANE / _BOOTSTRAP read by tests/integration_openfhe/support.py.
+# 6. Run CipherScope's real-binding gate as the native supporting lane. The
+#    lane name is what tests/integration_openfhe/support.py reads; ENV-01
+#    records this host's distribution instead of asserting Ubuntu, and
+#    run_gate.py reports `native_pass` (never `pass`, which is reserved for
+#    the Ubuntu 24.04 image) when every check succeeds.
 # ---------------------------------------------------------------------------
 export PYTHONPATH="$CIPHERSCOPE_DIR/src"
-export CIPHERSCOPE_OPENFHE_LANE=primary-source-py311
+export PYTHONNOUSERSITE=1
+export CIPHERSCOPE_OPENFHE_LANE="${CIPHERSCOPE_OPENFHE_LANE:-ls6-native-py311}"
 export CIPHERSCOPE_OPENFHE_BOOTSTRAP=1
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
+GATE_OUTPUT="$BUILD_ROOT/feasibility-$CIPHERSCOPE_OPENFHE_LANE.json"
 
 cd "$CIPHERSCOPE_DIR"
-echo "== Running tests/integration_openfhe gate =="
-python3.11 -m tests.integration_openfhe.run_gate \
-  --output "$BUILD_ROOT/feasibility-ls6.json"
+echo "== Running tests/integration_openfhe gate as lane $CIPHERSCOPE_OPENFHE_LANE =="
+python3.11 -m tests.integration_openfhe.run_gate --output "$GATE_OUTPUT"
 
 echo
-echo "Gate evidence written to: $BUILD_ROOT/feasibility-ls6.json"
-echo "Check its \"status\" field: \"pass\" means all required checks passed;"
+echo "Gate evidence written to: $GATE_OUTPUT"
+echo "Check its \"status\" field: \"native_pass\" means all required checks passed;"
 echo "\"incomplete\" means something still skipped; \"fail\" means a real failure."
+echo "Archive it with the build manifest:"
+echo "  mkdir -p artifact/feasibility/$CIPHERSCOPE_OPENFHE_LANE"
+echo "  cp $GATE_OUTPUT artifact/feasibility/$CIPHERSCOPE_OPENFHE_LANE/feasibility.json"
+echo "  cp $CIPHERSCOPE_OPENFHE_BUILD_MANIFEST artifact/feasibility/$CIPHERSCOPE_OPENFHE_LANE/build-manifest.json"

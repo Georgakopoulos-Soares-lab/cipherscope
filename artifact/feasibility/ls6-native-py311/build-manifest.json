@@ -1,0 +1,67 @@
+{
+  "base_platform": {
+    "architecture": "x86_64",
+    "kernel": "4.18.0-553.150.1.el8_10.x86_64",
+    "name": "TACC Lonestar6 (Rocky Linux host, no container)",
+    "os_release": {
+      "ANSI_COLOR": "0;32",
+      "BUG_REPORT_URL": "https://bugs.rockylinux.org/",
+      "CPE_NAME": "cpe:/o:rocky:rocky:8:GA",
+      "HOME_URL": "https://rockylinux.org/",
+      "ID": "rocky",
+      "ID_LIKE": "rhel centos fedora",
+      "LOGO": "fedora-logo-icon",
+      "NAME": "Rocky Linux",
+      "PLATFORM_ID": "platform:el8",
+      "PRETTY_NAME": "Rocky Linux 8.10 (Green Obsidian)",
+      "REDHAT_SUPPORT_PRODUCT": "Rocky Linux",
+      "REDHAT_SUPPORT_PRODUCT_VERSION": "8.10",
+      "ROCKY_SUPPORT_PRODUCT": "Rocky-Linux-8",
+      "ROCKY_SUPPORT_PRODUCT_VERSION": "8.10",
+      "SUPPORT_END": "2029-05-31",
+      "VERSION": "8.10 (Green Obsidian)",
+      "VERSION_ID": "8.10"
+    }
+  },
+  "host": {
+    "cpu_model": "AMD EPYC 7763 64-Core Processor",
+    "hostname": "v320-008.ls6.tacc.utexas.edu",
+    "make_jobs": "16",
+    "modules": [
+      "autotools/1.4",
+      "pmix/3.2.3",
+      "xalt/3.1",
+      "TACC",
+      "gcc/15.2.0",
+      "cmake/3.31.5"
+    ],
+    "omp_num_threads": "1",
+    "slurm_job_id": "3436198",
+    "slurm_partition": "vm-small"
+  },
+  "openfhe_native": {
+    "commit": "1306d14f8c26bb6150d3e6ad54f28dfe1007689e",
+    "repository": "https://github.com/openfheorg/openfhe-development.git"
+  },
+  "openfhe_python": {
+    "commit": "4f13e2c3a7e35f73f4816904dabd3a3db47b6e51",
+    "native_module_hashes": {
+      "openfhe.cpython-311-x86_64-linux-gnu.so": "429513c3add220b9ca493e3d626c7e20adb4b18609c836804d9bbe2a1e6e3a06"
+    },
+    "repository": "https://github.com/openfheorg/openfhe-python.git"
+  },
+  "python": {
+    "configure_flags": [
+      "--enable-shared",
+      "--with-ensurepip=install"
+    ],
+    "source": "https://www.python.org/ftp/python/3.11.15/Python-3.11.15.tar.xz",
+    "version": "3.11.15"
+  },
+  "schema_version": "1.0.0",
+  "toolchain": {
+    "cc": "gcc (GCC) 15.2.0",
+    "cmake": "cmake version 3.31.5",
+    "cxx": "g++ (GCC) 15.2.0"
+  }
+}

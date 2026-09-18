@@ -218,6 +218,11 @@ def run(*, output: Path, stream: TextIO, verbosity: int) -> tuple[int, dict[str,
     elif support.LANE == "provisional-wheel-py312":
         status = "provisional_pass"
         exit_code = 0
+    elif support.LANE == "ls6-native-py311":
+        # Same pins and Python as the primary lane, but the host distribution
+        # and compiler differ (Rocky Linux + TACC gcc module); supporting only.
+        status = "native_pass"
+        exit_code = 0
     else:
         status = "developer_pass"
         exit_code = 0

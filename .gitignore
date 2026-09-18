@@ -24,3 +24,6 @@ prs_run/
 prs_run_8192/
 prs_dot_product_analysis.py
 feasibility-*.json
+
+# Container images are rebuilt from artifact/apptainer/*.def; only their checksums are tracked.
+*.sif

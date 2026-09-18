@@ -1,0 +1,147 @@
+# Apptainer definition for the primary Python 3.11 source-build lane.
+#
+# This is artifact/docker/openfhe-py311-source/Dockerfile translated section by
+# section so the authoritative lane can be built without Docker or root, for
+# example on TACC Lonestar6 with `apptainer build --fakeroot`. The base-image
+# digest, Python tarball hash, and OpenFHE commits are the same bytes as the
+# Dockerfile and tests/integration_openfhe/golden_core.json -- do not edit them.
+#
+# Two additions are required for a rootless (user-namespace, no subuid) build:
+#   1. apt must stay root instead of dropping to `_apt` (APT::Sandbox::User);
+#   2. APPTAINER_TMPDIR must be on a local filesystem -- BeeGFS/Lustre have no
+#      xattr support and rename() inside the staged rootfs fails with EBUSY;
+#   3. /usr/local/share/fonts is pre-created so fontconfig-config's postinst
+#      does not chown it to an unmapped group (see %post);
+#   4. sources and the manifest script live under /usr/local/src, not /tmp:
+#      Apptainer bind-mounts the host's /tmp during %post, which hides
+#      anything %files stages there.
+#
+#   source ls6_env.sh
+#   apptainer build --fakeroot --build-arg MAKE_JOBS=16 \
+#       "$BUILD_ROOT/openfhe-py311-source.sif" artifact/apptainer/openfhe-py311-source.def
+
+Bootstrap: docker
+From: ubuntu@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90
+
+%arguments
+    MAKE_JOBS=16
+
+%files
+    artifact/docker/openfhe-py311-source/write_build_manifest.py /usr/local/src/write_build_manifest.py
+
+%environment
+    export PATH=/opt/python311/bin:$PATH
+    export LD_LIBRARY_PATH=/opt/python311/lib:/opt/openfhe/lib:/opt/openfhe/lib64
+    export PYTHONPATH=/workspace/cipherscope/src
+    export PYTHONNOUSERSITE=1
+    export CIPHERSCOPE_OPENFHE_LANE=primary-source-py311
+    export CIPHERSCOPE_OPENFHE_BOOTSTRAP=1
+    export CIPHERSCOPE_OPENFHE_NATIVE_COMMIT=1306d14f8c26bb6150d3e6ad54f28dfe1007689e
+    export CIPHERSCOPE_OPENFHE_WRAPPER_COMMIT=4f13e2c3a7e35f73f4816904dabd3a3db47b6e51
+    export CIPHERSCOPE_OPENFHE_BUILD_MANIFEST=/opt/cipherscope-openfhe-build-manifest.json
+
+%post
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+    MAKE_JOBS={{ MAKE_JOBS }}
+    PYTHON_VERSION=3.11.15
+    PYTHON_SHA256=272179ddd9a2e41a0fc8e42e33dfbdca0b3711aa5abf372d3f2d51543d09b625
+    OPENFHE_NATIVE_COMMIT=1306d14f8c26bb6150d3e6ad54f28dfe1007689e
+    OPENFHE_WRAPPER_COMMIT=4f13e2c3a7e35f73f4816904dabd3a3db47b6e51
+
+    # Rootless build (user namespace without subuid): apt must not drop to _apt.
+    echo 'APT::Sandbox::User "root";' > /etc/apt/apt.conf.d/99-rootless-sandbox
+    # fontconfig-config (pulled in by tk-dev) chowns this directory to
+    # root:staff, a group a single-uid namespace cannot map. Its postinst is
+    # guarded by `[ ! -d ... ]`, so creating the directory first skips the chown.
+    mkdir -p /usr/local/share/fonts
+    apt-get update
+    apt-get install --yes --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cmake \
+        curl \
+        git \
+        libbz2-dev \
+        libffi-dev \
+        libgdbm-dev \
+        liblzma-dev \
+        libncursesw5-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        libuuid1 \
+        libxml2-dev \
+        libzstd-dev \
+        pybind11-dev \
+        tk-dev \
+        uuid-dev \
+        xz-utils \
+        zlib1g-dev
+    rm -rf /var/lib/apt/lists/*
+
+    mkdir -p /usr/local/src/python-build
+    cd /usr/local/src/python-build
+    curl --fail --location --silent --show-error \
+        --output Python.tar.xz \
+        "https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz"
+    echo "${PYTHON_SHA256}  Python.tar.xz" | sha256sum --check --strict
+    tar --extract --file Python.tar.xz --xz --strip-components=1
+    ./configure \
+        --prefix=/opt/python311 \
+        --enable-shared \
+        --with-ensurepip=install
+    make --jobs "${MAKE_JOBS}"
+    make install
+    export PATH=/opt/python311/bin:$PATH
+    export LD_LIBRARY_PATH=/opt/python311/lib
+
+    git init /usr/local/src/openfhe-development
+    git -C /usr/local/src/openfhe-development remote add origin https://github.com/openfheorg/openfhe-development.git
+    git -C /usr/local/src/openfhe-development fetch --depth 1 origin "${OPENFHE_NATIVE_COMMIT}"
+    git -C /usr/local/src/openfhe-development checkout --detach FETCH_HEAD
+    test "$(git -C /usr/local/src/openfhe-development rev-parse HEAD)" = "${OPENFHE_NATIVE_COMMIT}"
+
+    cmake \
+        -S /usr/local/src/openfhe-development \
+        -B /usr/local/src/openfhe-development/build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/opt/openfhe \
+        -DBUILD_UNITTESTS=OFF \
+        -DBUILD_EXAMPLES=OFF \
+        -DBUILD_BENCHMARKS=OFF
+    cmake --build /usr/local/src/openfhe-development/build --parallel "${MAKE_JOBS}"
+    cmake --install /usr/local/src/openfhe-development/build
+    export LD_LIBRARY_PATH=/opt/python311/lib:/opt/openfhe/lib:/opt/openfhe/lib64
+
+    git init /usr/local/src/openfhe-python
+    git -C /usr/local/src/openfhe-python remote add origin https://github.com/openfheorg/openfhe-python.git
+    git -C /usr/local/src/openfhe-python fetch --depth 1 origin "${OPENFHE_WRAPPER_COMMIT}"
+    git -C /usr/local/src/openfhe-python checkout --detach FETCH_HEAD
+    test "$(git -C /usr/local/src/openfhe-python rev-parse HEAD)" = "${OPENFHE_WRAPPER_COMMIT}"
+
+    cmake \
+        -S /usr/local/src/openfhe-python \
+        -B /usr/local/src/openfhe-python/build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_PREFIX_PATH=/opt/openfhe \
+        -DCMAKE_INSTALL_PREFIX=/opt/python311/lib/python3.11/site-packages/openfhe \
+        -DOPENFHE_REQUIRED_VERSION=1.5.1 \
+        -DPython_EXECUTABLE=/opt/python311/bin/python3.11 \
+        -DPython_ROOT_DIR=/opt/python311 \
+        -DPYTHON_EXECUTABLE_PATH=/opt/python311/bin/python3.11
+    cmake --build /usr/local/src/openfhe-python/build --parallel "${MAKE_JOBS}"
+    cmake --install /usr/local/src/openfhe-python/build
+    python3.11 -c 'import openfhe; assert openfhe.get_native_int() in (64, 128)'
+
+    python3.11 /usr/local/src/write_build_manifest.py
+    rm -rf /usr/local/src/python-build /usr/local/src/openfhe-development /usr/local/src/openfhe-python
+
+%test
+    . /etc/os-release
+    test "$ID" = ubuntu
+    test "$VERSION_ID" = 24.04
+    python3.11 -c 'import openfhe, platform; print(platform.python_version(), openfhe.get_native_int())'
+
+%runscript
+    exec python3.11 -m tests.integration_openfhe.run_gate "$@"

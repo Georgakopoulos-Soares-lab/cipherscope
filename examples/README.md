@@ -25,8 +25,9 @@ OpenFHE Python CKKS binding. It generates a context and keys, encrypts two packe
 vectors, evaluates rotations and arithmetic, decrypts the result, and checks the
 numerical error.
 
-Activate the dedicated source-built OpenFHE environment. The same instructions
-are recorded for Codex in `../.codex/OPENFHE_ENVIRONMENT.md`:
+Activate an environment with the pinned binding. On macOS ARM64 that is the
+dedicated source-built conda environment (the same instructions are recorded
+for Codex in `../.codex/OPENFHE_ENVIRONMENT.md`):
 
 ```bash
 source /opt/miniconda3/etc/profile.d/conda.sh
@@ -35,6 +36,25 @@ unset DYLD_LIBRARY_PATH
 python --version
 python -c "import openfhe, cipherscope; print(openfhe.get_native_int())"
 ```
+
+On Linux / TACC Lonestar6, `ls6_env.sh` provides both lanes from
+[docs/evidence.md](../docs/evidence.md). The native lane's `python3.11` is
+put on `PATH` and can be used exactly as `python` is used below; the
+authoritative Ubuntu container is reached through `run_in_primary`, which
+mounts the checkout at `/workspace/cipherscope` and `$RESULTS_ROOT` at
+`/results`:
+
+```bash
+source ls6_env.sh
+python3.11 -c "import openfhe, cipherscope; print(openfhe.get_native_int())"   # native lane
+run_in_primary python3.11 -m cipherscope run --output /results/dot-product \
+  examples/profile_unmodified.py -- examples/dot_product.py                      # container lane
+```
+
+`evaluation/parity/run_lane.sh` runs every program on this page plus the
+seeded benchmark and the scaling sweep for one lane; the results from the
+macOS, container, and native lanes are compared in
+`evaluation/parity/parity_report.md`.
 
 From the `cipherscope/` implementation directory, run the program directly:
 
@@ -62,9 +82,10 @@ The bundle contains `trace.json`, `ciphertext_graph.json`,
 `recommendations.json`, `operations.csv`, `perfetto-trace.json`, and
 `summary.html`. With the arguments above, the recommendations include a
 repeated-rotation opportunity and report generated rotation index `4` as unused
-in this observed run. The trace and timings come from actual OpenFHE calls; this
-local macOS ARM64 developer build is not a substitute for the required Linux
-compatibility gate.
+in this observed run. The trace and timings come from actual OpenFHE calls.
+The same diagnoses are produced on the macOS ARM64 developer build and on both
+x86_64 Linux lanes (see `evaluation/parity/parity_report.md`); only the
+authoritative Linux lane backs the compatibility claim.
 
 ## Profile existing scripts without editing them
 
