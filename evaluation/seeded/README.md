@@ -55,28 +55,41 @@ Ratios are blank when their denominator is zero. Quote counts with ratios.
 - `depth.critical_path.v1` always fires when there is lineage, so its cases are
   value checks: Horner (depth 3), a linear-only kernel (depth 0), and an opaque
   `EvalInnerProduct` where the correct answer is `confidence == "unknown"`.
-- The corpus covers all twelve rules with 27 cases; only the bootstrap rule has
-  no real-binding positive (see below).
+- The corpus covers all twelve rules with 28 cases; every rule has at least one
+  real-binding positive and one hard negative (the bootstrap rule's positive
+  was added after the C++ frontend showed the rule firing on OpenFHE's own
+  bootstrapping example; see below).
 
 ## Known limits found while building this
 
-**No real-binding positive for `bootstrap.restored_levels_underused.v1`.**
-`GetLevel()` returns the same value before and after `EvalBootstrap` on this
-build under every scaling technique that can bootstrap (FLEXIBLEAUTO,
-FLEXIBLEAUTOEXT, FIXEDMANUAL at 59-bit scaling). The rule therefore measures a
-zero level delta. `bootstrap.limitation.underused_real` pins that behavior as
-"must not fabricate". The positive is exercised only by the fake-model test
-`tests/golden/test_bootstrap.py`. A real positive needs a level signal other
-than `GetLevel()`, for example the remaining RNS limb count.
+**`bootstrap.restored_levels_underused.v1` needs a deep input.** An earlier
+version of this note claimed `GetLevel()` is unchanged by `EvalBootstrap`; that
+was a misreading of one case. OpenFHE returns every bootstrapped ciphertext at
+the fixed level `depth - levelsAvailableAfterBootstrap`, whatever the input
+level. `bootstrap.limitation.underused_real` bootstraps after five squarings
+of a fresh ciphertext (level 5 of about 23), so the output lands deeper than the
+input and there is nothing restored: the rule stays clean, correctly.
+`bootstrap.positive.underused_deep` encrypts at `depth - 1`, bootstraps
+(31 → 21, ten levels restored) and decrypts without using them: the rule
+fires with `restored_levels = 10`. The C++ frontend observes the same 31 → 21
+transition on OpenFHE's own `simple-ckks-bootstrapping.cpp`, so this is the
+library's semantics, not a binding artifact. (Bootstrapping a level-0
+ciphertext returns level 0 on this build.)
 
 **CKKS decryption is noise-flooded.** Two decryptions of the same ciphertext
-differ at about 1e-12, about half an absolute bit either way. Before
-`precision.checkpoint_drop.v1` had a minimum, `precision.negative.same_ciphertext`
-fired roughly half the time. The rule now ignores drops below one bit
-(`MIN_BITS_LOST`), and that case pins the fix. `precision.tolerance_violated.v1`
-is the contract-based alternative: the developer declares an absolute, relative,
-or minimum-bits tolerance per checkpoint and the rule reports the first
-checkpoint that breaks it together with the operations since the previous one.
+differ at about 1e-12, stdev ~0.68 absolute bits (measured over 40
+repetitions; max observed 1.74 bits). Before `precision.checkpoint_drop.v1`
+had a minimum, `precision.negative.same_ciphertext` fired roughly half the
+time. A first fix set `MIN_BITS_LOST` to one bit, but that still left a
+normal-tailed ~5% false-positive rate on noise alone and the case kept
+failing intermittently in CI (confirmed: 2 of 4 runs). `MIN_BITS_LOST` is now
+three bits — about 4.4 stdev above the measured noise floor, and still two
+orders of magnitude below a genuine drop (~14 bits for three squarings in
+`precision_drop.py`) — and that case pins the corrected threshold.
+`precision.tolerance_violated.v1` is the contract-based alternative: the
+developer declares an absolute, relative, or minimum-bits tolerance per
+checkpoint and the rule reports the first checkpoint that breaks it together
+with the operations since the previous one.
 
 **The security level is not readable from a live context.**
 `configuration.testing_only_security.v1` assesses only runs that declared their

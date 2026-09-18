@@ -236,6 +236,9 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
   `artifact/feasibility/cpp-gcc152-openfhe151/` and `cpp-gcc133-openfhe151/`. Precision checkpoints
   and annotations have no C++ counterpart yet, so those rules report
   `not_applicable` on C++ traces.
+- The external Python corpus (`python-log-reg-examples`) traces strict-`COMPLETE`
+  on all four workloads with the current operation set; `EvalAddMany`,
+  `EvalMultMany`, `EvalChebyshevSeries` and the BGV/BFV API remain outside it.
 - Real OpenFHE behavior is verified on four lanes with different weight
   ([docs/evidence.md](docs/evidence.md)). The authoritative Python 3.11 source
   build on Ubuntu 24.04 x86_64 passes all 38 checks and is archived under
@@ -252,11 +255,15 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 - The fake-backend contract covers the planned state/depth matrix and observed
   rotation-key inventory. Its real-binding tests remain gated on an actual pinned
   OpenFHE installation; fake results are not compatibility evidence.
-- `bootstrap.restored_levels_underused.v1` cannot fire on real traces: `GetLevel()`
-  is unchanged by `EvalBootstrap` on OpenFHE Python 1.5.1.0 under every scaling
-  technique that can bootstrap. `precision.checkpoint_drop.v1` ignores drops
-  below one absolute bit because CKKS decryption is noise-flooded (about half a
-  bit of jitter per decryption). Both are documented in
+- `bootstrap.restored_levels_underused.v1` only sees a restoration when the
+  bootstrapped ciphertext was deeper than the level OpenFHE returns every
+  bootstrap output at (`depth - levelsAvailableAfterBootstrap`); bootstrapping
+  a shallow ciphertext shows no restored levels and the rule stays clean. The
+  seeded corpus has one real positive (`bootstrap.positive.underused_deep`) and
+  one such shallow negative. `precision.checkpoint_drop.v1` ignores drops
+  below three absolute bits because CKKS decryption is noise-flooded (stdev
+  ~0.68 bits of jitter per decryption, measured; three bits is ~4.4 stdev
+  above that floor). Both are documented in
   [evaluation/seeded/README.md](evaluation/seeded/README.md).
 - The security level is not readable from a live context. The configuration
   rule only assesses runs that declare their parameters

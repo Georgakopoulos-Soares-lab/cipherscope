@@ -3,7 +3,7 @@
   "checks": [
     {
       "description": "ENV-01: the declared Linux lane has its exact OS and architecture.",
-      "duration_ns": 3917726,
+      "duration_ns": 4040267,
       "id": "ENV-01",
       "observed": {
         "distribution_version": null,
@@ -43,7 +43,7 @@
     },
     {
       "description": "ENV-02: CPython matches the selected evidence lane.",
-      "duration_ns": 40306,
+      "duration_ns": 44203,
       "id": "ENV-02",
       "observed": {
         "expected_minor": [
@@ -59,7 +59,7 @@
     },
     {
       "description": "ENV-03: installed wrapper provenance matches the selected lane.",
-      "duration_ns": 213460,
+      "duration_ns": 235462,
       "id": "ENV-03",
       "observed": {
         "distribution_version": null,
@@ -72,7 +72,7 @@
     },
     {
       "description": "ENV-04: exact wheel hash or source commits are fixed and recorded.",
-      "duration_ns": 17303856,
+      "duration_ns": 4299164,
       "id": "ENV-04",
       "observed": {
         "build_manifest": {
@@ -154,7 +154,7 @@
     },
     {
       "description": "ENV-05: the native module imports and reports a supported word size.",
-      "duration_ns": 38604,
+      "duration_ns": 43232,
       "id": "ENV-05",
       "observed": {
         "module_file": "__init__.py",
@@ -166,7 +166,7 @@
     },
     {
       "description": "API-01: setup and the core covered methods are bound and executable.",
-      "duration_ns": 129562116,
+      "duration_ns": 131774373,
       "id": "API-01",
       "observed": {
         "availability": {
@@ -188,7 +188,7 @@
     },
     {
       "description": "API-02: supported context/ciphertext getters execute with typed values.",
-      "duration_ns": 23887745,
+      "duration_ns": 24940464,
       "id": "API-02",
       "observed": {
         "ciphertext_types": {
@@ -215,13 +215,13 @@
     },
     {
       "description": "API-03: CipherScope state snapshots agree with direct getter evidence.",
-      "duration_ns": 22675797,
+      "duration_ns": 23118900,
       "id": "API-03",
       "observed": {
         "ciphertext_snapshot": {
           "context_id": "context_0001",
           "key_switch_technique": "HYBRID",
-          "key_tag": "8ac622b6010d1e4c30e17d13d65ada25",
+          "key_tag": "7f61e590b30eb481228b70fb43f9ef4a",
           "level": 0,
           "noise_scale_degree": 1,
           "scale": 7.205759403832115e+16,
@@ -248,7 +248,7 @@
     },
     {
       "description": "API-04: core result shapes and clone identity match the pinned binding.",
-      "duration_ns": 123853692,
+      "duration_ns": 127561642,
       "id": "API-04",
       "observed": {
         "clone_available": true,
@@ -265,7 +265,7 @@
     },
     {
       "description": "API-05: known in-place methods match the tagged binding inventory.",
-      "duration_ns": 55113,
+      "duration_ns": 48422,
       "id": "API-05",
       "observed": {
         "availability": {
@@ -285,7 +285,7 @@
     },
     {
       "description": "PROXY-01: a real context executes the non-bootstrap core through trace().",
-      "duration_ns": 119296574,
+      "duration_ns": 135469932,
       "id": "PROXY-01",
       "observed": {
         "operations": [
@@ -305,7 +305,7 @@
     },
     {
       "description": "PROXY-02: one proxy call produces one adapter call and one event.",
-      "duration_ns": 46458516,
+      "duration_ns": 51848520,
       "id": "PROXY-02",
       "observed": {
         "native_adapter_calls": 1,
@@ -317,7 +317,7 @@
     },
     {
       "description": "PROXY-03: a normal helper taking a context works without modification.",
-      "duration_ns": 48469657,
+      "duration_ns": 54146170,
       "id": "PROXY-03",
       "observed": {
         "helper": "eval_add_site",
@@ -329,7 +329,7 @@
     },
     {
       "description": "PROXY-04: the proxy is not misrepresented as a native CryptoContext.",
-      "duration_ns": 25598393,
+      "duration_ns": 28001080,
       "id": "PROXY-04",
       "observed": {
         "fallback": "pass the original native context at native-only boundaries",
@@ -343,7 +343,7 @@
     },
     {
       "description": "TRACE-01: operations resolve to exact manually inspectable source lines.",
-      "duration_ns": 133693754,
+      "duration_ns": 146047110,
       "id": "TRACE-01",
       "observed": {
         "expected": [
@@ -387,7 +387,7 @@
     },
     {
       "description": "TRACE-02: the real trace validates and builds the same graph twice.",
-      "duration_ns": 93606359,
+      "duration_ns": 92687328,
       "id": "TRACE-02",
       "observed": {
         "edge_count": 12,
@@ -407,7 +407,7 @@
     },
     {
       "description": "ID-01: record whether pybind ciphertexts support weakrefs and hashing.",
-      "duration_ns": 24981985,
+      "duration_ns": 25182732,
       "id": "ID-01",
       "observed": {
         "hash_supported": true,
@@ -420,7 +420,7 @@
     },
     {
       "description": "ID-02: repeated aliases deduplicate and cyclic containers terminate.",
-      "duration_ns": 22622668,
+      "duration_ns": 22969158,
       "id": "ID-02",
       "observed": {
         "observations": 4,
@@ -432,7 +432,7 @@
     },
     {
       "description": "ID-03: each new native output receives a distinct ciphertext ID.",
-      "duration_ns": 119996329,
+      "duration_ns": 140561066,
       "id": "ID-03",
       "observed": {
         "output_ids": [
@@ -447,11 +447,11 @@
     },
     {
       "description": "MUT-01: EvalAddInPlace retains identity and changes decrypted value.",
-      "duration_ns": 77889456,
+      "duration_ns": 77475415,
       "id": "MUT-01",
       "observed": {
         "identity_retained": true,
-        "max_error": 6.439293542825908e-14,
+        "max_error": 9.414691248821327e-14,
         "returned_none": true
       },
       "required": true,
@@ -460,7 +460,7 @@
     },
     {
       "description": "MUT-02: the proxy records one immutable version for the mutation.",
-      "duration_ns": 121960623,
+      "duration_ns": 202213579,
       "id": "MUT-02",
       "observed": {
         "native_calls": 1,
@@ -473,11 +473,11 @@
     },
     {
       "description": "NUM-01: traced addition agrees with direct and expected slot values.",
-      "duration_ns": 101374936,
+      "duration_ns": 111399582,
       "id": "NUM-01",
       "observed": {
-        "max_direct_vs_traced_error": 9.281464485866309e-14,
-        "max_expected_error": 5.684341886080802e-14,
+        "max_direct_vs_traced_error": 1.021405182655144e-13,
+        "max_expected_error": 9.414691248821327e-14,
         "tolerance": 0.001
       },
       "required": true,
@@ -486,11 +486,11 @@
     },
     {
       "description": "NUM-02: traced multiplication agrees with direct and expected values.",
-      "duration_ns": 174849801,
+      "duration_ns": 192624037,
       "id": "NUM-02",
       "observed": {
-        "max_direct_vs_traced_error": 2.2160051571518125e-13,
-        "max_expected_error": 2.793321129956894e-13,
+        "max_direct_vs_traced_error": 3.326228181776969e-13,
+        "max_expected_error": 3.7614356074300304e-13,
         "tolerance": 0.001
       },
       "required": true,
@@ -499,7 +499,7 @@
     },
     {
       "description": "ROT-01: +1/-2 rotations have exact trace indices and slot semantics.",
-      "duration_ns": 271487499,
+      "duration_ns": 297202554,
       "id": "ROT-01",
       "observed": {
         "distinct_outputs": true,
@@ -507,10 +507,10 @@
           1,
           -2
         ],
-        "negative_direct_error": 6.661338147750939e-14,
-        "negative_expected_error": 5.573319583618286e-14,
-        "positive_direct_error": 4.518607710224387e-14,
-        "positive_expected_error": 1.021405182655144e-13,
+        "negative_direct_error": 5.062616992290714e-14,
+        "negative_expected_error": 5.706546346573305e-14,
+        "positive_direct_error": 8.171241461241152e-14,
+        "positive_expected_error": 6.084022174945858e-14,
         "shared_input_version": true
       },
       "required": true,
@@ -519,7 +519,7 @@
     },
     {
       "description": "ROT-02: fast rotations with one precompute agree with regular rotations.",
-      "duration_ns": 365350820,
+      "duration_ns": 412429474,
       "id": "ROT-02",
       "observed": {
         "cyclotomic_order": 65536,
@@ -529,9 +529,9 @@
           3
         ],
         "max_errors": {
-          "1": 3.6415315207705135e-14,
-          "2": 3.530509218307998e-14,
-          "3": 3.9968028886505635e-14
+          "1": 6.394884621840902e-14,
+          "2": 9.57012247226885e-14,
+          "3": 6.539213615042172e-14
         }
       },
       "required": true,
@@ -540,7 +540,7 @@
     },
     {
       "description": "BOOT-01: official tagged setup, key generation, and bootstrap execute.",
-      "duration_ns": 2728106657,
+      "duration_ns": 2978348521,
       "id": "BOOT-01",
       "observed": {
         "after_level": 21,
@@ -560,15 +560,15 @@
     },
     {
       "description": "BOOT-02: traced bootstrap agrees with direct output and source values.",
-      "duration_ns": 5406081161,
+      "duration_ns": 5959131117,
       "id": "BOOT-02",
       "observed": {
-        "direct_vs_traced_max_error": 2.2735411454810617e-05,
+        "direct_vs_traced_max_error": 2.399515829754062e-05,
         "input_state": {
           "context_id": "context_0001",
           "id": "ct_0001:v0",
           "key_switch_technique": "HYBRID",
-          "key_tag": "554daa436c377181c9bc93a9222c493b",
+          "key_tag": "e025fb6fb374e471d42d19994d3105fd",
           "level": 31,
           "noise_scale_degree": 1,
           "scale": 5.7646075229709926e+17,
@@ -579,7 +579,7 @@
           "context_id": "context_0001",
           "id": "ct_0002:v0",
           "key_switch_technique": "HYBRID",
-          "key_tag": "554daa436c377181c9bc93a9222c493b",
+          "key_tag": "e025fb6fb374e471d42d19994d3105fd",
           "level": 21,
           "noise_scale_degree": 2,
           "scale": 3.3230699894369778e+35,
@@ -593,7 +593,7 @@
           "line": 21,
           "qualified_function": "eval_bootstrap_site"
         },
-        "source_max_error": 1.3193146734202799e-05,
+        "source_max_error": 2.1003996550528203e-05,
         "tolerance": 0.005
       },
       "required": true,
@@ -602,7 +602,7 @@
     },
     {
       "description": "GAP-01: ciphertext addition overload executes but emits no proxy event.",
-      "duration_ns": 46724537,
+      "duration_ns": 50735547,
       "id": "GAP-01",
       "observed": {
         "emitted_events": 0,
@@ -615,7 +615,7 @@
     },
     {
       "description": "GAP-02: a raw-context call executes but is not observable by the proxy.",
-      "duration_ns": 46271163,
+      "duration_ns": 49927277,
       "id": "GAP-02",
       "observed": {
         "emitted_events": 0,
@@ -627,7 +627,7 @@
     },
     {
       "description": "GAP-03: module-level FHE callables are inventoried without coverage claims.",
-      "duration_ns": 78297,
+      "duration_ns": 85431,
       "id": "GAP-03",
       "observed": {
         "free_function_coverage": false,
@@ -644,7 +644,7 @@
     },
     {
       "description": "GAP-04: an uncovered composite rejects or is counted as passthrough.",
-      "duration_ns": 46439039,
+      "duration_ns": 50449960,
       "id": "GAP-04",
       "observed": {
         "permissive_events": 0,
@@ -659,18 +659,18 @@
     },
     {
       "description": "RES-01: event wall/CPU timings are nonnegative and externally bounded.",
-      "duration_ns": 89349344,
+      "duration_ns": 91145379,
       "id": "RES-01",
       "observed": {
         "event": {
-          "process_cpu_duration_ns": 39064520,
-          "start_ns": 1947335779389927,
-          "thread_cpu_duration_ns": 39065742,
-          "wall_duration_ns": 39061808
+          "process_cpu_duration_ns": 39995075,
+          "start_ns": 1948420495096408,
+          "thread_cpu_duration_ns": 39996619,
+          "wall_duration_ns": 39992147
         },
-        "outer_process_cpu_duration_ns": 39752800,
-        "outer_thread_cpu_duration_ns": 39750386,
-        "outer_wall_duration_ns": 40071747
+        "outer_process_cpu_duration_ns": 40840010,
+        "outer_thread_cpu_duration_ns": 40836614,
+        "outer_wall_duration_ns": 41608947
       },
       "required": true,
       "status": "pass",
@@ -678,12 +678,12 @@
     },
     {
       "description": "RES-02: /proc and getrusage memory samples use explicit units.",
-      "duration_ns": 245021,
+      "duration_ns": 218321,
       "id": "RES-02",
       "observed": {
-        "getrusage_maxrss_kib": 636832,
-        "proc_hwm_bytes": 652115968,
-        "proc_rss_bytes": 627245056
+        "getrusage_maxrss_kib": 648952,
+        "proc_hwm_bytes": 664526848,
+        "proc_rss_bytes": 607842304
       },
       "required": true,
       "status": "pass",
@@ -691,7 +691,7 @@
     },
     {
       "description": "API-06: every declared non-mutating state/depth method is bound.",
-      "duration_ns": 32451,
+      "duration_ns": 38091,
       "id": "API-06",
       "observed": {
         "availability": {
@@ -710,7 +710,7 @@
     },
     {
       "description": "MUT-03: every declared mutation emits one next state version.",
-      "duration_ns": 157645220,
+      "duration_ns": 160468958,
       "id": "MUT-03",
       "observed": {
         "transitions": [
@@ -752,10 +752,10 @@
     },
     {
       "description": "PROXY-05: encryption and decryption preserve native result behavior.",
-      "duration_ns": 55769334,
+      "duration_ns": 60052426,
       "id": "PROXY-05",
       "observed": {
-        "max_abs_error": 5.995204332975845e-14,
+        "max_abs_error": 4.973799150320701e-14,
         "operations": [
           "Encrypt",
           "Decrypt"
@@ -767,7 +767,7 @@
     },
     {
       "description": "ROT-03: generated and used indices feed the observed-run key rule.",
-      "duration_ns": 58884320,
+      "duration_ns": 67532150,
       "id": "ROT-03",
       "observed": {
         "inventory": {
@@ -790,22 +790,20 @@
     },
     {
       "description": "SEED-01: seeded positives are detected and hard negatives stay silent.",
-      "duration_ns": 108528747005,
+      "duration_ns": 115267540041,
       "id": "SEED-01",
       "observed": {
-        "cases": 27,
-        "rules_without_real_positive": [
-          "bootstrap.restored_levels_underused.v1"
-        ],
+        "cases": 28,
+        "rules_without_real_positive": [],
         "seeded_negatives": 18,
-        "seeded_positives": 13
+        "seeded_positives": 14
       },
       "required": true,
       "status": "pass",
       "test": "tests.integration_openfhe.test_seeded_benchmark.SeededBenchmarkTests.test_every_case_matches_ground_truth"
     }
   ],
-  "duration_ns": 122283562938,
+  "duration_ns": 130234534148,
   "environment": {
     "distribution_version": null,
     "executable": "python3.11",
@@ -859,7 +857,7 @@
     "wrapper_tag": "v1.5.1.0"
   },
   "schema_version": "1.0.0",
-  "started_unix_ns": 1789700643274402692,
+  "started_unix_ns": 1789701726860218489,
   "status": "native_pass",
   "summary": {
     "fail": 0,

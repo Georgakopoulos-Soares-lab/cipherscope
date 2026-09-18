@@ -6,7 +6,15 @@
   "inputs": {
     "ablation": {
       "path": "raw/semantic_ablation.csv",
-      "sha256": "b8995f6f15ab4f1de9f9d12896cc8c1cd083014707d4dab99c607b8a04005bcd"
+      "sha256": "05f3dc8c6b894089d7e2d2a069b9ccb14de73183a0892c7b471cef7dbc51c73c"
+    },
+    "coverage": {
+      "path": "raw/coverage_report.csv",
+      "sha256": "f1c96e04d4aebbaf6f145d9d2fd672031f865f083c12c651ab9806d98d2ac48b"
+    },
+    "findings": {
+      "path": "adjudication/findings.csv",
+      "sha256": "f63bb1c264ea59cbc1ca730136c3861363a7e32eac77cc63d599aef4566927b2"
     },
     "scaling": {
       "path": "raw/scaling.csv",
@@ -14,20 +22,20 @@
     },
     "seeded": {
       "path": "raw/seeded/case_results.json",
-      "sha256": "33a6ce1df72c33fbb46f43b943214d329dd21cc7b64dd711265a0b220dda756e"
+      "sha256": "65fba98b7e5679f2f1c3b2d9f45f0411635d9cc1f070b79851293bb2f35944b8"
     }
   },
   "schema": "schema/results.schema.json",
   "skipped_inputs": {
-    "coverage": "raw/coverage_report.csv",
-    "findings": "adjudication/findings.csv",
     "workload_runs": "raw/workload_runs.csv"
   },
   "tables": {
-    "generic_profiler_comparison.csv": "ee9b06ae0ee214142b1c283431d4961512857b51a653569518a821d5914e634f",
-    "recall.csv": "d1786dde2890ee5839fa9ef514003e19cf07617f9f46699086237598c806c7ed",
+    "coverage.csv": "3ea55c27307f2cc23308b7ff063cdcc662e3c10d2806300982b2084bbe1bc358",
+    "generic_profiler_comparison.csv": "cb85aa96ba629f706d1fedf26476cce3285a24d5040ca3f080981b2b4a8729ce",
+    "precision.csv": "e6aad514104b12880afcfbe2a21be926246c29fc79ae9121f52c17ba29187c0f",
+    "recall.csv": "fbe789419fd626fc947620e4185d9eba5d93a8dc6524d54171072f1b577ba34b",
     "scaling.csv": "735207a2039b3ea280f692492b61311950914c736021c4b84727175bb47f4563",
-    "seeded_cases.csv": "9eb3c905458fd5d6bd84b3154cd772e0488f37de5e1d51ec7c1bdb2b7f29813c",
-    "semantic_ablation.csv": "06f47f2d5dab763958e2828267e88b0521de8540db402617387bc9b983d5cf27"
+    "seeded_cases.csv": "be22b8e12df71f25a2ba7cd56f71858ca212ae7927867ac218c5fdaf617e2826",
+    "semantic_ablation.csv": "d4f0ab3c2b0ceacf6ea2934531409bfc68da263e125840a9255cd22dc277bfe9"
   }
 }

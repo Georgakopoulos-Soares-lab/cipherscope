@@ -150,6 +150,37 @@ unmatched calls (`coverage.unmatched_candidate_names`, mirrored into
 binaries. Python's proxy pass-through counters are `0` for native runs and its
 static source scan is not applied to C++ files.
 
+## Overhead
+
+`evaluation/native_overhead/run_native_overhead.py` runs a C++ twin of the
+Python scaling kernel (`tests/cpp/fixtures/scaling_kernel.cpp`: N operations
+in a fixed EvalAdd/EvalSub/EvalRotate mix on a depth-1 context) in three arms,
+one fresh process per point, with wall time measured outside the process and
+peak RSS from `wait4`: **plain** (the user's binary), **hooks** (the
+instrumented build with no spool — every `cs_event_*` call runs, nothing is
+written), **full** (spool enabled, what `profile` measures). LS6 `vm-small`,
+GCC 15.2.0, OpenFHE 1.5.1, `OMP_NUM_THREADS=1`, three repetitions per point
+(`evaluation/raw/native_overhead.csv`, `evaluation/native_overhead/summarize.py`):
+
+| events | hooks / plain | full / plain | plain peak RSS | full peak RSS | spool bytes / event |
+|---|---|---|---|---|---|
+| 10³ | 1.004 | 1.069 | 25 MB | 25 MB | 1 195 |
+| 10⁴ | 1.015 | 0.987 | 26 MB | 26 MB | 1 197 |
+| 10⁵ | 1.003 | 1.007 | 26 MB | 26 MB | 1 201 |
+
+Those rows pin glibc's allocator (`MALLOC_TRIM_THRESHOLD_`/`MALLOC_TOP_PAD_`);
+under the default allocator the instrumented arms ran 6–16 % *faster* than
+the plain binary at 10⁴–10⁵ because glibc trims and re-faults the heap after
+each freed ~500 KB ciphertext buffer and the runtime's few long-lived
+allocations suppress that. Both settings are in the raw record with an
+`allocator` column; only the pinned rows measure instrumentation itself. The
+tracing cost is within run-to-run noise of the FHE work, memory is flat
+(the registry prunes entries whose ciphertext has been destroyed), and the
+spool grows linearly at ~1.2 KB per event. The runtime writes one locked
+record per event; with a millisecond-scale FHE operation per event, a
+thread-local buffer (design §31) was not needed to reach this result, and
+`threads.cpp` shows four OpenMP threads recording concurrently.
+
 ## Supported envelope
 
 | Component | Status |

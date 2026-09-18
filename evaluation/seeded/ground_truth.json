@@ -318,9 +318,9 @@
       "expected": {
         "bootstrap.restored_levels_underused.v1": "clean"
       },
-      "hard_negative_reason": "the refresh is underused, but GetLevel() is unchanged by EvalBootstrap on OpenFHE Python 1.5.1.0, so the rule has no level delta and must not fabricate one",
+      "hard_negative_reason": "the refresh is underused, but the input was bootstrapped at a shallow level: OpenFHE returns every bootstrapped ciphertext at depth - levelsAvailableAfterBootstrap, so a shallow input ends deeper than it started and there are no restored levels to report",
       "numerical_validity_expected": true,
-      "notes": "no real-binding positive exists for this rule; see README.md and tests/golden/test_bootstrap.py"
+      "notes": "companion positive: bootstrap.positive.underused_deep; see README.md"
     },
     {
       "case_id": "configuration.positive.not_set",
@@ -405,6 +405,18 @@
       },
       "hard_negative_reason": "same computation and loss, but the declared 1e-3 tolerance is far looser than the ~1e-9 error",
       "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bootstrap.positive.underused_deep",
+      "path": "cases/bootstrap_underused_deep.py",
+      "kind": "positive",
+      "mutation_id": "bootstrap_then_decrypt",
+      "expected": {
+        "bootstrap.restored_levels_underused.v1": "positive"
+      },
+      "hard_negative_reason": "",
+      "numerical_validity_expected": true,
+      "notes": "encrypted at the last level, bootstrapped (+10 levels), decrypted without using them; same shape as OpenFHE's simple-ckks-bootstrapping example"
     }
   ]
 }

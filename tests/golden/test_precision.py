@@ -51,15 +51,16 @@ class PrecisionAnalyzerTests(unittest.TestCase):
         self.assertEqual(result["inventory"]["min_bits_lost_threshold"], MIN_BITS_LOST)
 
     def test_sub_threshold_drop_is_noise_not_a_finding(self) -> None:
-        # 0.9 bits lost: below the noise-flooding threshold.
-        early_error, late_error = 2.0**-20, 2.0 ** -(20 - 0.9)
+        # Just below the noise-flooding threshold: not a finding.
+        below, above = MIN_BITS_LOST - 0.1, MIN_BITS_LOST + 0.1
+        early_error, late_error = 2.0**-20, 2.0 ** -(20 - below)
         result = analyze_precision(_shadow_trace([1.0 + early_error, 2.0], [1.0 + late_error, 2.0]))
         self.assertEqual(result["analysis_status"], "clean")
-        # 1.1 bits lost: counted.
-        late_error = 2.0 ** -(20 - 1.1)
+        # Just above the threshold: counted.
+        late_error = 2.0 ** -(20 - above)
         result = analyze_precision(_shadow_trace([1.0 + early_error, 2.0], [1.0 + late_error, 2.0]))
         self.assertEqual(result["analysis_status"], "positive")
-        self.assertAlmostEqual(result["findings"][0]["evidence"]["absolute_bits_lost"], 1.1, places=6)
+        self.assertAlmostEqual(result["findings"][0]["evidence"]["absolute_bits_lost"], above, places=6)
         self.assertEqual(result["findings"][0]["evidence"]["min_bits_lost_threshold"], MIN_BITS_LOST)
 
     def test_non_shadow_run_is_not_applicable(self) -> None:

@@ -41,7 +41,17 @@ from cipherscope.build_discovery import discover_cmake_build, discover_openfhe, 
 from cipherscope.native_profile import cache_root_for, ensure_toolchain, shadow_build  # noqa: E402
 
 COLUMNS = ("size", "arm", "repetition", "events", "wall_ms", "loop_ms", "peak_rss_mb", "spool_bytes",
-           "compiler_version", "openfhe_version", "python_version", "machine", "lane")
+           "compiler_version", "openfhe_version", "python_version", "machine", "lane", "allocator")
+
+# glibc trims the heap after every freed ~500 KB ciphertext buffer and re-faults
+# it on the next allocation; a handful of long-lived allocations (such as the
+# runtime's registry) suppresses that and makes an instrumented binary *faster*
+# than the plain one. The `notrim` setting pins the allocator so both arms are
+# measured under the same heap policy; `default` records what users see.
+ALLOCATORS = {
+    "default": {},
+    "notrim": {"MALLOC_TRIM_THRESHOLD_": "2147483647", "MALLOC_TOP_PAD_": "268435456"},
+}
 
 
 def run_once(binary: Path, size: int, env: dict[str, str], stdout_path: Path) -> tuple[float, float, float]:
@@ -69,6 +79,7 @@ def main() -> int:
     parser.add_argument("--sizes", type=int, nargs="+", default=[100, 1000, 10000, 100000])
     parser.add_argument("--repeat", type=int, default=3)
     parser.add_argument("--arms", nargs="+", default=["plain", "hooks", "full"])
+    parser.add_argument("--allocator", choices=sorted(ALLOCATORS), default="default")
     parser.add_argument("--output", type=Path, default=ROOT / "evaluation" / "raw" / "native_overhead.csv")
     parser.add_argument("--work", type=Path, default=None)
     args = parser.parse_args()
@@ -84,7 +95,8 @@ def main() -> int:
     subprocess.run(["cmake", "--build", str(build), "--target", "scaling_kernel", "--parallel", "8"], check=True, capture_output=True)
     plain = build / "scaling_kernel"
 
-    env = dict(os.environ, OMP_NUM_THREADS=os.environ.get("OMP_NUM_THREADS", "1"), CIPHERSCOPE_CACHE=str(work / "cache"))
+    env = dict(os.environ, OMP_NUM_THREADS=os.environ.get("OMP_NUM_THREADS", "1"), CIPHERSCOPE_CACHE=str(work / "cache"),
+               **ALLOCATORS[args.allocator])
     os.environ["CIPHERSCOPE_CACHE"] = env["CIPHERSCOPE_CACHE"]
     discovered = discover_cmake_build(plain)
     openfhe = discover_openfhe(discovered.cache)
@@ -121,6 +133,7 @@ def main() -> int:
                         "spool_bytes": spool.stat().st_size if arm == "full" and spool.exists() else "",
                         "compiler_version": discovered.compiler_version, "openfhe_version": openfhe.version,
                         "python_version": platform.python_version(), "machine": platform.machine(), "lane": lane,
+                        "allocator": f"glibc-{args.allocator}",
                     }
                     writer.writerow(row)
                     stream.flush()

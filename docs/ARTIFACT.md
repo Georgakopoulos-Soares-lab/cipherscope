@@ -72,11 +72,12 @@ restore the archived versions.
 | Claim / research question | Evidence | Generated table | Status |
 |---|---|---|---|
 | RQ1 Fidelity: tracing preserves OpenFHE numerics and reconstructs source/state/provenance | `artifact/feasibility/*/feasibility.json` (NUM/ID/MUT/PROXY/TRACE checks) | `docs/evidence.md`, `evaluation/parity/parity_report.md` | **primary 38/38 (archived, authoritative)**, native LS6 38/38, developer 37/38, provisional 33/33 (older gate); numerics within tolerance on all |
-| RQ2 Coverage: fraction of workloads completely observable | `cipherscope coverage` output per corpus run | `evaluation/tables/coverage.csv` | 16/16 examples `COMPLETE` on both LS6 lanes; external corpus (`python-log-reg-examples` @ `5a34dc68`) strict runs in progress |
-| RQ3 Precision on real workloads | `evaluation/adjudication/findings.csv` (human verdicts) | `evaluation/tables/precision.csv` | pending adjudication |
-| RQ3 Recall on seeded pathologies | `evaluation/seeded/ground_truth.json`, `evaluation/raw/seeded/case_results.json` | `evaluation/tables/recall.csv`, `evaluation/tables/seeded_cases.csv` | 13/13 detected, 0 FP on 18 negatives, 12 rules |
-| RQ4 Impact of validated findings | `findings.csv` transformation columns | `evaluation/tables/before_after.csv` | not started (needs D-01 verdicts) |
-| RQ5 Cost: run-time overhead, memory, trace size, analysis time vs events | `evaluation/raw/scaling.csv` (10²–10⁵ events, baseline/streaming/buffered, per `machine`) | `evaluation/tables/scaling.csv` (per machine) | arm64 done; x86_64 rows from the primary lane; corpus-wide overhead (`workload_runs.csv`) pending |
+| RQ2 Coverage: fraction of workloads completely observable | `evaluation/raw/coverage_report.csv` (16 examples + the 4 `python-log-reg-examples` @ `5a34dc68` workloads, strict) | `evaluation/tables/coverage.csv` | 20/20 `COMPLETE` with manifest v2 (the corpus was 1/4 before `EvalLogistic`/`EvalSum{Rows,Cols}` were covered); C++ upstream examples: 6/6 `COMPLETE` |
+| RQ3 Precision on real workloads | `evaluation/adjudication/findings.csv` (12 findings from the 4 external workloads, adjudicated) | `evaluation/tables/precision.csv` | 12/12 true positive (2 `TP-ACTIONABLE`, 10 `TP-NONACTIONABLE`), 0 false positives; single-pass adjudication, no independent second reviewer (`adjudicator_2` empty on every row — see `precision.csv`'s own reported limitation) |
+| RQ3 Recall on seeded pathologies | `evaluation/seeded/ground_truth.json`, `evaluation/raw/seeded/case_results.json` | `evaluation/tables/recall.csv`, `evaluation/tables/seeded_cases.csv` | 14/14 detected, 0 FP on 18 negatives, 12 rules (every rule has a real positive) |
+| RQ4 Impact of validated findings | `findings.csv` transformation columns (external-corpus `TP-ACTIONABLE` findings) | `evaluation/tables/before_after.csv` | per-finding patches not started (2 `TP-ACTIONABLE` verdicts now unblock this); rotation-hoisting flagship case done separately — see below |
+| RQ4 Rotation-hoisting flagship case | `evaluation/rq4_rotation_hoisting.py`, `evaluation/raw/before_after.csv` | `evaluation/tables/rotation_hoisting.csv` | done: naive vs. `EvalFastRotationPrecompute`/`EvalFastRotation` on `repeated_rotations`, 200 reps, correctness-checked every repetition, 1.328x mean speedup; kept deliberately separate from the adjudicated-findings pipeline (see table's own header comment) |
+| RQ5 Cost: run-time overhead, memory, trace size, analysis time vs events | `evaluation/raw/scaling.csv` (Python, 10²–10⁵, per `machine`); `evaluation/raw/native_overhead.csv` (C++ plain / hooks / full, two allocator settings) | `evaluation/tables/scaling.csv`; `evaluation/native_overhead/summarize.py` | Python: arm64 + x86_64 rows; C++: see `docs/cpp_frontend.md` — instrumentation cost within noise of the FHE work, flat RSS, 1.2 KB/event spool; corpus-wide `workload_runs.csv` pending |
 | RQ5 Bounded recording | `tests/test_streaming.py` (limits, spool, memory envelope) | — | done; run-phase memory flat, finalization is O(events) (see limits) |
 | Semantic observability beyond a generic profiler | `evaluation/raw/semantic_ablation.csv` (TIMING_ONLY / STATE / FULL) | `evaluation/tables/semantic_ablation.csv`, `evaluation/tables/generic_profiler_comparison.csv` | done on the seeded corpus |
 | RQ6 Security/correctness | configuration rule (`HEStd_NotSet`), tolerance contracts, seeded cases | `evaluation/tables/security_cases.csv` | rules done; real-workload hunt (F-02) pending |
@@ -92,8 +93,11 @@ restore the archived versions.
   the whole trace: peak RSS was 3.2 GB at 10⁵ events (2.2 KB/event of trace,
   ~44 s of analysis). `--max-events` / `--max-trace-bytes` cap a run honestly
   (`coverage.truncation` records what was dropped).
-- **The bootstrap rule has no real-binding positive**; `GetLevel()` is
-  unchanged by `EvalBootstrap` on OpenFHE Python 1.5.1.0.
+- **The bootstrap rule needs a deep input to see a restoration.** OpenFHE
+  returns every bootstrap output at `depth - levelsAvailableAfterBootstrap`;
+  only an input deeper than that (the intended use) shows restored levels.
+  `bootstrap.positive.underused_deep` is the real-binding positive; the upstream
+  C++ example `simple-ckks-bootstrapping.cpp` triggers the rule the same way.
 - **The security level is not readable from a live context**; the
   configuration rule assesses only runs that declare their parameters.
 - Real-binding raw records under `evaluation/raw/` were produced on the macOS

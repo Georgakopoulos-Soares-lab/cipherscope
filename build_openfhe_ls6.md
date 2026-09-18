@@ -305,3 +305,42 @@ Implements `cpp_gcc_design.md` phases 0–6 on LS6 (node `v320-008`, job 3452489
       project's toolchain.
 - [ ] Phase 7 (thread-local buffering / native overhead study) — not started;
       the runtime uses one locked write per event.
+
+### Manifest v2, bootstrap positive, corrected depth accounting (2026-09-17, later)
+
+- [x] Manifest `openfhe-1.5-v2` (38 ops): `EvalFastRotation[Precompute]`,
+      `EvalPoly`, `EvalLogistic`, `EvalSum{Rows,Cols}[KeyGen]` in both
+      frontends. Python gate 38/38 (both LS6 lanes) and C++ gate 18/18 re-run
+      and re-archived. External corpus: `sol_encrypted_inference` now
+      strict-COMPLETE (was PARTIAL); `sol_log_reg`/`sol_nag_log_reg` strict
+      re-runs in progress. Upstream `advanced-real-numbers.cpp` COMPLETE, with
+      its `FastRotationsDemo1` "before" block (7 `EvalRotate` on one
+      ciphertext) flagged and the hoisted block silent.
+- [x] **Bootstrap rule limitation was misdiagnosed.** The C++ frontend on
+      upstream `simple-ckks-bootstrapping.cpp` showed level 31 → 21 across
+      `EvalBootstrap`; the Python binding shows the same for a deep input.
+      OpenFHE returns bootstrap output at `depth − levelsAvailableAfterBootstrap`
+      regardless of input, so only deep inputs show a restoration. Added
+      seeded positive `bootstrap.positive.underused_deep`: **28/28 matched,
+      every rule now has a real positive** (recall table 14/14). README,
+      ARTIFACT, seeded README and the hard-negative case docstring corrected.
+- [x] Plaintext-operand fix corrected depth accounting in three seeded cases
+      (`ct × pt` no longer counts as depth); documented in
+      `evaluation/parity/README.md` as the two current developer-lane
+      disagreements pending a Mac rerun.
+- [x] More upstream C++ examples profiled COMPLETE: `function-evaluation`
+      (testing-only security fires: `HEStd_NotSet`), `polynomial-evaluation`,
+      `simple-ckks-bootstrapping` (bootstrap underuse + testing-only security).
+- [x] Native overhead (design phase 7, measurement half): plain / hooks /
+      full ×3 at 10²–10⁵, two allocator settings. Pinned allocator: hooks and
+      full within 0.3–7 % of plain, peak RSS 25–26 MB in every arm, spool
+      1.2 KB/event. Default glibc makes the instrumented binary 6–16 %
+      *faster* at 10⁴–10⁵ (heap trimming), so the raw record carries an
+      `allocator` column and the doc explains it. Registry now prunes expired
+      entries every 1024 registrations: 10⁵ full-arm peak RSS 49 MB → 26 MB.
+      Thread-local buffering deliberately not implemented: one locked write
+      per millisecond-scale FHE event is not measurable.
+- [x] External corpus strict under manifest v2: **4/4 COMPLETE** (was 1/4);
+      `evaluation/raw/coverage_report.csv` = 20/20 COMPLETE (16 examples +
+      4 workloads); `evaluation/adjudication/findings.csv` exported (12
+      findings, verdicts empty — human step).

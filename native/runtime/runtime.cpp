@@ -118,6 +118,16 @@ public:
         entry.witness = witness;
         auto inserted = ciphertexts_.emplace(raw, std::move(entry)).first;
         if (is_new) *is_new = true;
+        // A weak_ptr keeps a make_shared control block (and the object's own
+        // footprint) allocated after the ciphertext dies. Drop entries for
+        // dead objects now and then so long runs stay flat in memory; the
+        // address-reuse check above already treats them as gone.
+        if (++registrations_since_prune_ >= kPruneEvery) {
+            registrations_since_prune_ = 0;
+            for (auto it = ciphertexts_.begin(); it != ciphertexts_.end();) {
+                if (it->second.witness.expired()) it = ciphertexts_.erase(it); else ++it;
+            }
+        }
         return {inserted->second.id, inserted->second.version};
     }
 
@@ -145,9 +155,11 @@ public:
     }
 
 private:
+    static constexpr size_t kPruneEvery = 1024;
     std::unordered_map<const void*, CiphertextEntry> ciphertexts_;
     std::unordered_map<const void*, std::string> contexts_;
     size_t ciphertext_counter_ = 0;
+    size_t registrations_since_prune_ = 0;
 
 public:
     // Ordered view for the contexts record at finalisation.

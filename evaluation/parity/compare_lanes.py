@@ -197,7 +197,7 @@ def _seeded_signature(document: Mapping[str, Any]) -> dict[str, tuple[Any, ...]]
     return signature
 
 
-def compare_seeded(lanes: Sequence[Lane], report: Report) -> None:
+def compare_seeded(lanes: Sequence[Lane], report: Report, *, allow_missing_cases: bool = False) -> None:
     present = [lane for lane in lanes if lane.seeded is not None]
     if len(present) < 2:
         report.section("Seeded benchmark", ["fewer than two lanes provided case_results.json; nothing to compare"])
@@ -207,6 +207,12 @@ def compare_seeded(lanes: Sequence[Lane], report: Report) -> None:
     differing = []
     for key in keys:
         values = [signatures[lane.name].get(key) for lane in present]
+        missing_from = [lane.name for lane in present if key not in signatures[lane.name]]
+        if missing_from and allow_missing_cases and len(missing_from) < len(present):
+            # A lane whose archived seeded result predates a corpus extension
+            # did not run this case; that is listed, never silently ignored.
+            report.allowed.append(f"seeded {key}: not run on {', '.join(missing_from)} (result predates the case)")
+            continue
         if len({json.dumps(v, sort_keys=True) for v in values}) != 1:
             differing.append([key, *values])
             report.disagree(f"seeded {key}: " + ", ".join(f"{lane.name}={signatures[lane.name].get(key)}" for lane in present))
@@ -316,7 +322,7 @@ def compare_scaling(lanes: Sequence[Lane], archived: Path | None, report: Report
     )
 
 
-def build_report(lanes: Sequence[Lane], golden: Mapping[str, Any], archived_scaling: Path | None) -> Report:
+def build_report(lanes: Sequence[Lane], golden: Mapping[str, Any], archived_scaling: Path | None, *, allow_missing_cases: bool = False) -> Report:
     report = Report()
     header = _table(
         ["lane", "status", "pass / skip / total", "platform", "machine", "python", "native module sha256"],
@@ -335,7 +341,7 @@ def build_report(lanes: Sequence[Lane], golden: Mapping[str, Any], archived_scal
     compare_pins(lanes, report)
     compare_checks(lanes, report)
     compare_numerics(lanes, golden, report)
-    compare_seeded(lanes, report)
+    compare_seeded(lanes, report, allow_missing_cases=allow_missing_cases)
     compare_ablation(lanes, report)
     compare_examples(lanes, report)
     compare_scaling(lanes, archived_scaling, report)
@@ -379,6 +385,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--ablation", action="append", metavar="NAME=PATH", help="semantic_ablation.csv for a lane without a results root")
     parser.add_argument("--golden", type=Path, default=Path("tests/integration_openfhe/golden_core.json"))
     parser.add_argument("--archived-scaling", type=Path, default=Path("evaluation/raw/scaling.csv"))
+    parser.add_argument("--allow-missing-cases", action="store_true",
+                        help="a seeded case absent from some lanes (their result predates it) is listed as allowed, not a disagreement")
     parser.add_argument("--output", type=Path, help="write the Markdown report here (default: stdout)")
     args = parser.parse_args(argv)
 
@@ -398,7 +406,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         lanes.append(lane)
 
     golden = _read_json(args.golden) if args.golden.is_file() else {}
-    report = build_report(lanes, golden, args.archived_scaling)
+    report = build_report(lanes, golden, args.archived_scaling, allow_missing_cases=args.allow_missing_cases)
     text = render(report, lanes)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

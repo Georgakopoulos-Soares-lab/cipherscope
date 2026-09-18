@@ -1,11 +1,12 @@
 rule_id,seeded_positives,generic_profiler_can_diagnose,needs
-configuration.testing_only_security.v1,1,true,TIMING_ONLY
-depth.critical_path.v1,27,false,FULL
+bootstrap.restored_levels_underused.v1,1,false,STATE
+configuration.testing_only_security.v1,2,true,TIMING_ONLY
+depth.critical_path.v1,28,false,FULL
 encoding.repeated_public_constant.v1,1,false,STATE
 keys.unused_in_observed_run.v1,1,false,STATE
 multiplication.serial_reduction_review.v1,1,false,FULL
 packing.low_utilization_annotated.v1,1,false,FULL
-parameters.depth_headroom_observed.v1,26,false,FULL
+parameters.depth_headroom_observed.v1,27,false,FULL
 precision.checkpoint_drop.v1,3,false,STATE
 precision.tolerance_violated.v1,1,false,STATE
 provenance.public_value_ciphertext_mult.v1,1,false,FULL

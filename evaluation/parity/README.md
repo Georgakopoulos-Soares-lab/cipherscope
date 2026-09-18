@@ -53,3 +53,21 @@ transitions, semantic arguments, and every analyzer's conclusion must be
 identical; IDs, timings, thread IDs, source paths and provenance are ignored.
 The four twin pairs under `tests/cpp/fixtures` / `tests/cpp/twins` are
 equivalent (`tests/test_native_frontend.py`, gate check `PARITY-01`).
+
+## Known differences in the current report
+
+The developer (macOS) lane's archived seeded and ablation results were
+recorded before two changes made on branch `cpp-gcc-frontend`, and the report
+lists them rather than hiding them:
+
+- `bootstrap.positive.underused_deep` (seeded case 28) did not exist; it is
+  reported as *not run on developer* under `--allow-missing-cases`.
+- Six ablation rows for `encoding.*` and `provenance.negative.public_pt_only`
+  changed from `max_depth=1` to `max_depth=0`: the Python frontend used to
+  classify an OpenFHE `Plaintext` operand as a ciphertext (it exposes
+  `GetLevel`/`GetNoiseScaleDeg` too), so `ct × pt` counted as nonlinear depth.
+  The C++ frontend parity check exposed this; the fix is in
+  `cipherscope.compatibility.is_ciphertext`. Both LS6 lanes agree on the
+  corrected rows.
+
+Rerunning `make reproduce-small` on the Mac from this branch removes both.

@@ -21,7 +21,8 @@ the artifacts.
 **`developer`** — the local macOS build runs every real-binding check except
 `RES-02`, which reads `/proc/self/status` and is Linux-only. That single skip is
 why the status is `incomplete` rather than `pass`, and it is expected on macOS.
-This lane also runs the seeded benchmark (`SEED-01`, 27 cases; see
+This lane also runs the seeded benchmark (`SEED-01`; 27 cases when archived,
+28 since `bootstrap.positive.underused_deep` was added — see
 `evaluation/seeded/README.md`). It is a developer convenience, not a
 compatibility claim: the wheel is not the pinned Linux toolchain.
 

@@ -19,6 +19,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def main(path: Path = ROOT / "evaluation" / "raw" / "native_overhead.csv") -> int:
     rows = list(csv.DictReader(path.open(encoding="utf-8")))
+    for allocator in sorted({row.get("allocator", "glibc-default") for row in rows}):
+        print(f"\n### allocator: {allocator}\n")
+        _table([row for row in rows if row.get("allocator", "glibc-default") == allocator])
+    return 0
+
+
+def _table(rows: list[dict[str, str]]) -> None:
     groups: dict[tuple[int, str], list[dict[str, str]]] = defaultdict(list)
     for row in rows:
         groups[(int(row["size"]), row["arm"])].append(row)
@@ -38,7 +45,6 @@ def main(path: Path = ROOT / "evaluation" / "raw" / "native_overhead.csv") -> in
         fmt = lambda v: f"{v:.0f}" if v is not None else "—"
         print(f"| {size} | {fmt(plain)} | {fmt(hooks)} | {ratio(hooks, plain)} | {fmt(full)} | {ratio(full, plain)} | "
               f"{fmt(med('plain', 'peak_rss_mb'))} | {fmt(med('full', 'peak_rss_mb'))} | {fmt(per_event)} | {len(groups.get((size, 'plain'), []))} |")
-    return 0
 
 
 if __name__ == "__main__":

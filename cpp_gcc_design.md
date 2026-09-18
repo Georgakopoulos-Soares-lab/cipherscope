@@ -34,7 +34,7 @@ Everything before this boundary is responsible for observing a C++/OpenFHE execu
 
 The desired architecture is therefore:
 
-```text
+```text`
                       TARGET PROGRAM
                            C++
                             │
@@ -46,7 +46,7 @@ The desired architecture is therefore:
               │ CipherScope GCC frontend│
               │ + OpenFHE adapter       │
               │ + native trace runtime  │
-              └────────────┬────────────┘
+              └────────────┬────────────┘`
                            │
                            │ canonical trace
                            ▼
