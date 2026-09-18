@@ -16,6 +16,7 @@ do not need to rerun them to check the artifact.
 | Scaling sweep (`evaluation/scaling/run_scaling.py`) | real binding; ~4 GB RAM for the 10⁵ point | ~4 min on arm64; ~25 min on the LS6 VM lanes |
 | `evaluation/parity/run_lane.sh <lane> <out>` | real binding; runs the 16 examples, the seeded benchmark, and the scaling sweep for one lane | ~30 min |
 | `evaluation/parity/compare_lanes.py` | the archived `feasibility.json` files plus any `run_lane.sh` outputs; stdlib only | seconds |
+| `python3 -m tests.integration_cpp.run_gate --openfhe-dir …` | GCC with plugin headers, CMake, an OpenFHE C++ install | ~1 min (18 checks, 6 fixture programs) |
 
 Real-binding lanes and how to build them are in [docs/evidence.md](evidence.md).
 The primary source lane is built either from the Dockerfile under
@@ -81,6 +82,7 @@ restore the archived versions.
 | RQ6 Security/correctness | configuration rule (`HEStd_NotSet`), tolerance contracts, seeded cases | `evaluation/tables/security_cases.csv` | rules done; real-workload hunt (F-02) pending |
 | Related-work positioning | `paper/prior_art_matrix.csv` | — | rows for other tools are marked `verify` until checked against each paper |
 | Paper claims and non-claims | `paper/claims.md`, `paper/rq_matrix.csv` | — | draft |
+| Language-neutral trace: C++ and Python frontends share schema, graph, analyzers, exporters | `artifact/feasibility/cpp-gcc15-openfhe151/feasibility.json` (BUILD/OP/MUT/ID/SRC/EXC/THR/NUM/COV/LIMIT/TRACE/PIPE/PARITY), `tests/cpp/expected/repeated_rotations/` | `docs/cpp_frontend.md` | 18/18 on GCC 15.2.0 + OpenFHE 1.5.1; Python and C++ twins semantically equivalent with identical findings |
 | Cross-platform equivalence of platform-independent results | `evaluation/parity/compare_lanes.py` over the archived lanes and `run_lane.sh` outputs | `evaluation/parity/parity_report.md` | seeded 58/58 expectations, 972/972 ablation rows, 16/16 example diagnoses identical across macOS arm64, Ubuntu x86_64, Rocky x86_64 |
 
 ## Known limits a reviewer will hit

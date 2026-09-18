@@ -256,7 +256,12 @@ def shadow_build(target: NativeTarget, toolchain: NativeToolchain, cache_root: P
     if not marker:
         raise NativeProfileError(f"shadow binary {binary} carries no CipherScope marker; the plugin did not instrument it")
 
-    units = translation_units_for(build, shadow_build_dir / "compile_commands.json")
+    # Every C++ object the shadow build produced went through the launcher, so
+    # the number of instrumented translation units must equal this count.
+    units = sum(1 for path in shadow_build_dir.rglob("CMakeFiles/*.dir/**/*.o")
+                if path.name.endswith((".cpp.o", ".cc.o", ".cxx.o", ".C.o")))
+    if units == 0:
+        units = translation_units_for(build, shadow_build_dir / "compile_commands.json")
     metadata = {
         "fingerprint": fingerprint,
         "original_binary": str(target.binary),

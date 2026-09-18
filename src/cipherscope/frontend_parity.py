@@ -128,9 +128,12 @@ def render_markdown(report: ParityReport, left_name: str, right_name: str) -> st
     for index, (a, b) in enumerate(zip(report.left_signature, report.right_signature), start=1):
         same = a == b
         out = a["output_states"][0] if a["output_states"] else None
+        state = "" if not out else f"{out['level']}/{out['noise_scale_degree']}"
+        arguments = json.dumps(a["semantic_arguments"], sort_keys=True) if a["semantic_arguments"] else ""
+        mark = "" if same else " ✗"
         lines.append(
-            f"| {index}{'' if same else ' ✗'} | {a['operation']} | {a['overload']} | {', '.join(a['operands'])} | {', '.join(a['inputs'])} | {', '.join(a['outputs'])} | "
-            f"{'' if not out else f'{out['level']}/{out['noise_scale_degree']}'} | {json.dumps(a['semantic_arguments'], sort_keys=True) if a['semantic_arguments'] else ''} |"
+            f"| {index}{mark} | {a['operation']} | {a['overload']} | {', '.join(a['operands'])} | "
+            f"{', '.join(a['inputs'])} | {', '.join(a['outputs'])} | {state} | {arguments} |"
         )
     return "\n".join(lines) + "\n"
 

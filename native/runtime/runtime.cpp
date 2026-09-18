@@ -177,9 +177,14 @@ struct OpenEvent {
     bool recorded = false;
 };
 
+class Runtime;
+
 struct ThreadState {
     OpenEvent open;      // token != 0 while a recorded event is open
-    int depth = 0;       // nesting depth of instrumented calls (recorded or not)
+    ThreadState();
+    ~ThreadState();      // closes an event left open by an unwinding call
+    ThreadState(const ThreadState&) = delete;
+    ThreadState& operator=(const ThreadState&) = delete;
 };
 
 // ---------------------------------------------------------------------------
@@ -223,15 +228,14 @@ public:
 
     cs_token begin(const char* operation, const char* site_id) {
         ThreadState& ts = thread_state();
-        if (ts.open.token != 0 && ts.depth == 0) {
-            // The previous call on this thread never reached cs_event_end: it
-            // unwound. Close it as an error before opening the next event.
+        if (ts.open.token != 0) {
+            // The previous instrumented call on this thread never reached
+            // cs_event_end: it left by exception. Close it as an error event
+            // before opening the next one. (The plugin never instruments
+            // OpenFHE's own code, so an instrumented call cannot legitimately
+            // be nested inside another; a user callback invoked by OpenFHE
+            // that itself calls the API would be misread as an unwind.)
             close_unwound(ts);
-        }
-        ts.depth += 1;
-        if (ts.depth > 1) {
-            nested_internal_.fetch_add(1, std::memory_order_relaxed);
-            return 0;  // folded into the outer event
         }
         if (!accepting()) {
             calls_dropped_.fetch_add(1, std::memory_order_relaxed);
@@ -269,9 +273,8 @@ public:
     }
 
     void end(cs_token token, int result_kind, const void* result) {
-        ThreadState& ts = thread_state();
-        if (ts.depth > 0) ts.depth -= 1;
         if (token == 0) return;
+        ThreadState& ts = thread_state();
         OpenEvent& ev = ts.open;
         if (ev.token != token) return;
         int64_t wall_end = clock_ns(CLOCK_MONOTONIC);
@@ -314,12 +317,33 @@ public:
         emit(thread_state(), line);
     }
 
+    // Thread states register themselves so finalisation can close events left
+    // open on threads that are still alive; a thread that exits first closes
+    // its own in ~ThreadState. Never touch thread_local storage from here: at
+    // process exit the main thread's TLS is destroyed before this object.
+    void register_thread(ThreadState* state) {
+        std::lock_guard<std::mutex> guard(threads_mutex_);
+        threads_.push_back(state);
+    }
+
+    void unregister_thread(ThreadState* state) {
+        std::lock_guard<std::mutex> guard(threads_mutex_);
+        threads_.erase(std::remove(threads_.begin(), threads_.end(), state), threads_.end());
+    }
+
+    void close_open_event(ThreadState& ts) {
+        if (ts.open.token != 0) close_unwound(ts);
+    }
+
     void finalize() {
         std::lock_guard<std::mutex> guard(finalize_mutex_);
         if (finalized_) return;
         finalized_ = true;
-        ThreadState& ts = thread_state();
-        if (ts.open.token != 0) close_unwound(ts);
+        {
+            std::lock_guard<std::mutex> threads_guard(threads_mutex_);
+            for (ThreadState* state : threads_) close_open_event(*state);
+            threads_.clear();
+        }
         {
             std::lock_guard<std::mutex> registry_guard(registry_mutex_);
             std::string contexts = "{\"record\":\"contexts\",\"contexts\":[";
@@ -364,7 +388,6 @@ private:
         unwound_.fetch_add(1, std::memory_order_relaxed);
         traced_.fetch_add(1, std::memory_order_relaxed);
         ev = OpenEvent{};
-        ts.depth = 0;
     }
 
     // One locked append per record. FHE operations cost milliseconds, so the
@@ -395,6 +418,8 @@ private:
     std::mutex write_mutex_;
     std::mutex registry_mutex_;
     std::mutex finalize_mutex_;
+    std::mutex threads_mutex_;
+    std::vector<ThreadState*> threads_;
     Registry registry_;
     std::atomic<int64_t> next_token_{0};
     std::atomic<int64_t> next_sequence_{0};
@@ -412,6 +437,14 @@ private:
     std::string truncation_reason_;
     bool finalized_ = false;
 };
+
+ThreadState::ThreadState() { Runtime::instance().register_thread(this); }
+
+ThreadState::~ThreadState() {
+    Runtime& runtime = Runtime::instance();
+    runtime.close_open_event(*this);
+    runtime.unregister_thread(this);
+}
 
 }  // namespace
 

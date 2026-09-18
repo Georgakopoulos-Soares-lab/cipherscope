@@ -12,6 +12,7 @@ the artifacts.
 | `developer` | macOS ARM64 (Darwin arm64) | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`) | `incomplete` | 37 / 1 / 38 | no | `artifact/feasibility/developer/feasibility.json` |
 | `provisional-wheel-py312` | Ubuntu 24.04 x86_64 | 3.12.3 | PyPI wheel `1.5.1.0.24.4` | `provisional_pass` | 33 / 0 / 33 | no | `artifact/feasibility/provisional-wheel-py312/feasibility.json` |
 | `ls6-native-py311` | Rocky Linux 8.10 x86_64, bare TACC LS6 host (AMD EPYC 7763), `gcc/15.2.0` + `cmake/3.31.5` modules | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`), GCC 15.2.0 | `native_pass` | 38 / 0 / 38 | no | `artifact/feasibility/ls6-native-py311/feasibility.json` |
+| `cpp-gcc15-openfhe151` | Rocky Linux 8.10 x86_64, bare TACC LS6 host; GCC 15.2.0 plugin frontend against the native OpenFHE 1.5.1 C++ install | 3.11.15 (driver) | C++ API of the same native v1.5.1 build (`1306d14f`), instrumentation manifest `openfhe-1.5-v1` | `native_pass` | 18 / 0 / 18 | no | `artifact/feasibility/cpp-gcc15-openfhe151/feasibility.json` |
 | `primary-source-py311` | Ubuntu 24.04 x86_64 container (Apptainer 1.4.1 `--fakeroot` image built and run on TACC LS6; Rocky 8.10 host, AMD EPYC 7763) | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`), Ubuntu gcc 13.3.0 | `pass` | 38 / 0 / 38 | yes | `artifact/feasibility/primary-source-py311/feasibility.json` |
 
 ## What each lane proves
@@ -55,6 +56,23 @@ cluster-scale corpus and overhead runs, where a container is unnecessary
 overhead; every bundle it produces carries its native-module hash
 (`429513c3…`), distinct from the primary lane's (`a3a6e18a…`).
 
+**`cpp-gcc15-openfhe151`** — the C++ frontend's gate
+(`tests/integration_cpp/run_gate.py`). It builds the plain fixture project
+under `tests/cpp/fixtures` with GCC 15.2.0 and the native OpenFHE 1.5.1
+install, profiles each fixture with `cipherscope profile <binary>` exactly as a
+user would, and checks the properties [docs/cpp_frontend.md](cpp_frontend.md)
+claims: transparent shadow builds with an untouched source tree and original
+binary (BUILD-01..04), exactly-once interception with semantic arguments
+(OP-01), operator and in-place normalization (OP-02, MUT-01), identity across
+copies/moves/containers and no ID reuse after destruction (ID-01), exact
+source attribution at -O0/-O2/-O3 (SRC-01/02), exceptions preserved and
+recorded (EXC-01), OpenMP threads (THR-01), byte-identical program output
+between plain and instrumented binaries (NUM-01), unmatched calls denying
+COMPLETE (COV-01), hard limits (LIMIT-01), canonical validation and the
+unchanged pipeline (TRACE-01, PIPE-01), and semantic parity with the Python
+frontend's trace of the twin program (PARITY-01). It is a frontend gate, not a
+compatibility claim about OpenFHE itself, so it is never authoritative.
+
 ## Regenerating a lane
 
 ```bash
@@ -85,6 +103,16 @@ apptainer exec "$PRIMARY_SIF" cat /opt/cipherscope-openfhe-build-manifest.json \
 `run_in_primary` runs the container with `--cleanenv --no-home --containall`
 so nothing from the host (module paths, `PYTHONPATH`, user site-packages) can
 reach the gate; the image's own environment declares the lane.
+
+The C++ frontend gate needs GCC with plugin headers, CMake, and an OpenFHE
+install (the native lane's is used on LS6):
+
+```bash
+source ls6_env.sh
+PYTHONPATH=src:. python3.11 -m tests.integration_cpp.run_gate \
+  --openfhe-dir "$BUILD_ROOT/opt/openfhe/lib/OpenFHE" \
+  --output artifact/feasibility/cpp-gcc15-openfhe151/feasibility.json
+```
 
 The native lane is one script on an allocated LS6 compute node (about ten
 minutes at `MAKE_JOBS=16`; it skips the parts that already exist):

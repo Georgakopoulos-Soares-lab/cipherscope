@@ -443,6 +443,7 @@ unsigned int cs_pass::execute(function* fun) {
             std::string operation;
             unsigned first_operand = 0;  // index of the first argument that is not `this`
             bool method = is_cryptocontext_method(fndecl);
+            bool compound_operator = false;  // operator+=, -=, *=: the result is the first operand
             if (method) {
                 if (g_manifest.operations.count(name)) { operation = name; first_operand = 1; }
                 else if (allowed_nonsemantic(name)) {
@@ -493,6 +494,7 @@ unsigned int cs_pass::execute(function* fun) {
                 if (classify_type(TREE_TYPE(gimple_call_arg(stmt, 0)), &pp) != K_CIPHERTEXT) continue;
                 operation = alias->second;
                 first_operand = 0;
+                compound_operator = name.size() > 8 && name.back() == '=';
             } else {
                 continue;
             }
@@ -510,6 +512,7 @@ unsigned int cs_pass::execute(function* fun) {
             gsi_insert_before(&gsi, begin, GSI_SAME_STMT);
 
             unsigned nargs = gimple_call_num_args(stmt);
+            tree first_ciphertext_ptr = NULL_TREE;
             for (unsigned i = 0; i < nargs; ++i) {
                 tree a = gimple_call_arg(stmt, i);
                 bool pointer_param = false;
@@ -541,6 +544,7 @@ unsigned int cs_pass::execute(function* fun) {
                         if (pointer == NULL_TREE) kind = K_UNKNOWN;
                         break;
                 }
+                if (kind == K_CIPHERTEXT && first_ciphertext_ptr == NULL_TREE) first_ciphertext_ptr = pointer;
                 insert_arg_call(&gsi, token, kind, pointer, ivalue, dvalue);
             }
             (void)first_operand;
@@ -573,6 +577,12 @@ unsigned int cs_pass::execute(function* fun) {
                 } else {
                     result_kind = K_UNKNOWN;
                 }
+            }
+            if (lhs == NULL_TREE && compound_operator && first_ciphertext_ptr != NULL_TREE) {
+                // `c += d;` discards the returned reference; the assigned-to
+                // operand is the result and its address is already known.
+                result_kind = K_CIPHERTEXT;
+                result_ptr = first_ciphertext_ptr;
             }
             if (result_ptr == NULL_TREE) {
                 // Pointer-typed lhs: copy it into a const void* temporary after the call.
