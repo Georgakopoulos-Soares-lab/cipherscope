@@ -402,9 +402,25 @@ class CompatibilityRegistry:
             return next(iter(self._contexts.values()))[1]
         return None
 
+    def is_plaintext(self, value: Any) -> bool:
+        """An OpenFHE Plaintext exposes the packed-value getters and no ciphertext getters."""
+
+        if self.is_ciphertext(value):
+            return False
+        try:
+            return callable(getattr(value, "GetLength", None)) and (
+                callable(getattr(value, "GetCKKSPackedValue", None))
+                or callable(getattr(value, "GetPackedValue", None))
+                or callable(getattr(value, "GetEncodingType", None))
+            )
+        except Exception:
+            return False
+
     def operand_kind(self, value: Any) -> str:
         if self.is_ciphertext(value):
             return "ciphertext"
+        if self.is_plaintext(value):
+            return "plaintext"
         if isinstance(value, bool):
             return "boolean"
         if isinstance(value, int):
@@ -515,6 +531,11 @@ class CompatibilityRegistry:
             right_ct = self.is_ciphertext(values[1])
             if left_ct and right_ct:
                 return "ct_ct"
+            # The same labels the C++ frontend derives from static operand types.
+            if left_ct and self.is_plaintext(values[1]):
+                return "ct_pt"
+            if right_ct and self.is_plaintext(values[0]):
+                return "pt_ct"
             if left_ct and isinstance(values[1], (int, float, complex)):
                 return "ct_scalar"
             if right_ct and isinstance(values[0], (int, float, complex)):
