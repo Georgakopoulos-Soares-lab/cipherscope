@@ -28,10 +28,8 @@ def build_manifest(trace: Mapping[str, Any]) -> dict[str, Any]:
         "tool": run.get("tool") or {"name": "cipherscope", "version": "0.1.0"},
         "runtime": run.get("runtime") or {},
         "coverage": run.get("coverage") or {},
-        "clocks": {
-            "wall": "time.perf_counter_ns",
-            "cpu": "time.process_time_ns",
-        },
+        # The producer names its clocks; the Python frontend's are the default.
+        "clocks": dict(run.get("clocks") or {"wall": "time.perf_counter_ns", "cpu": "time.process_time_ns"}),
         "parameter_set": {
             "scheme": context.get("scheme", "CKKS"),
             "ring_dimension": context.get("ring_dimension"),
@@ -44,6 +42,8 @@ def build_manifest(trace: Mapping[str, Any]) -> dict[str, Any]:
     }
     if run.get("synthetic_contract") is True:
         manifest["synthetic_contract"] = True
+    if isinstance(run.get("producer"), Mapping):
+        manifest["producer"] = dict(run["producer"])
     return manifest
 
 

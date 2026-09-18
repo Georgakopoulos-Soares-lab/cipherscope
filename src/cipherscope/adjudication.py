@@ -17,6 +17,7 @@ from .coverage import (
     classify_run,
     entrypoint_from_trace,
     real_backend_rejection,
+    scannable_entrypoint,
     scan_file,
 )
 from .validation import StrictJSONError, load_json_file
@@ -200,8 +201,11 @@ def export_bundle(
         return BundleExport(path, workload, excluded_reason=rejection)
 
     entrypoint = entrypoint_from_trace(trace)
-    scannable = entrypoint is not None and entrypoint.is_file()
-    if not scannable and not allow_unscanned:
+    scannable = entrypoint is not None and entrypoint.is_file() and scannable_entrypoint(entrypoint)
+    # A compiler-instrumented (C++) run proves coverage through its trace
+    # counters; there is no Python source to scan and none is needed.
+    native_frontend = (run.get("producer") or {}).get("frontend", "python-openfhe") != "python-openfhe"
+    if not scannable and not allow_unscanned and not native_frontend:
         return BundleExport(
             path,
             workload,

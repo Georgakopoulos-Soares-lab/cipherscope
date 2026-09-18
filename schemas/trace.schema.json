@@ -15,7 +15,19 @@
         "status": {"enum": ["completed", "incomplete", "failed", "interrupted"]},
         "synthetic_contract": {"type": "boolean"},
         "truncated": {"type": "boolean"},
-        "shadow_mode": {"type": "boolean"}
+        "shadow_mode": {"type": "boolean"},
+        "producer": {"$ref": "#/$defs/producer"},
+        "runtime": {"$ref": "#/$defs/runtime"},
+        "coverage": {"$ref": "#/$defs/coverage"},
+        "clocks": {
+          "type": "object",
+          "properties": {
+            "wall": {"type": "string", "minLength": 1},
+            "cpu": {"type": "string", "minLength": 1},
+            "thread_cpu": {"type": ["string", "null"]}
+          },
+          "additionalProperties": true
+        }
       },
       "additionalProperties": true
     },
@@ -46,6 +58,61 @@
   },
   "$defs": {
     "id": {"type": "string", "minLength": 1, "maxLength": 512},
+    "producer": {
+      "description": "Which acquisition frontend emitted the trace. Provenance only: no analyzer may branch on it.",
+      "type": "object",
+      "required": ["frontend", "frontend_version"],
+      "properties": {
+        "frontend": {"type": "string", "minLength": 1},
+        "frontend_version": {"type": "string", "minLength": 1},
+        "instrumentation_manifest": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "runtime": {
+      "description": "Language, toolchain, framework, and platform of the observed process; every field is provenance.",
+      "type": "object",
+      "properties": {
+        "language": {"enum": ["python", "c++", null]},
+        "language_version": {"type": ["string", "null"]},
+        "compiler": {"type": ["string", "null"]},
+        "compiler_version": {"type": ["string", "null"]},
+        "framework": {"type": ["string", "null"]},
+        "framework_version": {"type": ["string", "null"]},
+        "platform": {"type": ["string", "null"]},
+        "architecture": {"type": ["string", "null"]},
+        "python": {"type": ["string", "null"]},
+        "backend": {"type": ["string", "null"]},
+        "backend_representation": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "coverage": {
+      "description": "Acquisition completeness evidence. Proxy counters come from the Python frontend; translation-unit and candidate counters from compiler instrumentation.",
+      "type": "object",
+      "properties": {
+        "strict": {"type": "boolean"},
+        "traced_semantic_calls": {"type": "integer", "minimum": 0},
+        "allowed_passthrough_calls": {"type": "integer", "minimum": 0},
+        "unclassified_proxy_passthrough_calls": {"type": "integer", "minimum": 0},
+        "rejected_unclassified_calls": {"type": "integer", "minimum": 0},
+        "unsupported_operations": {"type": "array", "items": {"type": "string"}},
+        "potentially_incomplete": {"type": "boolean"},
+        "truncated": {"type": "boolean"},
+        "failed_state_reads": {"type": "integer", "minimum": 0},
+        "operator_overload_coverage": {"type": "boolean"},
+        "original_reference_bypass_observable": {"type": "boolean"},
+        "instrumentation_manifest": {"type": ["string", "null"]},
+        "unmatched_openfhe_candidates": {"type": "integer", "minimum": 0},
+        "unmatched_candidate_names": {"type": "array", "items": {"type": "string"}},
+        "instrumented_translation_units": {"type": ["integer", "null"], "minimum": 0},
+        "expected_translation_units": {"type": ["integer", "null"], "minimum": 0},
+        "instrumented_binary_verified": {"type": ["boolean", "null"]},
+        "nested_internal_calls": {"type": "integer", "minimum": 0},
+        "unwound_calls": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": true
+    },
     "id_array": {
       "type": "array",
       "items": {"$ref": "#/$defs/id"},

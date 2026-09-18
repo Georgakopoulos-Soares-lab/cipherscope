@@ -29,6 +29,7 @@ from .coverage import (
     entrypoint_from_trace,
     report_row,
     scan_file,
+    scannable_entrypoint,
     summarize_report,
     write_coverage_report,
 )
@@ -267,7 +268,7 @@ def coverage_report(
         trace = _mapping(load_json_file(bundle / "trace.json"), str(bundle / "trace.json"))
         entrypoint = entrypoint_from_trace(trace)
         risks = ()
-        if scan_sources and entrypoint is not None and entrypoint.is_file():
+        if scan_sources and entrypoint is not None and entrypoint.is_file() and scannable_entrypoint(entrypoint):
             risks = scan_file(entrypoint)
         assessment = classify_run(trace, risks=risks)
         rows.append(report_row(bundle, trace, assessment, entrypoint=entrypoint))
