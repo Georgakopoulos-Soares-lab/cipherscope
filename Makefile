@@ -3,7 +3,7 @@
 PYTHON ?= python3
 export PYTHONPATH := src
 
-.PHONY: test artifact-smoke reproduce-small tables checksums verify-checksums seeded gate
+.PHONY: test artifact-smoke reproduce-small tables checksums verify-checksums seeded gate cpp-gate
 
 test:
 	$(PYTHON) -m unittest discover -s tests -p 'test_*.py'
@@ -41,6 +41,10 @@ tables:
 gate:
 	CIPHERSCOPE_OPENFHE_BOOTSTRAP=1 $(PYTHON) -m tests.integration_openfhe.run_gate \
 	  --output artifact/feasibility/$${CIPHERSCOPE_OPENFHE_LANE:-developer}/feasibility.json
+
+## C++ frontend gate; needs GCC with plugin headers, CMake, and OPENFHE_DIR=<dir containing OpenFHEConfig.cmake>.
+cpp-gate:
+	PYTHONPATH=src:. $(PYTHON) -m tests.integration_cpp.run_gate --openfhe-dir $${OPENFHE_DIR:?set OPENFHE_DIR}
 
 checksums:
 	cd evaluation/raw && find . -type f ! -name CHECKSUMS.sha256 | LC_ALL=C sort | xargs shasum -a 256 > CHECKSUMS.sha256

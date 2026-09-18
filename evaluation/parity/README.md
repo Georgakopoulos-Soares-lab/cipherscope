@@ -43,3 +43,13 @@ sweeps' baseline arms ran under different concurrent load, which is why the
 container lane's traced/baseline ratios fall below 1 while the native lane's
 sit at 1.08–1.11; the arm64 sweep gives 1.22 at 10⁵. Bytes per event
 (2 139–2 193) and peak RSS at 10⁵ (2.98–3.17 GB) agree across all three.
+
+## Frontend parity (Python vs C++)
+
+`cipherscope.frontend_parity.compare_traces` compares traces of the same
+workload recorded by the Python proxy and by the GCC plugin frontend:
+operation sequence and kinds, overloads, operand roles, lineage, level/noise
+transitions, semantic arguments, and every analyzer's conclusion must be
+identical; IDs, timings, thread IDs, source paths and provenance are ignored.
+The four twin pairs under `tests/cpp/fixtures` / `tests/cpp/twins` are
+equivalent (`tests/test_native_frontend.py`, gate check `PARITY-01`).

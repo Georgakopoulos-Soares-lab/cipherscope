@@ -18,6 +18,20 @@ a versioned graph, a nonlinear-depth path, one conservative
 `rotation.hoist_same_input.v1` finding, and a clean
 `keys.unused_in_observed_run.v1` result.
 
+## Profile a C++ program
+
+OpenFHE C++ programs built with GCC and CMake need no change either:
+
+```bash
+PYTHONPATH=src python -m cipherscope profile --output /tmp/cipherscope-cpp ./build/my_program -- args
+```
+
+The plain fixture project under `tests/cpp/fixtures/` (rotations, operators
+and in-place mutation, aliasing, exceptions, threads, an unmatched call) shows
+what is observed; `docs/cpp_frontend.md` explains the shadow build and the
+coverage evidence. `tests/cpp/twins/` holds the Python programs equivalent to
+those fixtures, and their traces are semantically identical.
+
 ## Profile a small program with `cipherscope run`
 
 `profiled_workload.py` is an ordinary instrumented target program using the real
