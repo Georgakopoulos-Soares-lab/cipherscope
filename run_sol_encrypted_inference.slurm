@@ -17,12 +17,14 @@ CIPHERSCOPE_DIR="${CIPHERSCOPE_DIR:-$WORK/cipherscope}"
 source "$CIPHERSCOPE_DIR/ls6_env.sh"
 
 REPO="${LOG_REG_EXAMPLES:-$WORK/python-log-reg-examples}"
+# The targets never call cipherscope.attach(); profile_unmodified.py intercepts
+# GenCryptoContext instead. They import their helper packages from the repo root.
 export PYTHONPATH="$PYTHONPATH:$REPO"
 cd "$REPO"
 rm -rf "$CIPHERSCOPE_DIR/external_suite/sol_encrypted_inference"
-if ! python3.11 -m cipherscope.cli run --output "$CIPHERSCOPE_DIR/external_suite/sol_encrypted_inference/" "sol_encrypted_inference.py"; then
+if ! python3.11 -m cipherscope.cli run --output "$CIPHERSCOPE_DIR/external_suite/sol_encrypted_inference/" "$CIPHERSCOPE_DIR/examples/profile_unmodified.py" -- "sol_encrypted_inference.py"; then
   echo "strict run failed; re-running permissive for the coverage inventory"
   rm -rf "$CIPHERSCOPE_DIR/external_suite/sol_encrypted_inference"
-  python3.11 -m cipherscope.cli run --output "$CIPHERSCOPE_DIR/external_suite/sol_encrypted_inference/" --permissive "sol_encrypted_inference.py"
+  python3.11 -m cipherscope.cli run --output "$CIPHERSCOPE_DIR/external_suite/sol_encrypted_inference/" --permissive "$CIPHERSCOPE_DIR/examples/profile_unmodified.py" -- "sol_encrypted_inference.py"
 fi
 echo "exit code: $?"

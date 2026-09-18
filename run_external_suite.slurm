@@ -17,6 +17,8 @@ CIPHERSCOPE_DIR="${CIPHERSCOPE_DIR:-$WORK/cipherscope}"
 source "$CIPHERSCOPE_DIR/ls6_env.sh"
 
 REPO="${LOG_REG_EXAMPLES:-$WORK/python-log-reg-examples}"
+# The targets never call cipherscope.attach(); profile_unmodified.py intercepts
+# GenCryptoContext instead. They import their helper packages from the repo root.
 export PYTHONPATH="$PYTHONPATH:$REPO"
 rm -rf "$CIPHERSCOPE_DIR/external_suite"
 mkdir -p "$CIPHERSCOPE_DIR/external_suite"
@@ -30,10 +32,10 @@ for prog in "${PROGRAMS[@]}"; do
   echo "=== $name ==="
   # Strict first: only a COMPLETE run feeds the finding-quality tables. Fall
   # back to --permissive solely to inventory the unsupported operations.
-  if ! python3.11 -m cipherscope.cli run --output "$CIPHERSCOPE_DIR/external_suite/$name/" "$prog"; then
+  if ! python3.11 -m cipherscope.cli run --output "$CIPHERSCOPE_DIR/external_suite/$name/" "$CIPHERSCOPE_DIR/examples/profile_unmodified.py" -- "$prog"; then
     echo "strict run of $name failed; re-running permissive for the coverage inventory"
     rm -rf "$CIPHERSCOPE_DIR/external_suite/$name"
-    python3.11 -m cipherscope.cli run --output "$CIPHERSCOPE_DIR/external_suite/$name/" --permissive "$prog"
+    python3.11 -m cipherscope.cli run --output "$CIPHERSCOPE_DIR/external_suite/$name/" --permissive "$CIPHERSCOPE_DIR/examples/profile_unmodified.py" -- "$prog"
   fi
   echo "exit code: $?"
 done

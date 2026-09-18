@@ -567,6 +567,14 @@ def _environment() -> dict[str, Any]:
 
     from .fingerprint import build_fingerprint
 
+    # The cases run in subprocesses, so this process has not necessarily
+    # loaded the binding; load it now so the native-module hash is recorded.
+    try:
+        import importlib
+
+        importlib.import_module("openfhe")
+    except Exception:  # noqa: BLE001 - absent binding simply leaves the hashes empty
+        pass
     return {
         **build_fingerprint(),
         "platform": platform.system(),

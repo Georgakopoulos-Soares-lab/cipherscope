@@ -45,10 +45,16 @@ export CIPHERSCOPE_OPENFHE_BUILD_MANIFEST="${CIPHERSCOPE_OPENFHE_BUILD_MANIFEST:
 # Run a command inside the authoritative Ubuntu 24.04 container. The host
 # environment is dropped (--cleanenv) so the gcc module's LD_LIBRARY_PATH and
 # this PYTHONPATH cannot leak in; the image's %environment supplies the lane.
+# --containall also gives the container a private /tmp capped at Apptainer's
+# session-dir size (64 MB by default); anything that spools through tempfile
+# (the scaling kernel, `cipherscope run` bundles) dies there with ENOSPC at a
+# few thousand events. Bind a real scratch directory over it.
 run_in_primary() {
+  mkdir -p "$RESULTS_ROOT/container-tmp"
   apptainer exec --cleanenv --no-home --containall \
     --bind "$CIPHERSCOPE_DIR:/workspace/cipherscope" \
     --bind "$RESULTS_ROOT:/results" \
+    --bind "$RESULTS_ROOT/container-tmp:/tmp" \
     --pwd /workspace/cipherscope \
     --env OMP_NUM_THREADS="$OMP_NUM_THREADS" \
     "$PRIMARY_SIF" "$@"

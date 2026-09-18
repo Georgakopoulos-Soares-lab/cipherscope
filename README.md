@@ -15,12 +15,15 @@ possible optimizations. It currently:
 - export a schema-versioned run bundle.
 
 This is pre-alpha research software. The included fake backend performs no
-cryptography. Real-OpenFHE evidence comes from three lanes, described in
-[docs/evidence.md](docs/evidence.md): a macOS developer build (37 of 38 gate
-checks; the one skip is Linux-only), a provisional Ubuntu/Python 3.12 wheel
-(33 of 33 at the time it was archived), and the authoritative Python 3.11
-source build on Linux, whose gate result is not yet archived in this
-repository. CipherScope does not select secure parameters or prove precision.
+cryptography. Real-OpenFHE evidence comes from four lanes, described in
+[docs/evidence.md](docs/evidence.md): the authoritative Python 3.11 source
+build on Ubuntu 24.04 x86_64 (38 of 38 gate checks), the same pins built
+natively on a Rocky Linux 8.10 cluster host with GCC 15.2 (38 of 38), a macOS
+ARM64 developer build (37 of 38; the one skip is Linux-only), and a
+provisional Ubuntu/Python 3.12 wheel (33 of 33 at the time it was archived).
+`evaluation/parity/parity_report.md` shows that the platform-independent
+results (seeded benchmark, ablation, example diagnoses) are identical across
+them. CipherScope does not select secure parameters or prove precision.
 
 ## Quick start
 
@@ -41,9 +44,16 @@ PYTHONPATH=src "$PYTHON" -m cipherscope.cli view cipherscope-results/demo
 Do not use the Apple Command Line Tools Python 3.9 interpreter; it is below the
 package's supported version floor.
 
-For the real macOS ARM64 OpenFHE example, activate the dedicated source-built
-environment documented in [OPENFHE_ENVIRONMENT.md](../.codex/OPENFHE_ENVIRONMENT.md),
-then follow [examples/README.md](examples/README.md). The metadata-only fake
+For the real OpenFHE examples you need the pinned binding. On macOS ARM64,
+activate the source-built conda environment documented in
+[OPENFHE_ENVIRONMENT.md](../.codex/OPENFHE_ENVIRONMENT.md). On Linux, build one
+of the two lanes in [docs/evidence.md](docs/evidence.md): the Ubuntu 24.04
+container (`artifact/apptainer/openfhe-py311-source.def`, or the equivalent
+Dockerfile), or the native toolchain build (`build_openfhe_ls6.sh`, written
+for TACC Lonestar6 but only assuming Lmod modules for gcc and cmake). On LS6,
+`source ls6_env.sh` sets up both: it puts the native build's `python3.11` on
+`PATH` and defines `run_in_primary` to run a command inside the container.
+Then follow [examples/README.md](examples/README.md). The metadata-only fake
 backend remains only for deterministic unit and contract tests.
 
 An editable installation exposes the `cipherscope` command:
@@ -63,7 +73,8 @@ installing it does not establish compatibility by itself:
 ```
 
 The primary Python 3.11 lane uses the source-build recipe under
-`artifact/docker/openfhe-py311-source/`.
+`artifact/docker/openfhe-py311-source/`, or its rootless Apptainer twin under
+`artifact/apptainer/`; the archived gate artifact was produced with the latter.
 
 ## Instrumentation API
 
@@ -191,14 +202,19 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 
 ## Current limitations
 
-- Real OpenFHE behavior is verified on three lanes with different weight
-  ([docs/evidence.md](docs/evidence.md)): the macOS ARM64 developer build
-  (all checks except the Linux-only `RES-02`, including bootstrap and the seeded
-  benchmark), the provisional Ubuntu 24.04 / Python 3.12 wheel (every check that
-  existed when it was archived), and the authoritative Python 3.11 source build,
-  whose passing gate artifact still has to be copied into `artifact/feasibility/`.
-  Until that file is present the compatibility claim is not backed by checked-in
-  evidence.
+- Real OpenFHE behavior is verified on four lanes with different weight
+  ([docs/evidence.md](docs/evidence.md)). The authoritative Python 3.11 source
+  build on Ubuntu 24.04 x86_64 passes all 38 checks and is archived under
+  `artifact/feasibility/primary-source-py311/`; the native Rocky Linux / GCC
+  15.2 build passes the same 38; the macOS ARM64 developer build passes all
+  but the Linux-only `RES-02`; the provisional Python 3.12 wheel passes the 33
+  checks that existed when it was archived. The claim is about observing
+  OpenFHE calls correctly on those builds; other distributions, compilers, or
+  OpenFHE versions are untested.
+- Timing and memory figures are per machine. `evaluation/tables/scaling.csv`
+  carries a `machine` column and never pools rows from different hardware;
+  compare ratios (traced / baseline, bytes per event) across machines, not
+  absolute milliseconds.
 - The fake-backend contract covers the planned state/depth matrix and observed
   rotation-key inventory. Its real-binding tests remain gated on an actual pinned
   OpenFHE installation; fake results are not compatibility evidence.
