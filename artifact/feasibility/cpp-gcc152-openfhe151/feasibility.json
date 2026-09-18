@@ -3,7 +3,7 @@
   "checks": [
     {
       "description": "BUILD-01: the plain fixture project builds and runs without CipherScope",
-      "duration_ns": 11891878427,
+      "duration_ns": 18444753120,
       "id": "BUILD-01",
       "observed": {
         "programs": [
@@ -20,7 +20,7 @@
     },
     {
       "description": "BUILD-02: CMakeCache.txt yields source root, GCC, OpenFHE and the CMake target; the plain binary has no marker",
-      "duration_ns": 15593650,
+      "duration_ns": 17342878,
       "id": "BUILD-02",
       "observed": {
         "compiler_version": "15.2.0",
@@ -32,7 +32,7 @@
     },
     {
       "description": "BUILD-03: `cipherscope profile <binary>` creates an instrumented shadow build for every fixture without touching the source tree",
-      "duration_ns": 4210956754,
+      "duration_ns": 6782564758,
       "id": "BUILD-03",
       "observed": {
         "aliasing": {
@@ -71,7 +71,7 @@
     },
     {
       "description": "BUILD-04: the shadow binary carries the marker, every translation unit was instrumented, and the original binary is untouched",
-      "duration_ns": 12161566,
+      "duration_ns": 10654373,
       "id": "BUILD-04",
       "observed": {
         "marker": {
@@ -82,14 +82,14 @@
           "manifest": "openfhe-1.5-v1",
           "schema_major": "1"
         },
-        "original_mtime_ns": 1789698711000000000
+        "original_mtime_ns": 1789699938000000000
       },
       "required": true,
       "status": "pass"
     },
     {
       "description": "OP-01: every application-level OpenFHE call is intercepted exactly once with its semantic arguments",
-      "duration_ns": 17422,
+      "duration_ns": 15017,
       "id": "OP-01",
       "observed": {
         "operations": [
@@ -110,7 +110,7 @@
     },
     {
       "description": "OP-02: operator*, operator+, operator+=, unary operator- and ct*pt normalize to one canonical event each",
-      "duration_ns": 12724,
+      "duration_ns": 11311,
       "id": "OP-02",
       "observed": {
         "operations": [
@@ -136,7 +136,7 @@
     },
     {
       "description": "MUT-01: in-place operations produce the next immutable version of their operand and later calls read it",
-      "duration_ns": 8747,
+      "duration_ns": 7494,
       "id": "MUT-01",
       "observed": {
         "add_in_place": [
@@ -151,7 +151,7 @@
     },
     {
       "description": "ID-01: handle copies, moves and container storage keep one identity; destroyed objects never hand their ID to a reused address",
-      "duration_ns": 22322,
+      "duration_ns": 20088,
       "id": "ID-01",
       "observed": {
         "identities": [
@@ -169,7 +169,7 @@
     },
     {
       "description": "SRC-01: events resolve to the exact user source file, line and function",
-      "duration_ns": 15579,
+      "duration_ns": 15630,
       "id": "SRC-01",
       "observed": {
         "lines": [
@@ -190,7 +190,7 @@
     },
     {
       "description": "SRC-02: the same events and source lines are recorded at -O0, -O2 and -O3 (instrumentation precedes optimization)",
-      "duration_ns": 18370336731,
+      "duration_ns": 18775764236,
       "id": "SRC-02",
       "observed": {
         "-O0": [
@@ -235,7 +235,7 @@
     },
     {
       "description": "EXC-01: a throwing OpenFHE call becomes an error event, the application's catch runs unchanged, and tracing continues",
-      "duration_ns": 14668,
+      "duration_ns": 12234,
       "id": "EXC-01",
       "observed": {
         "error_event": "event_0005"
@@ -245,14 +245,14 @@
     },
     {
       "description": "THR-01: concurrent semantic calls from OpenMP threads are recorded once each with their own thread IDs and complete lineage",
-      "duration_ns": 23814,
+      "duration_ns": 22232,
       "id": "THR-01",
       "observed": {
         "thread_ids": [
-          2010170,
-          2010171,
-          2010172,
-          2010181
+          2038344,
+          2038345,
+          2038346,
+          2038355
         ]
       },
       "required": true,
@@ -260,7 +260,7 @@
     },
     {
       "description": "NUM-01: the instrumented binaries print exactly what the plain binaries print (same decrypted results, same control flow)",
-      "duration_ns": 4697794,
+      "duration_ns": 4970565,
       "id": "NUM-01",
       "observed": {
         "aliasing": true,
@@ -275,7 +275,7 @@
     },
     {
       "description": "COV-01: an executed OpenFHE call outside the manifest denies COMPLETE and is named; every other fixture is COMPLETE",
-      "duration_ns": 59281,
+      "duration_ns": 65744,
       "id": "COV-01",
       "observed": {
         "unmatched": [
@@ -288,7 +288,7 @@
     },
     {
       "description": "LIMIT-01: a hard event limit stops recording, never the workload, and the truncated bundle validates as incomplete",
-      "duration_ns": 19884156153,
+      "duration_ns": 22980215214,
       "id": "LIMIT-01",
       "observed": {
         "calls_dropped": 6,
@@ -299,7 +299,7 @@
     },
     {
       "description": "TRACE-01: every bundle validates against the canonical schemas and runs through the unchanged graph/analyzer/export pipeline",
-      "duration_ns": 86402023,
+      "duration_ns": 90229673,
       "id": "TRACE-01",
       "observed": {
         "validated": [
@@ -316,7 +316,7 @@
     },
     {
       "description": "PIPE-01: the existing analyzers reach the expected diagnoses on the C++ trace and mark unavailable evidence not_applicable",
-      "duration_ns": 4994380,
+      "duration_ns": 5013636,
       "id": "PIPE-01",
       "observed": {
         "positives": [
@@ -330,25 +330,27 @@
       "status": "pass"
     },
     {
-      "description": "PARITY-01: the C++ trace of repeated_rotations is semantically equivalent to the Python frontend's trace of the twin program",
-      "duration_ns": 11347396,
+      "description": "PARITY-01: the C++ traces of the twin programs (rotations, operators/in-place, aliasing, exception) are semantically equivalent to the Python frontend's traces",
+      "duration_ns": 45862213,
       "id": "PARITY-01",
       "observed": {
-        "events_compared": 10,
-        "python_producer": "python-openfhe"
+        "aliasing": 10,
+        "exception": 7,
+        "operators_inplace": 15,
+        "repeated_rotations": 10
       },
       "required": true,
       "status": "pass"
     }
   ],
-  "duration_ns": 54760156081,
+  "duration_ns": 67551781264,
   "environment": {
     "compiler": "/opt/apps/gcc/15.2.0/bin/g++",
     "compiler_version": "15.2.0",
     "frontend": "gcc-openfhe",
     "frontend_version": "0.1.0",
     "instrumentation_manifest": "openfhe-1.5-v1",
-    "lane": "cpp-gcc15-openfhe151",
+    "lane": "cpp-gcc152-openfhe151",
     "machine": "x86_64",
     "openfhe_dir": "/work/10899/kimopro/ls6/cipherscope-openfhe-build/opt/openfhe/lib/OpenFHE",
     "openfhe_version": "1.5.1",
@@ -384,7 +386,7 @@
     "tests/cpp/fixtures/unmatched.cpp"
   ],
   "gate": "CipherScope GCC/OpenFHE C++ frontend feasibility",
-  "lane": "cpp-gcc15-openfhe151",
+  "lane": "cpp-gcc152-openfhe151",
   "limitations": [
     "GCC only; the compiler that built the target must provide plugin headers.",
     "CMake projects only; the CMake target is resolved from the binary name unless --cmake-target is given.",
@@ -392,7 +394,7 @@
     "Fixtures use HEStd_128_classic defaults with small batch sizes for tractability; they are coverage evidence, not benchmarks."
   ],
   "schema_version": "1.0.0",
-  "started_unix_ns": 1789698700788807873,
+  "started_unix_ns": 1789699921272192470,
   "status": "native_pass",
   "summary": {
     "fail": 0,

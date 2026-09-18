@@ -23,6 +23,7 @@ RUN apt-get update \
         build-essential \
         ca-certificates \
         cmake \
+        gcc-13-plugin-dev \
         curl \
         git \
         libbz2-dev \

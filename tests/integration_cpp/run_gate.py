@@ -86,6 +86,7 @@ def run_plain(binary: Path, env: dict[str, str]) -> subprocess.CompletedProcess:
 
 
 def main(argv: list[str] | None = None) -> int:
+    global LANE
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--openfhe-dir", type=Path, default=Path(os.environ.get("CIPHERSCOPE_OPENFHE_DIR", "")) or None,
                         help="directory containing OpenFHEConfig.cmake")
@@ -94,12 +95,23 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--work", type=Path, default=None, help="working directory (default: temporary)")
     parser.add_argument("--python-twin", type=Path, default=EXPECTED / "repeated_rotations" / "python_trace.json",
                         help="trace.json recorded by the Python frontend for repeated_rotations.py")
+    parser.add_argument("--lane", default=None, help="lane name (default: cpp-gcc<major><minor>-openfhe<version> from the toolchain)")
     args = parser.parse_args(argv)
     if args.openfhe_dir is None or not (args.openfhe_dir / "OpenFHEConfig.cmake").is_file():
         print("cipherscope: --openfhe-dir (or CIPHERSCOPE_OPENFHE_DIR) must point at OpenFHEConfig.cmake", file=sys.stderr)
         return 2
 
     started = time.time_ns()
+    if args.lane:
+        LANE = args.lane
+    else:
+        version = subprocess.run([str(args.compiler), "-dumpfullversion"], capture_output=True, text=True, check=False).stdout.strip()
+        openfhe_text = (args.openfhe_dir / "OpenFHEConfig.cmake").read_text(encoding="utf-8", errors="replace")
+        import re as _re
+        fhe = _re.search(r"-DOPENFHE_VERSION=([0-9.]+)", openfhe_text)
+        LANE = f"cpp-gcc{''.join(version.split('.')[:2])}-openfhe{(fhe.group(1) if fhe else 'x').replace('.', '')}"
+    if args.output == ROOT / "artifact" / "feasibility" / "cpp-gcc15-openfhe151" / "feasibility.json":
+        args.output = ROOT / "artifact" / "feasibility" / LANE / "feasibility.json"
     gate = Gate()
     work = args.work or Path(tempfile.mkdtemp(prefix="cipherscope-cpp-gate-"))
     work.mkdir(parents=True, exist_ok=True)
@@ -361,12 +373,16 @@ def main(argv: list[str] | None = None) -> int:
     gate.check("PIPE-01", "the existing analyzers reach the expected diagnoses on the C++ trace and mark unavailable evidence not_applicable", analyzers)
 
     def parity() -> dict[str, Any]:
-        python_trace = load_json_file(args.python_twin)
-        report = compare_traces(python_trace, traces["repeated_rotations"], left_name="python", right_name="c++")
-        assert report.equivalent, report.differences
-        return {"events_compared": len(report.left_signature), "python_producer": python_trace["run"].get("producer", {}).get("frontend", "python-openfhe")}
+        observed: dict[str, int] = {}
+        for name in ("repeated_rotations", "operators_inplace", "aliasing", "exception"):
+            twin = args.python_twin if name == "repeated_rotations" else EXPECTED / name / "python_trace.json"
+            python_trace = load_json_file(twin)
+            report = compare_traces(python_trace, traces[name], left_name="python", right_name="c++")
+            assert report.equivalent, (name, report.differences)
+            observed[name] = len(report.left_signature)
+        return observed
 
-    gate.check("PARITY-01", "the C++ trace of repeated_rotations is semantically equivalent to the Python frontend's trace of the twin program", parity)
+    gate.check("PARITY-01", "the C++ traces of the twin programs (rotations, operators/in-place, aliasing, exception) are semantically equivalent to the Python frontend's traces", parity)
 
     # ---- artifact ----
     counts = {status: sum(c["status"] == status for c in gate.checks) for status in ("pass", "fail", "skip")}

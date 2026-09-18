@@ -250,3 +250,58 @@ container, plain `bash …` for the native lane. Outputs under
   four external workloads stay `PARTIAL-PERMISSIVE`.
 - Scaling repetitions: all LS6 sweep points are single runs on a shared VM;
   E-02 wants ≥3 repetitions on an otherwise idle node before ratios are quoted.
+
+## C++ frontend (branch `cpp-gcc-frontend`, 2026-09-17)
+
+Implements `cpp_gcc_design.md` phases 0–6 on LS6 (node `v320-008`, job 3452489):
+
+- [x] Phase 0 — trace producer-neutral: `run.producer`, `run.runtime.language/
+      compiler/framework`, `run.clocks`, native coverage counters (one schema);
+      Python recorder declares `python-openfhe`; `classify_run` reads native
+      evidence; AST scan only for `.py`. `tests/test_frontend_neutral.py`.
+- [x] Phase 1 — native runtime (`native/runtime/runtime.cpp`): C ABI
+      (`native/include/cipherscope/runtime.h`), weak-ref identity registry,
+      in-place versions, three clocks, thread IDs, unwound-call detection,
+      limits, JSONL spool; OpenFHE adapter (`adapter.cpp`) the only
+      OpenFHE-including TU; `.cipherscope.marker` ELF section.
+- [x] Phase 2 — GCC plugin (`native/gcc/plugin.cpp`): GIMPLE pass after `cfg`,
+      instruments application-code calls to manifest-listed
+      `CryptoContextImpl` members and ciphertext operators; static operand
+      kinds via `type_as_string`; unmatched/allowed calls reported; site
+      tables; verified under `-fchecking=2`.
+- [x] Phase 3 — adapter reads level/noise/scale/slots/key tag/context/
+      techniques and `CCParams` at `GenCryptoContext`; C++ context block
+      identical to Python's.
+- [x] Phase 4 — manifest `native/openfhe/openfhe-1.5.operations.json`
+      (30 ops + 7 operator aliases), bound to `CORE_OPERATIONS` by
+      `tests/test_operation_manifest.py`; strict unmatched detection.
+- [x] Phase 5 — `cipherscope profile BINARY`: CMakeCache/compile_commands
+      discovery, toolchain built with the target's GCC into a fingerprinted
+      cache, isolated shadow build via `CMAKE_CXX_COMPILER_LAUNCHER`,
+      marker check, cached reuse (1.4 s second run).
+- [x] Phase 6 — coverage classes from native evidence (TUs instrumented,
+      unmatched candidates, marker).
+- [x] Gate `tests/integration_cpp/run_gate.py`: **18/18 `native_pass`** on
+      GCC 15.2.0 / OpenFHE 1.5.1 (Rocky), archived
+      `artifact/feasibility/cpp-gcc152-openfhe151/`.
+- [x] Parity: `frontend_parity.compare_traces`; four Python/C++ twin pairs
+      equivalent (rotations, operators/in-place, aliasing, exception) —
+      caught and fixed a Python-frontend bug (OpenFHE `Plaintext` has
+      `GetLevel/GetNoiseScaleDeg`, so plaintext operands were recorded as
+      ciphertexts and `ct×pt` as `ct_ct`).
+- [x] Report (`summary.html`): frontend/language/toolchain/framework header
+      and environment table, coverage evidence in each frontend's terms,
+      source files with language, lineage per event.
+- [x] Upstream unmodified examples: `simple-real-numbers.cpp` COMPLETE with a
+      real `rotation.hoist_same_input.v1` finding; `advanced-real-numbers.cpp`
+      PARTIAL-PERMISSIVE (`EvalFastRotation*` outside the manifest in both
+      frontends).
+- [x] Second GCC / distribution: `gcc-13-plugin-dev` added to the Apptainer
+      definition and the Dockerfile; image rebuilt (3 min), primary Python
+      gate re-run on it (38/0/38, artifact re-archived), and the C++ gate
+      run inside it: **18/18 `native_pass` on GCC 13.3.0 / Ubuntu 24.04**
+      (`artifact/feasibility/cpp-gcc133-openfhe151/`). The plugin is built on
+      demand by whichever GCC built the target, so the frontend follows the
+      project's toolchain.
+- [ ] Phase 7 (thread-local buffering / native overhead study) — not started;
+      the runtime uses one locked write per event.

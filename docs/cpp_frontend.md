@@ -154,7 +154,7 @@ static source scan is not applied to C++ files.
 
 | Component | Status |
 |---|---|
-| GCC 15.2.0, x86_64 Linux | tested (`artifact/feasibility/cpp-gcc15-openfhe151/feasibility.json`, 18/18) |
+| GCC 15.2.0 on Rocky 8.10, GCC 13.3.0 on Ubuntu 24.04 (x86_64) | tested, 18/18 each (`artifact/feasibility/cpp-gcc152-openfhe151/`, `cpp-gcc133-openfhe151/`) |
 | other GCC versions with plugin headers | expected to work; plugins are version-locked, so each is built on demand — untested |
 | Clang, MSVC, `LD_PRELOAD` | not supported by design |
 | OpenFHE 1.5.1 C++ API (CKKS) | tested; manifest `openfhe-1.5-v1`, 30 operations + 7 operator aliases |

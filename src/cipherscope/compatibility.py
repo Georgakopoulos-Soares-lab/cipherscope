@@ -181,9 +181,16 @@ class CompatibilityRegistry:
         if self._ciphertext_type is not None:
             return isinstance(value, self._ciphertext_type)
         try:
-            return callable(getattr(value, "GetLevel", None)) and callable(
+            # OpenFHE's Plaintext also has GetLevel/GetNoiseScaleDeg/GetSlots;
+            # only a ciphertext carries a key tag (and only a plaintext a length).
+            has_state = callable(getattr(value, "GetLevel", None)) and callable(
                 getattr(value, "GetNoiseScaleDeg", None)
             )
+            if not has_state:
+                return False
+            if callable(getattr(value, "SetLength", None)) and not callable(getattr(value, "GetKeyTag", None)):
+                return False
+            return True
         except Exception:
             return False
 
@@ -408,10 +415,11 @@ class CompatibilityRegistry:
         if self.is_ciphertext(value):
             return False
         try:
-            return callable(getattr(value, "GetLength", None)) and (
-                callable(getattr(value, "GetCKKSPackedValue", None))
+            return callable(getattr(value, "SetLength", None)) and (
+                callable(getattr(value, "GetLength", None))
+                or callable(getattr(value, "GetCKKSPackedValue", None))
                 or callable(getattr(value, "GetPackedValue", None))
-                or callable(getattr(value, "GetEncodingType", None))
+                or callable(getattr(value, "GetRealPackedValue", None))
             )
         except Exception:
             return False

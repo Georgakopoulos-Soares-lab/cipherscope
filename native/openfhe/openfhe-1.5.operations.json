@@ -472,7 +472,8 @@
   "supported_toolchain": {
     "compiler": "gcc",
     "versions_tested": [
-      "15.2.0"
+      "15.2.0",
+      "13.3.0"
     ],
     "platform": "linux",
     "architecture": "x86_64"

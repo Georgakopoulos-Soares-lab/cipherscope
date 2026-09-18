@@ -60,6 +60,7 @@ From: ubuntu@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc709
         build-essential \
         ca-certificates \
         cmake \
+        gcc-13-plugin-dev \
         curl \
         git \
         libbz2-dev \

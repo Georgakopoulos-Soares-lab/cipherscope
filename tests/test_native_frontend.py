@@ -75,6 +75,15 @@ class NormalizerTests(unittest.TestCase):
         positives = {k for k, v in build_analysis_bundle(cpp)["recommendations"]["analyzer_status"].items() if v == "positive"}
         self.assertEqual(positives, {"depth.critical_path.v1", "keys.unused_in_observed_run.v1", "rotation.hoist_same_input.v1", "parameters.depth_headroom_observed.v1"})
 
+    def test_every_archived_twin_pair_is_equivalent(self) -> None:
+        for name in ("repeated_rotations", "operators_inplace", "aliasing", "exception"):
+            with self.subTest(fixture=name):
+                root = ROOT / "tests" / "cpp" / "expected" / name
+                cpp = normalize(root / "spool.jsonl", root / "sites", MANIFEST, run_id=f"run_{name}", instrumented_binary_verified=True, expected_translation_units=1)
+                python = json.loads((root / "python_trace.json").read_text(encoding="utf-8"))
+                report = compare_traces(python, cpp, left_name="python", right_name="c++")
+                self.assertTrue(report.equivalent, report.differences)
+
     def test_parity_comparator_reports_semantic_differences_only(self) -> None:
         cpp = normalize_fixture()
         python = json.loads((FIXTURE / "python_trace.json").read_text(encoding="utf-8"))

@@ -12,7 +12,8 @@ the artifacts.
 | `developer` | macOS ARM64 (Darwin arm64) | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`) | `incomplete` | 37 / 1 / 38 | no | `artifact/feasibility/developer/feasibility.json` |
 | `provisional-wheel-py312` | Ubuntu 24.04 x86_64 | 3.12.3 | PyPI wheel `1.5.1.0.24.4` | `provisional_pass` | 33 / 0 / 33 | no | `artifact/feasibility/provisional-wheel-py312/feasibility.json` |
 | `ls6-native-py311` | Rocky Linux 8.10 x86_64, bare TACC LS6 host (AMD EPYC 7763), `gcc/15.2.0` + `cmake/3.31.5` modules | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`), GCC 15.2.0 | `native_pass` | 38 / 0 / 38 | no | `artifact/feasibility/ls6-native-py311/feasibility.json` |
-| `cpp-gcc15-openfhe151` | Rocky Linux 8.10 x86_64, bare TACC LS6 host; GCC 15.2.0 plugin frontend against the native OpenFHE 1.5.1 C++ install | 3.11.15 (driver) | C++ API of the same native v1.5.1 build (`1306d14f`), instrumentation manifest `openfhe-1.5-v1` | `native_pass` | 18 / 0 / 18 | no | `artifact/feasibility/cpp-gcc15-openfhe151/feasibility.json` |
+| `cpp-gcc152-openfhe151` | Rocky Linux 8.10 x86_64, bare TACC LS6 host; GCC 15.2.0 plugin frontend against the native OpenFHE 1.5.1 C++ install | 3.11.15 (driver) | C++ API of the same native v1.5.1 build (`1306d14f`), instrumentation manifest `openfhe-1.5-v1` | `native_pass` | 18 / 0 / 18 | no | `artifact/feasibility/cpp-gcc152-openfhe151/feasibility.json` |
+| `cpp-gcc133-openfhe151` | Ubuntu 24.04 x86_64 container (the primary lane's image, GCC 13.3.0 with `gcc-13-plugin-dev`) against its `/opt/openfhe` 1.5.1 install | 3.11.15 (driver) | same manifest, second compiler and distribution | `native_pass` | 18 / 0 / 18 | no | `artifact/feasibility/cpp-gcc133-openfhe151/feasibility.json` |
 | `primary-source-py311` | Ubuntu 24.04 x86_64 container (Apptainer 1.4.1 `--fakeroot` image built and run on TACC LS6; Rocky 8.10 host, AMD EPYC 7763) | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`), Ubuntu gcc 13.3.0 | `pass` | 38 / 0 / 38 | yes | `artifact/feasibility/primary-source-py311/feasibility.json` |
 
 ## What each lane proves
@@ -42,7 +43,8 @@ rootless on an LS6 compute node and the gate ran inside it (2 min 29 s,
 `OMP_NUM_THREADS=1`). `build-manifest.json` beside the artifact records the
 Ubuntu toolchain and the native-module hash, which equals the hash the gate
 observed. A Docker build of the same Dockerfile produces the same lane; only
-the build host differs.
+the build host differs. The image also carries `gcc-13-plugin-dev` so the C++
+frontend gate can run inside it (the OpenFHE build itself is unchanged).
 
 **`ls6-native-py311`** — the same Python 3.11.15 and OpenFHE commits built
 directly on the Rocky Linux 8.10 host with the TACC `gcc/15.2.0` module by
@@ -56,7 +58,7 @@ cluster-scale corpus and overhead runs, where a container is unnecessary
 overhead; every bundle it produces carries its native-module hash
 (`429513c3…`), distinct from the primary lane's (`a3a6e18a…`).
 
-**`cpp-gcc15-openfhe151`** — the C++ frontend's gate
+**`cpp-gcc152-openfhe151`, `cpp-gcc133-openfhe151`** — the C++ frontend's gate
 (`tests/integration_cpp/run_gate.py`). It builds the plain fixture project
 under `tests/cpp/fixtures` with GCC 15.2.0 and the native OpenFHE 1.5.1
 install, profiles each fixture with `cipherscope profile <binary>` exactly as a
@@ -70,8 +72,11 @@ recorded (EXC-01), OpenMP threads (THR-01), byte-identical program output
 between plain and instrumented binaries (NUM-01), unmatched calls denying
 COMPLETE (COV-01), hard limits (LIMIT-01), canonical validation and the
 unchanged pipeline (TRACE-01, PIPE-01), and semantic parity with the Python
-frontend's trace of the twin program (PARITY-01). It is a frontend gate, not a
-compatibility claim about OpenFHE itself, so it is never authoritative.
+frontend's traces of the twin programs (PARITY-01). The same gate passes on the
+Rocky host with GCC 15.2.0 and inside the Ubuntu 24.04 image with GCC 13.3.0:
+the plugin is built on demand by whichever GCC built the target. It is a
+frontend gate, not a compatibility claim about OpenFHE itself, so it is never
+authoritative.
 
 ## Regenerating a lane
 
@@ -111,7 +116,9 @@ install (the native lane's is used on LS6):
 source ls6_env.sh
 PYTHONPATH=src:. python3.11 -m tests.integration_cpp.run_gate \
   --openfhe-dir "$BUILD_ROOT/opt/openfhe/lib/OpenFHE" \
-  --output artifact/feasibility/cpp-gcc15-openfhe151/feasibility.json
+  --output artifact/feasibility/cpp-gcc152-openfhe151/feasibility.json
+# inside the primary image (GCC 13.3):
+run_in_primary sh -c 'cd /workspace/cipherscope && PYTHONPATH=src:. python3.11 -m tests.integration_cpp.run_gate --openfhe-dir /opt/openfhe/lib/OpenFHE'
 ```
 
 The native lane is one script on an allocated LS6 compute node (about ten

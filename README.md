@@ -231,8 +231,9 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 ## Current limitations
 
 - The C++ frontend supports GCC (with plugin headers) and CMake projects only;
-  it is verified on GCC 15.2.0 / OpenFHE 1.5.1 by the 18-check gate archived
-  under `artifact/feasibility/cpp-gcc15-openfhe151/`. Precision checkpoints
+  it is verified on GCC 15.2.0 (Rocky 8.10) and GCC 13.3.0 (Ubuntu 24.04) with
+  OpenFHE 1.5.1 by the 18-check gate archived under
+  `artifact/feasibility/cpp-gcc152-openfhe151/` and `cpp-gcc133-openfhe151/`. Precision checkpoints
   and annotations have no C++ counterpart yet, so those rules report
   `not_applicable` on C++ traces.
 - Real OpenFHE behavior is verified on four lanes with different weight
