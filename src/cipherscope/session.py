@@ -23,6 +23,7 @@ from .errors import (
     SessionLifecycleError,
     ShadowModeError,
 )
+from . import operators
 from .recorder import EventRecorder
 from .source import SourceResolver
 
@@ -118,6 +119,31 @@ class _Ownership:
 
 _OWNERS: dict[int, _Ownership] = {}
 _OWNERS_LOCK = threading.RLock()
+
+
+def _session_for_ciphertext(ciphertext: Any) -> Session[Any] | None:
+    """The active session that attached this ciphertext's crypto context, if any.
+
+    Used by the operator hooks: ``ct.GetCryptoContext()`` returns the very
+    object the application attached, so ownership is an identity lookup.
+    """
+
+    getter = getattr(ciphertext, "GetCryptoContext", None)
+    if not callable(getter):
+        return None
+    try:
+        native_context = getter()
+    except Exception:  # noqa: BLE001 - never let a metadata read break arithmetic
+        return None
+    with _OWNERS_LOCK:
+        ownership = _OWNERS.get(id(native_context))
+    if ownership is None or ownership.native_context is not native_context:
+        return None
+    session = ownership.session
+    return session if session.state == "active" and session.recorder.accepting else None
+
+
+operators.set_session_resolver(_session_for_ciphertext)
 _ACTIVE_SESSION: contextvars.ContextVar[Any] = contextvars.ContextVar(
     "cipherscope_active_session", default=None
 )
@@ -169,6 +195,7 @@ class Session(Generic[ContextT]):
         self._context_metadata: dict[str, Any] | None = None
         self._declared_parameters: dict[str, Any] | None = None
         self._pending_parameters: Any = None
+        self._hooked_ciphertext_types: list[type] = []
         self._lock = threading.RLock()
 
     @property
@@ -256,6 +283,10 @@ class Session(Generic[ContextT]):
             self._scoped_ids.clear()
             token = self._token
             self._token = None
+            hooked = tuple(self._hooked_ciphertext_types)
+            self._hooked_ciphertext_types.clear()
+        for ciphertext_type in hooked:
+            operators.uninstall(ciphertext_type)
         with _OWNERS_LOCK:
             for identity in owned_ids:
                 ownership = _OWNERS.get(identity)
@@ -319,6 +350,7 @@ class Session(Generic[ContextT]):
             self._owned_ids.add(identity)
             self._current_context = proxy
             self.recorder.register_backend(native_context)
+            self._hook_operators_for(native_context)
             if self._context_metadata is None:
                 self._context_metadata = self.compatibility.snapshot_context(
                     native_context
@@ -619,6 +651,35 @@ class Session(Generic[ContextT]):
             self._scoped_ids.discard(identity)
             self._current_context = previous
 
+    def _hook_operators_for(self, native_context: Any) -> None:
+        """Route the binding's ciphertext operators through this session's proxy.
+
+        The ciphertext type is the one the attached context's binding module
+        exports (``openfhe.Ciphertext``); a context from another module (the
+        fake backend, a test double) is looked up by the same rule and simply
+        has no operators to wrap. The flag is set only when at least one
+        operator was actually rerouted, so it is evidence, not a promise.
+        """
+
+        module = sys.modules.get(type(native_context).__module__)
+        candidates: list[type] = []
+        for attribute in ("Ciphertext",):
+            candidate = getattr(module, attribute, None) if module is not None else None
+            if isinstance(candidate, type):
+                candidates.append(candidate)
+        # A binding whose Ciphertext lives in a submodule (openfhe.openfhe.Ciphertext).
+        parent_name = type(native_context).__module__.rpartition(".")[0]
+        parent = sys.modules.get(parent_name) if parent_name else None
+        candidate = getattr(parent, "Ciphertext", None) if parent is not None else None
+        if isinstance(candidate, type) and candidate not in candidates:
+            candidates.append(candidate)
+        for ciphertext_type in candidates:
+            if ciphertext_type in self._hooked_ciphertext_types:
+                continue
+            if operators.install(ciphertext_type):
+                self._hooked_ciphertext_types.append(ciphertext_type)
+                self.recorder.operator_overload_coverage = True
+
     @staticmethod
     def _native_identity(proxy: TracedCryptoContext[Any, Any]) -> int:
         return id(proxy._context)
@@ -629,6 +690,10 @@ class Session(Generic[ContextT]):
             token = self._token
             self._token = None
             self._state = "created"
+            hooked = tuple(self._hooked_ciphertext_types)
+            self._hooked_ciphertext_types.clear()
+        for ciphertext_type in hooked:
+            operators.uninstall(ciphertext_type)
         with _OWNERS_LOCK:
             for identity in owned_ids:
                 ownership = _OWNERS.get(identity)

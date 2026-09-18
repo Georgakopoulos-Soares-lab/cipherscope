@@ -111,28 +111,18 @@ with cipherscope.trace(native_context, name="example") as session:
     combined = cc.EvalAdd(rotated, encrypted_input)
 ```
 
-In Python, CipherScope records only calls made through `session.context`. It
-does not see operator overloads, free functions, calls through the original
-context, unexecuted branches, work inside a native call, or other processes.
-Strict mode rejects methods it cannot classify. Permissive mode calls them and
-marks the trace incomplete. The C++ frontend sees every call the application
-makes to the `CryptoContext` API, operator overloads included, because the
-compiler inserts the observation; a call to a method outside the operation
-manifest is reported and denies `COMPLETE` coverage.
-
-The runner owns the top-level session; the target must call `attach()` or
-`trace()` and otherwise keeps its working directory, streams, arguments, and exit
-status:
-
-```bash
-PYTHONPATH=src python3 -m cipherscope.cli run \
-  --output cipherscope-results/my-run -- instrumented_program.py --model demo.json
-```
-
-Normal, nonzero `SystemExit`, uncaught covered-call failure, missing attachment,
-and `KeyboardInterrupt` paths all finalize a validated bundle. `view` validates
-the bundle and prints the self-contained HTML report path; it does not start a
-server or upload an artifact.
+In Python, CipherScope records calls made through `session.context` and, while
+a session is active, ciphertext operator overloads (`a + b`) on ciphertexts
+whose context the session owns: the binding's operators are rerouted through
+the proxy for the session's lifetime and restored at close, so `a + b` and
+`cc.EvalAdd(a, b)` produce the same single event. It does not see free
+functions, calls through the original context, unexecuted branches, work
+inside a native call, or other processes. Strict mode rejects methods it
+cannot classify. Permissive mode calls them and marks the trace incomplete.
+The C++ frontend sees every call the application makes to the `CryptoContext`
+API, operator overloads included, because the compiler inserts the
+observation; a call to a method outside the operation manifest is reported and
+denies `COMPLETE` coverage.
 
 ## Coverage classes
 

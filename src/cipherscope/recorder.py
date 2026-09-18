@@ -113,6 +113,9 @@ class EventRecorder:
         self._unsupported_operations: set[str] = set()
         self._backend_names: list[str] = []
         self._backend_representations: list[str] = []
+        # Set by the session when the binding's ciphertext operators were
+        # rerouted through the proxy for this run (see operators.py).
+        self.operator_overload_coverage = False
         self._lock = threading.RLock()
 
     def next_identity(self) -> tuple[int, str]:
@@ -261,7 +264,7 @@ class EventRecorder:
                 "failed_state_reads": sum(
                     len(event.get("missing", ())) for event in events
                 ),
-                "operator_overload_coverage": False,
+                "operator_overload_coverage": self.operator_overload_coverage,
                 "original_reference_bypass_observable": False,
             }
             if truncated:

@@ -1,8 +1,9 @@
 """Python twin of tests/cpp/fixtures/operators_inplace.cpp.
 
-The C++ program uses operator overloads (a * b, a + b, c += d, -a); the Python
-proxy cannot observe the binding's operators (a documented gap), so the twin
-spells the same operations as context calls. The semantic trace must match.
+The C++ program uses operator overloads (a * b, a + b, c += d, -a). The pinned
+Python binding defines only `Ciphertext.__add__`, which CipherScope reroutes
+through the session; the other operators are spelled as context calls here.
+The semantic trace must match the C++ one either way.
 """
 
 from openfhe import *
@@ -28,8 +29,8 @@ a = cc.Encrypt(keys.publicKey, px)
 b = cc.Encrypt(keys.publicKey, py)
 
 c = cc.EvalMult(a, b)          # a * b
-d = cc.EvalAdd(a, b)           # a + b
-c = cc.EvalAdd(c, d)           # c += d
+d = a + b                      # a + b: the binding's __add__, traced through the session
+c = cc.EvalAdd(c, d)           # c += d (no __iadd__ in the binding)
 cc.EvalAddInPlace(d, a)        # in place
 cc.RescaleInPlace(c)           # in place
 e = cc.EvalNegate(a)           # -a

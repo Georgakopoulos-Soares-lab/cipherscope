@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
 import cipherscope
 
@@ -18,22 +19,49 @@ class CoverageGapTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.fixture = support.basic_fixture()
 
-    def test_gap_01_operator_overload_bypasses_proxy(self) -> None:
-        """GAP-01: ciphertext addition overload executes but emits no proxy event."""
+    def test_gap_01_operator_overload_is_traced(self) -> None:
+        """GAP-01: ciphertext operator overloads are rerouted through the proxy and traced once."""
 
+        fhe = support.require_openfhe()
+        ciphertext_type = fhe.Ciphertext
+        defined = sorted(name for name in ("__add__", "__sub__", "__mul__", "__neg__") if name in ciphertext_type.__dict__)
+        originals = {name: ciphertext_type.__dict__[name] for name in defined}
         left = self.fixture.encrypt(self.fixture.a)
         right = self.fixture.encrypt(self.fixture.b)
+        raw = left + right  # the binding's own operator, outside any session
         with cipherscope.trace(self.fixture.context) as session:
-            result = left + right
+            self.assertTrue(all(ciphertext_type.__dict__[name] is not originals[name] for name in defined))
+            traced = left + right
         trace = session.to_trace()
-        self.assertIsNotNone(result)
-        self.assertEqual(trace["events"], [])
-        self.assertFalse(trace["run"]["coverage"]["operator_overload_coverage"])
+        # Restored at close: the process is not left patched.
+        self.assertTrue(all(ciphertext_type.__dict__[name] is originals[name] for name in defined))
+        events = [event for event in trace["events"] if event["kind"] == "crypto_operation"]
+        self.assertEqual([event["operation"] for event in events], ["EvalAdd"])
+        self.assertEqual(events[0]["overload"], "ct_ct")
+        self.assertEqual(len(events[0]["input_ciphertexts"]), 2)
+        self.assertEqual(len(events[0]["output_ciphertexts"]), 1)
+        self.assertEqual(events[0]["source"]["file"], str(Path(__file__).resolve()))
+        self.assertTrue(trace["run"]["coverage"]["operator_overload_coverage"])
+        traced_values = support.decrypt_values(
+            self.fixture.context, self.fixture.keys.secretKey, traced, self.fixture.batch_size
+        )
+        raw_values = support.decrypt_values(
+            self.fixture.context, self.fixture.keys.secretKey, raw, self.fixture.batch_size
+        )
+        error = support.max_abs_error(traced_values, raw_values)
+        self.assertLessEqual(error, support.GOLDEN["direct_vs_traced_tolerance"] * 1e4)
+        expected_error = support.max_abs_error(
+            traced_values, support.add_expected(self.fixture.a, self.fixture.b)
+        )
+        self.assertLessEqual(expected_error, support.GOLDEN["basic_max_abs_tolerance"])
         support.record(
             "GAP-01",
-            operator="ciphertext.__add__",
-            result_type=type(result).__name__,
-            emitted_events=0,
+            operators_defined_by_binding=defined,
+            operators_traced=defined,
+            emitted_events=len(events),
+            max_traced_vs_raw_error=error,
+            max_expected_error=expected_error,
+            restored_after_close=True,
         )
 
     def test_gap_02_original_context_reference_bypasses_proxy(self) -> None:
