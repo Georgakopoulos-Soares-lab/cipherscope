@@ -28,3 +28,5 @@ feasibility-*.json
 # Container images are rebuilt from artifact/apptainer/*.def; only their checksums are tracked.
 *.sif
 native/build*/
+.cipherscope/
+tests/cpp/fixtures/build/

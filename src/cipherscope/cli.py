@@ -389,7 +389,24 @@ def _parser() -> argparse.ArgumentParser:
     demo = subcommands.add_parser("demo", help="write a fake-backend example bundle")
     demo.add_argument("--output", type=Path, required=True)
 
-    run = subcommands.add_parser("run", help="run an instrumented Python script")
+    profile = subcommands.add_parser(
+        "profile",
+        help="profile an unmodified target: a Python script or a C++ binary built with GCC/CMake",
+    )
+    profile.add_argument("--output", type=Path, required=True)
+    profile.add_argument("--permissive", action="store_true", help="(Python) forward unclassified proxy calls and mark coverage incomplete")
+    profile.add_argument("--allow-testing-security", action="store_true", help="acknowledge HEStd_NotSet so the configuration rule reports it as information")
+    profile.add_argument("--max-events", type=int, default=None, help="stop recording after this many events")
+    profile.add_argument("--max-trace-bytes", type=int, default=None, help="stop recording once the serialized events reach this many bytes")
+    profile.add_argument("--build-dir", type=Path, default=None, help="(C++) CMake build directory of the target, if not an ancestor of the binary")
+    profile.add_argument("--cmake-target", default=None, help="(C++) CMake target that produces the binary, if its name differs")
+    profile.add_argument("--site-dir", type=Path, default=None, help="(C++) site table directory for an already-instrumented binary")
+    profile.add_argument("--jobs", type=int, default=None, help="(C++) parallel jobs for the shadow build")
+    profile.add_argument("--rebuild", action="store_true", help="(C++) discard a cached shadow build")
+    profile.add_argument("target", type=Path)
+    profile.add_argument("target_args", nargs=argparse.REMAINDER)
+
+    run = subcommands.add_parser("run", help="run an instrumented Python script (alias of `profile` for .py targets)")
     run.add_argument("--output", type=Path, required=True)
     run.add_argument(
         "--permissive",
@@ -495,6 +512,36 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 2
         print(f"Wrote synthetic CipherScope bundle to {destination}")
         return 0
+    if args.command == "profile":
+        forwarded = list(args.target_args)
+        if forwarded and forwarded[0] == "--":
+            forwarded.pop(0)
+        if args.target.suffix in {".py", ".pyw"}:
+            return run_target(
+                args.target,
+                forwarded,
+                output=args.output,
+                strict=not args.permissive,
+                allow_testing_security=args.allow_testing_security,
+                max_events=args.max_events,
+                max_trace_bytes=args.max_trace_bytes,
+            )
+        from .native_profile import profile_native
+
+        return profile_native(
+            args.target,
+            forwarded,
+            output=args.output,
+            build_dir=args.build_dir,
+            cmake_target=args.cmake_target,
+            site_dir=args.site_dir,
+            strict=not args.permissive,
+            max_events=args.max_events,
+            max_trace_bytes=args.max_trace_bytes,
+            allow_testing_security=args.allow_testing_security,
+            jobs=args.jobs,
+            rebuild=args.rebuild,
+        )
     if args.command == "run":
         forwarded = list(args.script_args)
         if forwarded and forwarded[0] == "--":
