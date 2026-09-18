@@ -290,9 +290,9 @@ class CountingContext:
         self.calls["EvalSub"] += 1
         return self.context.EvalSub(*args, **kwargs)
 
-    def EvalAddMany(self, *args: Any, **kwargs: Any) -> Any:
-        self.calls["EvalAddMany"] += 1
-        return self.context.EvalAddMany(*args, **kwargs)
+    def EvalAddMutable(self, *args: Any, **kwargs: Any) -> Any:
+        self.calls["EvalAddMutable"] += 1
+        return self.context.EvalAddMutable(*args, **kwargs)
 
 
 def unique_by_identity(values: Iterable[Any]) -> int:

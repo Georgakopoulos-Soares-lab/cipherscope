@@ -36,8 +36,20 @@ void describe_result(std::string& out, void* registry, const char* operation, in
                      const std::vector<const void*>& ciphertext_args,
                      const std::vector<std::string>& ciphertext_ids);
 
-// Append the JSON body describing declared CCParams<CryptoContextCKKSRNS>.
-void describe_ccparams(std::string& out, const void* params);
+// Append the JSON body describing declared CCParams<CryptoContextCKKSRNS|BFVRNS|BGVRNS>
+// (`kind` is the CS_KIND_CCPARAMS* the plugin classified).
+void describe_ccparams(std::string& out, int kind, const void* params);
+
+// Decrypt `ciphertext` (a Ciphertext<DCRTPoly> handle) with `secret_key` through
+// `context` and append the first `length` real packed values as a JSON array.
+// Returns false and sets `error` when OpenFHE throws or a handle is empty;
+// nothing is appended then. Used only by user-requested precision checkpoints.
+bool decrypt_real_values(std::string& out, const void* context, const void* ciphertext,
+                         const void* secret_key, size_t length, std::string* error);
+
+// OpenFHE's own textual rendering of a Plaintext handle (what the Python
+// binding's repr() shows), or "" for an empty handle.
+std::string plaintext_representation(const void* plaintext);
 
 // Append JSON objects (comma separated) for every context seen.
 void describe_contexts(std::string& out, void* registry);

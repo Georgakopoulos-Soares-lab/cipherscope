@@ -41,8 +41,16 @@ class OperationManifestTests(unittest.TestCase):
             with self.subTest(alias=alias):
                 self.assertIn(target, self.by_name)
 
+    def test_method_aliases_match_the_python_table(self) -> None:
+        from cipherscope.compatibility import METHOD_ALIASES
+
+        aliases = {k: v for k, v in self.manifest["method_aliases"].items() if k != "comment"}
+        self.assertEqual(aliases, METHOD_ALIASES)
+        for target in aliases.values():
+            self.assertIn(target, self.by_name)
+
     def test_manifest_is_versioned(self) -> None:
-        self.assertEqual(self.manifest["name"], "openfhe-1.5-v2")
+        self.assertEqual(self.manifest["name"], "openfhe-1.5-v3")
         self.assertTrue(self.manifest["supported_toolchain"]["versions_tested"])
 
 

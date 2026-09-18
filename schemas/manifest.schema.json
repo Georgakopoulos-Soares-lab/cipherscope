@@ -92,7 +92,7 @@
       "type": "object",
       "required": ["scheme", "ring_dimension", "configured_multiplicative_depth"],
       "properties": {
-        "scheme": {"enum": ["CKKS", null]},
+        "scheme": {"enum": ["CKKS", "BFV", "BGV", null]},
         "ring_dimension": {"type": ["integer", "null"], "minimum": 1},
         "configured_multiplicative_depth": {"type": ["integer", "null"], "minimum": 0},
         "scaling_technique": {"type": ["string", "null"]},

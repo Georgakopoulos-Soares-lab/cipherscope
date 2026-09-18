@@ -71,6 +71,7 @@ enum Kind {
     K_INTEGER = 6, K_SCALAR = 7, K_VECTOR_INT32 = 8, K_VECTOR_UINT32 = 9, K_VECTOR_DOUBLE = 10,
     K_VECTOR_COMPLEX = 11, K_CCPARAMS = 12, K_KEYPAIR = 13, K_BOOL = 14, K_PLAINTEXT_OUT = 15,
     K_STRING = 16, K_FUNCTION = 17, K_CRYPTOCONTEXT_PTR = 18, K_VECTOR_INT64 = 19, K_VOID = 20,
+    K_CIPHERTEXT_VECTOR = 21, K_CCPARAMS_BFV = 22, K_CCPARAMS_BGV = 23,
 };
 
 struct Config {
@@ -84,6 +85,7 @@ struct Config {
 struct Manifest {
     std::set<std::string> operations;                  // canonical method names on CryptoContextImpl
     std::map<std::string, std::string> operator_alias;  // "operator*" -> EvalMult (binary), "operator-/1" -> EvalNegate
+    std::map<std::string, std::string> method_alias;    // "EvalAtIndex" -> EvalRotate
     std::set<std::string> allowed_names;
     std::vector<std::string> allowed_prefixes;
 };
@@ -115,6 +117,7 @@ bool load_manifest(const std::string& path) {
     while (in >> kind) {
         if (kind == "op") { in >> a; g_manifest.operations.insert(a); }
         else if (kind == "alias") { in >> a >> b; g_manifest.operator_alias[a] = b; }
+        else if (kind == "method") { in >> a >> b; g_manifest.method_alias[a] = b; }
         else if (kind == "allow") { in >> a; g_manifest.allowed_names.insert(a); }
         else if (kind == "allow-prefix") { in >> a; g_manifest.allowed_prefixes.push_back(a); }
         else if (kind == "name") { in >> a; g_config.manifest_name = a; }
@@ -231,6 +234,10 @@ Kind classify_type(tree type, bool* is_pointer_param) {
     }
     std::string name = type_name(record);
     if (contains(name, "lbcrypto::CryptoContextImpl<") && !contains(name, "shared_ptr")) return K_CONTEXT;
+    // A vector of ciphertext handles must be recognised before a single handle:
+    // its spelling contains the single handle's spelling.
+    if (contains(name, "std::vector<std::shared_ptr<lbcrypto::CiphertextImpl") ||
+        contains(name, "std::vector<std::shared_ptr<const lbcrypto::CiphertextImpl")) return K_CIPHERTEXT_VECTOR;
     if (contains(name, "shared_ptr<lbcrypto::CiphertextImpl") || contains(name, "shared_ptr<const lbcrypto::CiphertextImpl")) return K_CIPHERTEXT;
     if (contains(name, "shared_ptr<lbcrypto::PlaintextImpl") || contains(name, "shared_ptr<const lbcrypto::PlaintextImpl")) {
         // Plaintext* (an output parameter, e.g. Decrypt) versus Plaintext / const Plaintext&.
@@ -241,6 +248,8 @@ Kind classify_type(tree type, bool* is_pointer_param) {
     if (contains(name, "shared_ptr<lbcrypto::PrivateKeyImpl") || contains(name, "shared_ptr<const lbcrypto::PrivateKeyImpl")) return K_PRIVATE_KEY;
     if (contains(name, "shared_ptr<lbcrypto::CryptoContextImpl")) return K_CRYPTOCONTEXT_PTR;
     if (contains(name, "lbcrypto::KeyPair<")) return K_KEYPAIR;
+    if (contains(name, "lbcrypto::CCParams<lbcrypto::CryptoContextBFVRNS")) return K_CCPARAMS_BFV;
+    if (contains(name, "lbcrypto::CCParams<lbcrypto::CryptoContextBGVRNS")) return K_CCPARAMS_BGV;
     if (contains(name, "lbcrypto::CCParams<")) return K_CCPARAMS;
     if (contains(name, "std::vector<std::complex<double")) return K_VECTOR_COMPLEX;
     if (contains(name, "std::vector<double")) return K_VECTOR_DOUBLE;
@@ -445,7 +454,9 @@ unsigned int cs_pass::execute(function* fun) {
             bool method = is_cryptocontext_method(fndecl);
             bool compound_operator = false;  // operator+=, -=, *=: the result is the first operand
             if (method) {
-                if (g_manifest.operations.count(name)) { operation = name; first_operand = 1; }
+                auto method_alias = g_manifest.method_alias.find(name);
+                if (method_alias != g_manifest.method_alias.end()) { operation = method_alias->second; first_operand = 1; }
+                else if (g_manifest.operations.count(name)) { operation = name; first_operand = 1; }
                 else if (allowed_nonsemantic(name)) {
                     CallSite site = site_of(stmt);
                     std::string callee = qualified_name(fndecl);
@@ -471,15 +482,14 @@ unsigned int cs_pass::execute(function* fun) {
                     tree arg0 = gimple_call_arg(stmt, 0);
                     bool pointer_param = false;
                     Kind kind = classify_type(TREE_TYPE(arg0), &pointer_param);
-                    std::string tname = type_name(POINTER_TYPE_P(TREE_TYPE(arg0)) ? TREE_TYPE(TREE_TYPE(arg0)) : TREE_TYPE(arg0));
-                    if (kind == K_CCPARAMS && contains(tname, "CryptoContextCKKSRNS")) {
+                    if (kind == K_CCPARAMS || kind == K_CCPARAMS_BFV || kind == K_CCPARAMS_BGV) {
                         CallSite site = site_of(stmt);
                         std::string callee = qualified_name(fndecl);
                         std::string sid = site_id_for(site.file, site.line, site.column, callee);
                         record_site(sid, "declared_parameters", "GenCryptoContext", callee, site.file, site.line, site.column, site.function, site.qualified);
                         tree addr = operand_address(&gsi, arg0, kind, pointer_param);
                         if (addr != NULL_TREE) {
-                            gcall* call = gimple_build_call(g_rt.params, 2, string_literal(sid), addr);
+                            gcall* call = gimple_build_call(g_rt.params, 3, string_literal(sid), build_int_cst(integer_type_node, kind), addr);
                             gsi_insert_before(&gsi, call, GSI_SAME_STMT);
                         }
                     }

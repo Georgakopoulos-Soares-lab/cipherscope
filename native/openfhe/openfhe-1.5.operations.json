@@ -1,9 +1,9 @@
 {
   "schema_version": "1.0.0",
-  "name": "openfhe-1.5-v2",
+  "name": "openfhe-1.5-v3",
   "framework": "openfhe",
   "framework_version": "1.5.x",
-  "boundary": "public lbcrypto::CryptoContextImpl<Element> API; nested calls made by an instrumented operation are folded into it (granularity openfhe_api_inclusive)",
+  "boundary": "public lbcrypto::CryptoContextImpl<Element> API for CKKS, BFV and BGV; nested calls made by an instrumented operation are folded into it (granularity openfhe_api_inclusive)",
   "operations": [
     {
       "canonical_name": "Encrypt",
@@ -549,6 +549,241 @@
       "matches": [
         "lbcrypto::CryptoContextImpl<*>::EvalSumColsKeyGen"
       ]
+    },
+    {
+      "canonical_name": "EvalAddMany",
+      "kind": "crypto_operation",
+      "default_overload": "ct_list",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "0": "operand_count"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalAddMany"
+      ]
+    },
+    {
+      "canonical_name": "EvalAddManyInPlace",
+      "kind": "crypto_operation",
+      "default_overload": "ct_list",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "0": "operand_count"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalAddManyInPlace"
+      ]
+    },
+    {
+      "canonical_name": "EvalMultMany",
+      "kind": "crypto_operation",
+      "default_overload": "ct_list",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "0": "operand_count"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalMultMany"
+      ]
+    },
+    {
+      "canonical_name": "EvalMultAndRelinearize",
+      "kind": "crypto_operation",
+      "default_overload": "ct_ct",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {},
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalMultAndRelinearize"
+      ]
+    },
+    {
+      "canonical_name": "EvalLinearWSum",
+      "kind": "crypto_operation",
+      "default_overload": "ct_list_constants",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "0": "operand_count"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalLinearWSum"
+      ]
+    },
+    {
+      "canonical_name": "EvalLinearWSumMutable",
+      "kind": "crypto_operation",
+      "default_overload": "ct_list_constants",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "0": "operand_count"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalLinearWSumMutable"
+      ]
+    },
+    {
+      "canonical_name": "EvalMerge",
+      "kind": "crypto_operation",
+      "default_overload": "ct_list",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "0": "operand_count"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalMerge"
+      ]
+    },
+    {
+      "canonical_name": "EvalChebyshevSeries",
+      "kind": "crypto_operation",
+      "default_overload": "ct_coefficients_bounds",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "1": "polynomial_degree",
+        "2": "lower_bound",
+        "3": "upper_bound"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalChebyshevSeries"
+      ]
+    },
+    {
+      "canonical_name": "EvalChebyshevSeriesLinear",
+      "kind": "crypto_operation",
+      "default_overload": "ct_coefficients_bounds",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "1": "polynomial_degree",
+        "2": "lower_bound",
+        "3": "upper_bound"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalChebyshevSeriesLinear"
+      ]
+    },
+    {
+      "canonical_name": "EvalChebyshevSeriesPS",
+      "kind": "crypto_operation",
+      "default_overload": "ct_coefficients_bounds",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "1": "polynomial_degree",
+        "2": "lower_bound",
+        "3": "upper_bound"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalChebyshevSeriesPS"
+      ]
+    },
+    {
+      "canonical_name": "EvalSin",
+      "kind": "crypto_operation",
+      "default_overload": "ct_bounds_degree",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "1": "lower_bound",
+        "2": "upper_bound",
+        "3": "polynomial_degree"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalSin"
+      ]
+    },
+    {
+      "canonical_name": "EvalCos",
+      "kind": "crypto_operation",
+      "default_overload": "ct_bounds_degree",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "1": "lower_bound",
+        "2": "upper_bound",
+        "3": "polynomial_degree"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalCos"
+      ]
+    },
+    {
+      "canonical_name": "EvalDivide",
+      "kind": "crypto_operation",
+      "default_overload": "ct_bounds_degree",
+      "mutated_argument": null,
+      "ciphertext_input_indices": null,
+      "has_ciphertext_output": true,
+      "semantic_arguments": {
+        "1": "lower_bound",
+        "2": "upper_bound",
+        "3": "polynomial_degree"
+      },
+      "operand_roles": {},
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::EvalDivide"
+      ]
+    },
+    {
+      "canonical_name": "MakePackedPlaintext",
+      "kind": "setup",
+      "default_overload": "values",
+      "mutated_argument": null,
+      "ciphertext_input_indices": [],
+      "has_ciphertext_output": false,
+      "semantic_arguments": {},
+      "operand_roles": {
+        "0": "plaintext_values"
+      },
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::MakePackedPlaintext"
+      ]
+    },
+    {
+      "canonical_name": "MakeCoefPackedPlaintext",
+      "kind": "setup",
+      "default_overload": "values",
+      "mutated_argument": null,
+      "ciphertext_input_indices": [],
+      "has_ciphertext_output": false,
+      "semantic_arguments": {},
+      "operand_roles": {
+        "0": "plaintext_values"
+      },
+      "matches": [
+        "lbcrypto::CryptoContextImpl<*>::MakeCoefPackedPlaintext"
+      ]
     }
   ],
   "operator_aliases": {
@@ -584,7 +819,8 @@
       "GetScheme",
       "GetKeyGenLevel",
       "GetElementParams",
-      "GetSchemeId"
+      "GetSchemeId",
+      "GetPlaintextModulus"
     ]
   },
   "supported_toolchain": {
@@ -595,5 +831,16 @@
     ],
     "platform": "linux",
     "architecture": "x86_64"
+  },
+  "method_aliases": {
+    "comment": "Binding methods that are a canonical operation under another name; both frontends record the canonical name.",
+    "EvalAtIndex": "EvalRotate",
+    "EvalAtIndexKeyGen": "EvalRotateKeyGen"
+  },
+  "schemes": {
+    "comment": "Schemes whose CCParams the frontends read at GenCryptoContext; trace vocabulary and OpenFHE enum names.",
+    "CKKS": "CKKSRNS_SCHEME",
+    "BFV": "BFVRNS_SCHEME",
+    "BGV": "BGVRNS_SCHEME"
   }
 }

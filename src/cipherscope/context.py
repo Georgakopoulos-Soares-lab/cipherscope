@@ -163,8 +163,10 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         classification = self._session.compatibility.classify_callable(name)
         if classification == "traced":
             # This also handles supported methods added by a subclass at runtime.
+            canonical = self._session.compatibility.canonical_operation(name)
+
             def traced(*args: Any, **kwargs: Any) -> Any:
-                return self._record_covered(name, args, kwargs)
+                return self._record_covered(canonical, args, kwargs, native_name=name)
 
             return traced
 
@@ -195,17 +197,22 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         operation: str,
         args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
+        *,
+        native_name: str | None = None,
     ) -> Any:
+        """Record ``operation``; the binding method invoked is ``native_name`` (an alias) or the same."""
+
         self._session._require_active()
         recorder = self._session.recorder
         compatibility = self._session.compatibility
         spec = compatibility.operation(operation)
         if spec is None:
             raise UnsupportedOperationError(f"operation {operation!r} is not covered")
+        native_name = native_name or operation
         if not recorder.accepting:
             # Past a size limit: run the call untouched and count it, record nothing.
             recorder.count_dropped_call()
-            return getattr(self._context, operation)(*args, **dict(kwargs))
+            return getattr(self._context, native_name)(*args, **dict(kwargs))
 
         sequence, event_id = recorder.next_identity()
         source = self._session.source_resolver.capture(operation)
@@ -243,7 +250,7 @@ class TracedCryptoContext(Generic[ContextT, CiphertextT]):
         output: Any = None
         try:
             try:
-                native_method = getattr(self._context, operation)
+                native_method = getattr(self._context, native_name)
                 # Keep the native call at one site so it cannot run twice.
                 output = native_method(*args, **dict(kwargs))
             finally:

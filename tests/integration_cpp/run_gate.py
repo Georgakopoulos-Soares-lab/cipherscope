@@ -49,13 +49,23 @@ EXPECTED = ROOT / "tests" / "cpp" / "expected"
 MANIFEST = ROOT / "native" / "openfhe" / "openfhe-1.5.operations.json"
 LANE = "cpp-gcc15-openfhe151"
 
-PROGRAMS = ("repeated_rotations", "operators_inplace", "aliasing", "exception", "threads", "unmatched")
+PROGRAMS = ("repeated_rotations", "operators_inplace", "aliasing", "exception", "threads", "unmatched",
+            "many_and_series", "bfv_arithmetic", "bgv_arithmetic", "checkpoints")
+TWINS = ("repeated_rotations", "operators_inplace", "aliasing", "exception", "many_and_series", "bfv_arithmetic",
+         "bgv_arithmetic", "checkpoints")
 REPEATED_ROTATIONS_OPS = ["KeyGen", "EvalRotateKeyGen", "MakeCKKSPackedPlaintext", "Encrypt", "EvalRotate", "EvalRotate",
                           "EvalRotate", "EvalAdd", "EvalAdd", "Decrypt"]
 REPEATED_ROTATIONS_LINES = [25, 27, 30, 31, 33, 34, 35, 36, 36, 39]
 OPERATORS_OPS = ["KeyGen", "EvalMultKeyGen", "MakeCKKSPackedPlaintext", "MakeCKKSPackedPlaintext", "MakeCKKSPackedPlaintext",
                  "Encrypt", "Encrypt", "EvalMult", "EvalAdd", "EvalAdd", "EvalAddInPlace", "RescaleInPlace", "EvalNegate",
                  "EvalMult", "Decrypt"]
+MANY_AND_SERIES_OPS = ["KeyGen", "EvalMultKeyGen", "EvalRotateKeyGen",
+                       "MakeCKKSPackedPlaintext", "Encrypt", "MakeCKKSPackedPlaintext", "Encrypt", "MakeCKKSPackedPlaintext", "Encrypt",
+                       "EvalAddMany", "EvalMultMany", "EvalLinearWSum", "EvalChebyshevSeries", "EvalRotate", "EvalAdd",
+                       "Decrypt", "Decrypt"]
+CHECKPOINTS_OPS = ["KeyGen", "EvalMultKeyGen", "MakeCKKSPackedPlaintext", "AnnotatePlaintext", "MakeCKKSPackedPlaintext",
+                   "AnnotatePlaintext", "MakeCKKSPackedPlaintext", "Encrypt", "Annotate", "PrecisionCheckpoint", "Encrypt",
+                   "Annotate", "EvalMult", "EvalSquare", "EvalSquare", "EvalSquare", "PrecisionCheckpoint", "Decrypt"]
 
 
 class Gate:
@@ -127,8 +137,10 @@ def main(argv: list[str] | None = None) -> int:
 
     # ---- plain build of the fixture project, exactly as a user would do it ----
     def plain_build() -> dict[str, Any]:
+        # The fixtures are built from a copy, so the opt-in header's location is given explicitly.
         subprocess.run(["cmake", "-S", str(project), "-B", str(build), f"-DOpenFHE_DIR={args.openfhe_dir}",
-                        f"-DCMAKE_CXX_COMPILER={args.compiler}"], check=True, capture_output=True, text=True)
+                        f"-DCMAKE_CXX_COMPILER={args.compiler}", f"-DCIPHERSCOPE_INCLUDE_DIR={ROOT / 'native' / 'include'}"],
+                       check=True, capture_output=True, text=True)
         subprocess.run(["cmake", "--build", str(build), "--parallel", "8"], check=True, capture_output=True, text=True)
         for name in PROGRAMS:
             assert (build / name).is_file(), f"{name} was not built"
@@ -225,6 +237,101 @@ def main(argv: list[str] | None = None) -> int:
         return {"add_in_place": add["output_ciphertexts"], "rescale_in_place": rescale["output_ciphertexts"]}
 
     gate.check("MUT-01", "in-place operations produce the next immutable version of their operand and later calls read it", in_place)
+
+    def composites() -> dict[str, Any]:
+        events = traces["many_and_series"]["events"]
+        ops = [e["operation"] for e in events]
+        assert ops == MANY_AND_SERIES_OPS, ops
+        by_op = {e["operation"]: e for e in events}
+        fresh = ["ct_0001:v0", "ct_0002:v0", "ct_0003:v0"]
+        for operation in ("EvalAddMany", "EvalMultMany", "EvalLinearWSum"):
+            event = by_op[operation]
+            assert event["input_ciphertexts"] == fresh and len(event["input_states"]) == 3, (operation, event["input_ciphertexts"])
+            assert event["semantic_arguments"] == {"operand_count": 3} and event["operand_kinds"][0] == "collection", event
+            assert len(event["output_ciphertexts"]) == 1, event
+        series = by_op["EvalChebyshevSeries"]
+        assert series["semantic_arguments"] == {"polynomial_degree": 3, "lower_bound": -8, "upper_bound": 8}, series["semantic_arguments"]
+        assert series["input_ciphertexts"] == ["ct_0001:v0"]
+        assert by_op["EvalRotate"]["semantic_arguments"] == {"rotation_index_requested": 1}
+        assert by_op["EvalRotate"]["input_ciphertexts"] == by_op["EvalAddMany"]["output_ciphertexts"]
+        assert by_op["EvalRotateKeyGen"]["semantic_arguments"] == {"rotation_indices_requested": [1]}
+        assert "EvalAtIndex" not in ops and "EvalAtIndexKeyGen" not in ops
+        parents = {c["id"]: c["parent_ids"] for c in traces["many_and_series"]["ciphertexts"]}
+        assert parents[by_op["EvalMultMany"]["output_ciphertexts"][0]] == fresh
+        assert traces["many_and_series"]["run"]["coverage"]["unmatched_candidate_names"] == []
+        return {"operations": ops}
+
+    gate.check("OP-03", "EvalAddMany/EvalMultMany/EvalLinearWSum record every vector element as an input, EvalChebyshevSeries its degree and bounds, and EvalAtIndex[KeyGen] their canonical names", composites)
+
+    def schemes() -> dict[str, Any]:
+        observed: dict[str, Any] = {}
+        for name, scheme in (("bfv_arithmetic", "BFV"), ("bgv_arithmetic", "BGV")):
+            context = traces[name]["context"]
+            ring = context["ring_dimension"]
+            assert context["scheme"] == scheme and context["scheme_evidence"] == "declared_parameters", context
+            assert isinstance(ring, int) and context["available_slots"] == ring == context["batch_size"], context
+            assert context["plaintext_modulus"] == 65537, context
+            assert context["declared_multiplicative_depth"] == 2, context
+            events = traces[name]["events"]
+            assert any(e["operation"] == "MakePackedPlaintext" for e in events)
+            assert all(e["overload"] != "unknown" for e in events), [e["operation"] for e in events if e["overload"] == "unknown"]
+            observed[name] = {"scheme": scheme, "ring_dimension": ring, "events": len(events)}
+        bfv_levels = {s["level"] for e in traces["bfv_arithmetic"]["events"] for s in e["output_states"]}
+        assert bfv_levels == {0}, f"BFV never consumes levels: {bfv_levels}"
+        ckks = traces["repeated_rotations"]["context"]
+        assert ckks["scheme"] == "CKKS" and ckks["available_slots"] == ckks["ring_dimension"] // 2 and ckks["plaintext_modulus"] is None, ckks
+        return observed
+
+    def annotations() -> dict[str, Any]:
+        trace = traces["checkpoints"]
+        events = trace["events"]
+        assert [e["operation"] for e in events] == CHECKPOINTS_OPS, [e["operation"] for e in events]
+        assert trace["run"]["shadow_mode"] is True, "a program that checkpoints handed over its secret key"
+        by_seq = {e["sequence"]: e for e in events}
+        for seq in (4, 6):
+            plaintext = by_seq[seq]
+            assert plaintext["kind"] == "annotation" and plaintext["operand_kinds"] == ["plaintext"], plaintext
+            assert plaintext["semantic_arguments"]["constant_id"] == "layer0" and plaintext["semantic_arguments"]["provenance"] == "model_parameter"
+            assert plaintext["semantic_arguments"]["plaintext_representation"].startswith("<Plaintext Object: (1, 1, 1, 1,")
+        packing = by_seq[9]
+        assert packing["kind"] == "annotation" and packing["input_ciphertexts"] == ["ct_0001:v0"]
+        assert packing["semantic_arguments"] == {"shape": [4], "packing": "row_major", "meaningful_slots": 4}
+        assert packing["source"]["line"] == 40 and packing["source"]["function"] == "main", packing["source"]
+        provenance = by_seq[12]
+        assert provenance["semantic_arguments"] == {"provenance": "model_parameter"} and provenance["input_ciphertexts"] == ["ct_0002:v0"]
+        states = {c["id"]: c for c in trace["ciphertexts"]}
+        assert states["ct_0001:v0"]["annotations"] == packing["semantic_arguments"]
+        assert states["ct_0002:v0"]["annotations"] == {"provenance": "model_parameter"}
+        fresh, later = by_seq[10], by_seq[17]
+        for checkpoint in (fresh, later):
+            assert checkpoint["kind"] == "checkpoint" and checkpoint["status"] == "ok", checkpoint
+            arguments = checkpoint["semantic_arguments"]
+            assert arguments["status"] == "ok" and len(arguments["observed_values"]) == len(arguments["expected_values"]) == 4
+            assert arguments["max_abs_error"] >= 0 and "absolute_bits" in arguments
+        assert fresh["semantic_arguments"]["checkpoint_name"] == "fresh" and fresh["semantic_arguments"]["tolerance_status"] == "undeclared"
+        assert fresh["input_ciphertexts"] == ["ct_0001:v0"]
+        assert later["semantic_arguments"]["checkpoint_name"] == "after_three_squarings"
+        assert later["semantic_arguments"]["tolerance"] == {"min_bits": 40.0} and later["semantic_arguments"]["violated"] == ["min_bits"]
+        assert later["semantic_arguments"]["absolute_bits"] < fresh["semantic_arguments"]["absolute_bits"], "three squarings lose bits"
+        # The checkpoint's decryption is the runtime's own, never a traced event.
+        assert sum(e["operation"] == "Decrypt" for e in events) == 1
+        statuses = build_analysis_bundle(trace)["recommendations"]["analyzer_status"]
+        positives = {k for k, v in statuses.items() if v == "positive"}
+        for rule in ("precision.checkpoint_drop.v1", "precision.tolerance_violated.v1", "packing.low_utilization_annotated.v1",
+                     "encoding.repeated_public_constant.v1", "provenance.public_value_ciphertext_mult.v1"):
+            assert rule in positives, (rule, statuses)
+        # Without the opt-in evidence those rules stay not_applicable (never faked).
+        plain = build_analysis_bundle(traces["repeated_rotations"])["recommendations"]["analyzer_status"]
+        for rule in ("precision.checkpoint_drop.v1", "packing.low_utilization_annotated.v1", "encoding.repeated_public_constant.v1",
+                     "provenance.public_value_ciphertext_mult.v1"):
+            assert plain[rule] == "not_applicable", (rule, plain[rule])
+        assert traces["repeated_rotations"]["run"]["shadow_mode"] is False
+        return {"positives": sorted(positives), "fresh_bits": fresh["semantic_arguments"]["absolute_bits"],
+                "later_bits": later["semantic_arguments"]["absolute_bits"]}
+
+    gate.check("META-01", "cipherscope/annotate.h annotations and precision checkpoints become annotation/checkpoint events with the caller's source line, shadow_mode follows the evidence, and the annotation-dependent analyzers fire only on that evidence", annotations)
+
+    gate.check("SCHEME-01", "BFV and BGV programs report their scheme from the declared CCParams, N packed slots and the plaintext modulus; CKKS keeps N/2 slots and no plaintext modulus", schemes)
 
     def identity() -> dict[str, Any]:
         trace = traces["aliasing"]
@@ -325,7 +432,7 @@ def main(argv: list[str] | None = None) -> int:
         assessment = classify_run(traces["unmatched"])
         coverage = traces["unmatched"]["run"]["coverage"]
         assert assessment.coverage_class == PARTIAL_PERMISSIVE, assessment
-        assert coverage["unmatched_candidate_names"] == ["EvalAddMany", "EvalMultMany"], coverage["unmatched_candidate_names"]
+        assert coverage["unmatched_candidate_names"] == ["EvalAddMutable", "EvalMultMutable"], coverage["unmatched_candidate_names"]
         assert coverage["unsupported_operations"] == coverage["unmatched_candidate_names"]
         for name in PROGRAMS:
             if name != "unmatched":
@@ -374,7 +481,7 @@ def main(argv: list[str] | None = None) -> int:
 
     def parity() -> dict[str, Any]:
         observed: dict[str, int] = {}
-        for name in ("repeated_rotations", "operators_inplace", "aliasing", "exception"):
+        for name in TWINS:
             twin = args.python_twin if name == "repeated_rotations" else EXPECTED / name / "python_trace.json"
             python_trace = load_json_file(twin)
             report = compare_traces(python_trace, traces[name], left_name="python", right_name="c++")
@@ -382,7 +489,7 @@ def main(argv: list[str] | None = None) -> int:
             observed[name] = len(report.left_signature)
         return observed
 
-    gate.check("PARITY-01", "the C++ traces of the twin programs (rotations, operators/in-place, aliasing, exception) are semantically equivalent to the Python frontend's traces", parity)
+    gate.check("PARITY-01", "the C++ traces of the twin programs (rotations, operators/in-place, aliasing, exception, vector composites/series, BFV, BGV, annotations/checkpoints) are semantically equivalent to the Python frontend's traces", parity)
 
     # ---- artifact ----
     counts = {status: sum(c["status"] == status for c in gate.checks) for status in ("pass", "fail", "skip")}

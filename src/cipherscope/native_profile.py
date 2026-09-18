@@ -173,7 +173,7 @@ def ensure_toolchain(compiler: Path, compiler_version: str, openfhe: OpenFHEInst
         "# CipherScope compiler launcher: runs the real compiler with the semantic\n"
         "# instrumentation plugin. CMake invokes it as: launcher <compiler> <args...>\n"
         "compiler=\"$1\"; shift\n"
-        f"exec \"$compiler\" -fplugin={plugin} -fplugin-arg-{PLUGIN_BASENAME}-manifest={manifest_txt} "
+        f"exec \"$compiler\" -DCIPHERSCOPE_INSTRUMENTED=1 -fplugin={plugin} -fplugin-arg-{PLUGIN_BASENAME}-manifest={manifest_txt} "
         f"-fplugin-arg-{PLUGIN_BASENAME}-site-dir=\"${{CIPHERSCOPE_SITE_DIR:?CIPHERSCOPE_SITE_DIR is not set}}\" \"$@\"\n",
         encoding="utf-8",
     )

@@ -21,6 +21,11 @@ _ZERO_WEIGHT_OPERATIONS = {
     "EvalSum",
     "EvalSumRows",
     "EvalSumCols",
+    "EvalAddMany",
+    "EvalAddManyInPlace",
+    "EvalLinearWSum",
+    "EvalLinearWSumMutable",
+    "EvalMerge",
     "EvalSub",
     "EvalSubInPlace",
     "ModReduce",
@@ -30,7 +35,13 @@ _ZERO_WEIGHT_OPERATIONS = {
     "Rescale",
     "RescaleInPlace",
 }
-_OPAQUE_OPERATIONS = {"EvalPoly", "EvalChebyshevFunction", "EvalInnerProduct", "EvalLogistic"}
+_OPAQUE_OPERATIONS = {
+    "EvalPoly", "EvalChebyshevFunction", "EvalInnerProduct", "EvalLogistic",
+    "EvalChebyshevSeries", "EvalChebyshevSeriesLinear", "EvalChebyshevSeriesPS",
+    "EvalSin", "EvalCos", "EvalDivide",
+    # A binary multiplication tree: its depth is ceil(log2(operands)), not 1.
+    "EvalMultMany",
+}
 
 
 def _event_sort_key(event: Mapping[str, Any]) -> tuple[int, str]:
@@ -54,7 +65,7 @@ def _nonlinear_weight(event: Mapping[str, Any]) -> int | None:
     operation = event.get("operation")
     if operation in {"EvalSquare", "EvalSquareInPlace"}:
         return 1
-    if operation in {"EvalMult", "EvalMultNoRelin"}:
+    if operation in {"EvalMult", "EvalMultNoRelin", "EvalMultAndRelinearize"}:
         overload = event.get("overload")
         if overload in {"ct_ct", "ciphertext_ciphertext"}:
             return 1

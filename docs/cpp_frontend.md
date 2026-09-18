@@ -118,10 +118,56 @@ The OpenFHE adapter (`adapter.cpp`) is the only code that includes OpenFHE
 headers. It reads level, noise-scale degree, scaling factor, slots, key tag,
 context identity, and the scaling/key-switch techniques; anything unreadable
 becomes `null` and is listed under `missing`. It also reads the
-`CCParams<CryptoContextCKKSRNS>` passed to `GenCryptoContext` (security
-level, ring dimension, depth, scaling mod size), which is what lets the
-`configuration.testing_only_security.v1` rule assess a C++ run exactly as a
-Python run launched through `profile_unmodified.py`.
+`CCParams<CryptoContextCKKSRNS|BFVRNS|BGVRNS>` passed to `GenCryptoContext`
+(scheme, security level, ring dimension, depth, scaling mod size, plaintext
+modulus), which is what lets the `configuration.testing_only_security.v1` rule
+assess a C++ run exactly as a Python run launched through
+`profile_unmodified.py`, and what names the scheme: `context.scheme` is
+`CKKS`, `BFV` or `BGV` with `scheme_evidence = declared_parameters`, and
+`available_slots` follows the scheme (N/2 for CKKS, N for BFV/BGV) in both
+frontends. A `std::vector` of ciphertext handles (`EvalAddMany`,
+`EvalMultMany`, `EvalLinearWSum`, `EvalMerge`) is described element by
+element, so every element is an input of the event and a parent of its
+result, exactly as the Python frontend flattens a list argument; the trace
+carries `operand_count`. Chebyshev coefficient vectors contribute only their
+degree (`polynomial_degree`), never the coefficients.
+
+## Annotations and precision checkpoints (opt-in)
+
+Everything above is recorded from the OpenFHE calls a program already makes.
+The Python session additionally accepts user assertions — `annotate()`
+(shape, packing, meaningful slots, provenance), `annotate_plaintext()`
+(provenance, `constant_id`) and `checkpoint()` (decrypt with the program's own
+secret key and compare against expected values, optionally under a tolerance).
+Their C++ counterpart is the single header `native/include/cipherscope/annotate.h`:
+
+```cpp
+#include "cipherscope/annotate.h"
+cipherscope::annotate(ct, {{4}, "row_major", 4, ""});              // shape, packing, meaningful_slots, provenance
+cipherscope::annotate_plaintext(pt, "model_parameter", "layer0");
+cipherscope::checkpoint("fresh", cc, ct, keys.secretKey, expected);
+cipherscope::Tolerance t; t.min_bits = 40;
+cipherscope::checkpoint("after", cc, ct2, keys.secretKey, expected2, t);
+```
+
+The header includes no OpenFHE header and references no CipherScope symbol
+unless the translation unit is compiled through the CipherScope launcher
+(which defines `CIPHERSCOPE_INSTRUMENTED`): in a plain build every call is an
+inline no-op, nothing is decrypted and the binary is the ordinary program. In
+the shadow build the runtime records `annotation` / `checkpoint` events with
+the caller's `__builtin_FILE/LINE/FUNCTION`, the ciphertext's identity and
+state, and — for checkpoints — the expected and observed values; the
+normalizer computes the precision metrics with the Python session's own
+functions, and a program that checkpointed is `run.shadow_mode = true`
+(it handed the runtime its secret key, which is what shadow mode means).
+Invalid annotations (negative shape, empty strings, no field) are recorded as
+`status: error` events and never reach the ciphertext's annotations. A
+program that does not use the header produces no such evidence, and the
+rules that depend on it (`precision.*`, `packing.low_utilization_annotated.v1`,
+`encoding.repeated_public_constant.v1`,
+`provenance.public_value_ciphertext_mult.v1`) stay `not_applicable` — nothing
+is inferred in their place. The gate's `checkpoints.cpp` / `twins/checkpoints.py`
+pair shows both frontends reaching the same five positive verdicts.
 
 ## Parity with the Python frontend
 
@@ -188,23 +234,25 @@ thread-local buffer (design §31) was not needed to reach this result, and
 | GCC 15.2.0 on Rocky 8.10, GCC 13.3.0 on Ubuntu 24.04 (x86_64) | tested, 18/18 each (`artifact/feasibility/cpp-gcc152-openfhe151/`, `cpp-gcc133-openfhe151/`) |
 | other GCC versions with plugin headers | expected to work; plugins are version-locked, so each is built on demand — untested |
 | Clang, MSVC, `LD_PRELOAD` | not supported by design |
-| OpenFHE 1.5.1 C++ API (CKKS) | tested; manifest `openfhe-1.5-v2`, 38 operations + 7 operator aliases |
+| OpenFHE 1.5.1 C++ API (CKKS, BFV, BGV) | tested; manifest `openfhe-1.5-v3`, 53 operations + 7 operator aliases + 2 method aliases (`EvalAtIndex[KeyGen]` → `EvalRotate[KeyGen]`) |
 | build systems | CMake only (`CMakeCache.txt` + `compile_commands.json`) |
 | already-instrumented binaries | run directly when the marker is present |
 
 Known limits: an instrumented call made from a user callback that OpenFHE
 invokes during another instrumented call is read as an unwound call; only the
-first `GenCryptoContext(CCParams<CryptoContextCKKSRNS>)` populates the
-declared parameters; precision checkpoints and annotations have no C++
-counterpart yet, so those rules report `not_applicable` (they are never
-faked); `EvalAddMany`/`EvalMultMany`, `EvalChebyshevSeries` and the BGV/BFV
-API are outside the manifest in both frontends.
+first `GenCryptoContext(CCParams<…>)` populates the declared parameters;
+annotations and precision checkpoints require the opt-in header above
+(without it those rules report `not_applicable`; they are never faked).
+`EvalAddMutable` / `EvalMultMutable` (the level-adjusting variants) stay
+outside the manifest in both frontends and are the gate's unmatched-call
+witnesses.
 
 ## Files
 
 | Path | Role |
 |---|---|
 | `native/include/cipherscope/runtime.h` | C ABI between compiler-inserted calls and the runtime |
+| `native/include/cipherscope/annotate.h` | opt-in annotations and precision checkpoints (no-ops outside a shadow build) |
 | `native/gcc/plugin.cpp` | GIMPLE instrumentation pass, site tables, marker |
 | `native/runtime/runtime.cpp` | identity, versions, clocks, threads, limits, spool |
 | `native/runtime/adapter.cpp` | OpenFHE metadata reader (only OpenFHE-including TU) |
@@ -214,4 +262,4 @@ API are outside the manifest in both frontends.
 | `src/cipherscope/native_profile.py` | toolchain cache, shadow build, run, bundle |
 | `src/cipherscope/frontend_parity.py` | cross-frontend semantic comparison |
 | `tests/cpp/fixtures/` | plain OpenFHE CMake project used by the gate |
-| `tests/integration_cpp/run_gate.py` | the 18-check feasibility gate |
+| `tests/integration_cpp/run_gate.py` | the 21-check feasibility gate |

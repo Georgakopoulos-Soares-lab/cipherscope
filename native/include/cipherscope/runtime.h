@@ -46,7 +46,10 @@ enum cs_kind {
     CS_KIND_FUNCTION = 17,        /* std::function<...>*                                                 */
     CS_KIND_CRYPTOCONTEXT_PTR = 18, /* std::shared_ptr<lbcrypto::CryptoContextImpl<DCRTPoly>>* (a result) */
     CS_KIND_VECTOR_INT64 = 19,    /* std::vector<int64_t>*                                               */
-    CS_KIND_VOID = 20             /* no result                                                           */
+    CS_KIND_VOID = 20,            /* no result                                                           */
+    CS_KIND_CIPHERTEXT_VECTOR = 21, /* std::vector<std::shared_ptr<[const] CiphertextImpl<DCRTPoly>>>*   */
+    CS_KIND_CCPARAMS_BFV = 22,    /* lbcrypto::CCParams<lbcrypto::CryptoContextBFVRNS>*                 */
+    CS_KIND_CCPARAMS_BGV = 23     /* lbcrypto::CCParams<lbcrypto::CryptoContextBGVRNS>*                 */
 };
 
 typedef uint64_t cs_token;
@@ -70,8 +73,27 @@ void cs_unmatched_call(const char* site_id, const char* qualified_name);
 /* Executed call the manifest lists as non-semantic (accessor, Enable, ...). */
 void cs_allowed_call(const char* site_id);
 
-/* A CCParams object observed at GenCryptoContext(): declared parameters. */
-void cs_declared_parameters(const char* site_id, const void* ccparams);
+/* A CCParams object observed at GenCryptoContext(): declared parameters.
+ * `kind` is CS_KIND_CCPARAMS (CKKS), CS_KIND_CCPARAMS_BFV or CS_KIND_CCPARAMS_BGV. */
+void cs_declared_parameters(const char* site_id, int kind, const void* ccparams);
+
+/* Optional user annotations (see cipherscope/annotate.h, whose inline wrappers
+ * call these only when CIPHERSCOPE_INSTRUMENTED is defined -- the compiler
+ * launcher defines it -- so a plain build needs no runtime). Pointers are the std::shared_ptr
+ * handles; `shape`/`packing`/`provenance`/`constant_id`/tolerances may be null
+ * (unset); `meaningful_slots` < 0 means unset. The checkpoint decrypts
+ * `ciphertext` with `secret_key` inside the runtime and records expected and
+ * observed values; the normalizer computes the precision metrics. */
+void cs_annotate_ciphertext(const char* file, int line, const char* function, const void* ciphertext,
+                            const int64_t* shape, size_t shape_length, const char* packing,
+                            int64_t meaningful_slots, const char* provenance);
+void cs_annotate_plaintext(const char* file, int line, const char* function, const void* plaintext,
+                           const char* provenance, const char* constant_id);
+void cs_checkpoint(const char* file, int line, const char* function, const char* name,
+                   const void* context, const void* ciphertext, const void* secret_key,
+                   const double* expected, size_t expected_length,
+                   const double* tolerance_absolute, const double* tolerance_relative,
+                   const double* tolerance_min_bits);
 
 /* Flush buffered records to the spool and write the run footer. Called from a
  * destructor/atexit handler; safe to call more than once. */

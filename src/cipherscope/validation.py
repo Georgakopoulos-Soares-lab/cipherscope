@@ -362,12 +362,12 @@ def validate_trace(document: Any) -> ValidationResult:
         context = _mapping(trace.get("context"), "$.context", issues)
         if context is not None:
             scheme = context.get("scheme")
-            if scheme is not None and scheme != "CKKS":
+            if scheme is not None and scheme not in ("CKKS", "BFV", "BGV"):
                 _add(
                     issues,
                     IssueCode.FIELD_VALUE,
                     "$.context.scheme",
-                    "must be 'CKKS' or null",
+                    "must be 'CKKS', 'BFV', 'BGV', or null",
                 )
             for field, minimum in (
                 ("ring_dimension", 1),
@@ -1358,12 +1358,12 @@ def validate_manifest(
             issues,
         )
         scheme = parameter_set.get("scheme")
-        if scheme is not None and scheme != "CKKS":
+        if scheme is not None and scheme not in ("CKKS", "BFV", "BGV"):
             _add(
                 issues,
                 IssueCode.FIELD_VALUE,
                 "$.parameter_set.scheme",
-                "must be 'CKKS' or null",
+                "must be 'CKKS', 'BFV', 'BGV', or null",
             )
         for field, minimum in (
             ("ring_dimension", 1),

@@ -222,20 +222,27 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 
 - The C++ frontend supports GCC (with plugin headers) and CMake projects only;
   it is verified on GCC 15.2.0 (Rocky 8.10) and GCC 13.3.0 (Ubuntu 24.04) with
-  OpenFHE 1.5.1 by the 18-check gate archived under
-  `artifact/feasibility/cpp-gcc152-openfhe151/` and `cpp-gcc133-openfhe151/`. Precision checkpoints
-  and annotations have no C++ counterpart yet, so those rules report
-  `not_applicable` on C++ traces.
+  OpenFHE 1.5.1 by the 21-check gate archived under
+  `artifact/feasibility/cpp-gcc152-openfhe151/` (GCC 13.3.0 / Ubuntu 24.04 ran
+  the earlier 18-check gate, `cpp-gcc133-openfhe151/`). Annotations and
+  precision checkpoints are available through the opt-in header
+  `native/include/cipherscope/annotate.h` (inline no-ops outside a shadow
+  build); without it those rules report `not_applicable` on C++ traces.
 - The external Python corpus (`python-log-reg-examples`) traces strict-`COMPLETE`
-  on all four workloads with the current operation set; `EvalAddMany`,
-  `EvalMultMany`, `EvalChebyshevSeries` and the BGV/BFV API remain outside it.
+  on all four workloads with the current operation set. Manifest v3 covers the
+  vector composites (`EvalAddMany`, `EvalMultMany`, `EvalLinearWSum`,
+  `EvalMerge`), the Chebyshev series family, `EvalSin`/`EvalCos`/`EvalDivide`,
+  the `EvalAtIndex` aliases and BFV/BGV contexts (`MakePackedPlaintext`, scheme
+  and plaintext modulus from the declared parameters) in both frontends; the
+  level-adjusting `*Mutable` variants remain outside it.
 - Real OpenFHE behavior is verified on four lanes with different weight
   ([docs/evidence.md](docs/evidence.md)). The authoritative Python 3.11 source
-  build on Ubuntu 24.04 x86_64 passes all 38 checks and is archived under
+  build on Ubuntu 24.04 x86_64 passes all 40 checks and is archived under
   `artifact/feasibility/primary-source-py311/`; the native Rocky Linux / GCC
-  15.2 build passes the same 38; the macOS ARM64 developer build passes all
-  but the Linux-only `RES-02`; the provisional Python 3.12 wheel passes the 33
-  checks that existed when it was archived. The claim is about observing
+  15.2 build passes the same 40; the macOS ARM64 developer build passes all
+  but the Linux-only `RES-02` of the 38 checks that existed when it was
+  archived; the provisional Python 3.12 wheel passes the 33 checks that
+  existed when it was archived. The claim is about observing
   OpenFHE calls correctly on those builds; other distributions, compilers, or
   OpenFHE versions are untested.
 - Timing and memory figures are per machine. `evaluation/tables/scaling.csv`

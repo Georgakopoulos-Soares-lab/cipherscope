@@ -17,6 +17,15 @@ include_directories(${OPENMP_INCLUDES} ${OpenFHE_INCLUDE} ${OpenFHE_INCLUDE}/thi
 link_directories(${OpenFHE_LIBDIR} ${OPENMP_LIBRARIES})
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenFHE_EXE_LINKER_FLAGS}")
 
+# checkpoints.cpp opts into cipherscope/annotate.h (inline no-ops unless the
+# CipherScope launcher compiles the unit, so a plain build needs no runtime).
+# The header ships with the repository; point at it when the fixtures are built
+# from a copy.
+if(NOT DEFINED CIPHERSCOPE_INCLUDE_DIR)
+  get_filename_component(CIPHERSCOPE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../native/include" ABSOLUTE)
+endif()
+include_directories(${CIPHERSCOPE_INCLUDE_DIR})
+
 file(GLOB FIXTURES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 foreach(source ${FIXTURES})
   get_filename_component(name ${source} NAME_WE)

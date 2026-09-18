@@ -253,7 +253,7 @@ container, plain `bash …` for the native lane. Outputs under
 
 ## C++ frontend (branch `cpp-gcc-frontend`, 2026-09-17)
 
-Implements `cpp_gcc_design.md` phases 0–6 on LS6 (node `v320-008`, job 3452489):
+Implements `docs/cpp_gcc_design.md` phases 0–6 on LS6 (node `v320-008`, job 3452489):
 
 - [x] Phase 0 — trace producer-neutral: `run.producer`, `run.runtime.language/
       compiler/framework`, `run.clocks`, native coverage counters (one schema);
@@ -344,3 +344,82 @@ Implements `cpp_gcc_design.md` phases 0–6 on LS6 (node `v320-008`, job 3452489
       `evaluation/raw/coverage_report.csv` = 20/20 COMPLETE (16 examples +
       4 workloads); `evaluation/adjudication/findings.csv` exported (12
       findings, verdicts empty — human step).
+
+### Coverage boundary closed on both frontends (2026-09-18)
+
+User request: operator overloads in Python (GAP-01), a C++ counterpart for
+checkpoints/annotations, and `EvalAddMany`/`EvalMultMany`,
+`EvalChebyshevSeries`, BGV/BFV in the manifest — in both frontends.
+
+- [x] GAP-01 — `src/cipherscope/operators.py`: while a session is active the
+      binding's `Ciphertext.__add__` (and `__sub__`/`__mul__`/`__neg__`/in-place
+      forms where a binding defines them) is rerouted to the owning session's
+      proxy, so `a + b` records one `EvalAdd ct_ct` at the user's line; the
+      native call runs once; originals restored at close (refcounted across
+      sessions). Real-binding check `GAP-01` now asserts the traced event and
+      numerical equality; `operator_overload_coverage` is evidence-based.
+      Commit `ef85955`.
+- [x] Manifest **`openfhe-1.5-v3`** (53 operations, shared table
+      `CORE_OPERATIONS` ⇄ `native/openfhe/openfhe-1.5.operations.json`,
+      `tests/test_operation_manifest.py` keeps them identical):
+      `EvalAddMany`, `EvalAddManyInPlace` (non-mutating: reassigns handles),
+      `EvalMultMany` (opaque depth), `EvalMultAndRelinearize`,
+      `EvalLinearWSum[Mutable]`, `EvalMerge`, `EvalChebyshevSeries[Linear|PS]`
+      (records `polynomial_degree`, bounds — never coefficients),
+      `EvalSin`/`EvalCos`/`EvalDivide`, `MakePackedPlaintext`,
+      `MakeCoefPackedPlaintext`; method aliases `EvalAtIndex[KeyGen]` →
+      `EvalRotate[KeyGen]` (both frontends record the canonical name).
+- [x] Schemes — trace/manifest schema `scheme ∈ {CKKS, BFV, BGV, null}`;
+      Python reads `CCParams*.GetScheme()`; C++ adapter reads the base
+      `lbcrypto::Params` of `CCParams<CKKSRNS|BFVRNS|BGVRNS>` (new ABI kinds
+      22/23, `cs_declared_parameters(site, kind, params)`), spools the enum
+      name (`BFVRNS`; Python binding says `BFVRNS_SCHEME` — both normalized);
+      `available_slots` = N/2 (CKKS) or N (BFV/BGV); `plaintext_modulus`
+      reported for integer schemes, null for CKKS (that slot holds the scaling
+      mod size). Without declared params a `batch_size == N` context is left
+      `scheme = null` (`batch_size_equals_ring_dimension_not_ckks`), never
+      labelled CKKS.
+- [x] C++ vector operands — plugin classifies
+      `std::vector<std::shared_ptr<[const] CiphertextImpl>>` as
+      `CS_KIND_CIPHERTEXT_VECTOR` (checked before the single-handle spelling);
+      adapter describes every element (id, first_seen, state) under `items`;
+      normalizer flattens them into inputs/parents in order, exactly like the
+      Python list flattening; `operand_count` semantic argument.
+- [x] Fixtures + twins: `many_and_series` (17 events), `bfv_arithmetic`
+      (13), `bgv_arithmetic` (14); spools/sites/Python traces archived under
+      `tests/cpp/expected/`; `unmatched.cpp` and Python `GAP-04` now use
+      `EvalAddMutable`/`EvalMultMutable` as the out-of-manifest witnesses.
+- [x] C++ gate **20/20 `native_pass`** (new `OP-03`, `SCHEME-01`; `PARITY-01`
+      over 7 twin pairs) — GCC 15.2.0 / OpenFHE 1.5.1, archived
+      `artifact/feasibility/cpp-gcc152-openfhe151/`.
+- [x] Python gate gains `API-07` (vector composites, series, alias, numerics)
+      and `API-08` (BFV and BGV contexts traced with scheme/slots/modulus):
+      `ls6-native-py311` **40/40 `native_pass`**, `primary-source-py311`
+      **40/40 `pass`** (authoritative), both re-archived; `docs/evidence.md`
+      rows updated (macOS `developer` and the 3.12 wheel keep their older
+      counts — not rerun here).
+- [x] C++ counterpart for annotations/checkpoints —
+      `native/include/cipherscope/annotate.h` (opt-in): `cipherscope::annotate`,
+      `annotate_plaintext`, `checkpoint`. Inline no-ops unless the unit is
+      compiled through the CipherScope launcher, which now defines
+      `CIPHERSCOPE_INSTRUMENTED` (weak symbols were tried first and rejected:
+      GCC 15 at `-O2` non-PIE folds the null check away). Runtime records
+      `meta` records (`Annotate`, `AnnotatePlaintext`, `PrecisionCheckpoint`)
+      with `__builtin_FILE/LINE/FUNCTION`, ciphertext id + state, the
+      annotation, expected values and — via the adapter's own `Decrypt`, not a
+      traced event — observed values; invalid input → `status: error`
+      (`annotation_error`), never merged. Normalizer emits `annotation` /
+      `checkpoint` events, merges ciphertext `annotations`, computes metrics
+      with the session's `_precision_metrics` (identical numbers by
+      construction), sets `run.shadow_mode` iff a checkpoint ran. Parity
+      comparator ignores measured noise (observed values, error metrics) but
+      keeps the checkpoint contract and outcome, and compares `shadow_mode`.
+      Fixture `checkpoints.cpp` + twin `checkpoints.py`: 18 events,
+      equivalent; both frontends reach the same five positives
+      (`precision.checkpoint_drop`, `precision.tolerance_violated`,
+      `packing.low_utilization_annotated`, `encoding.repeated_public_constant`,
+      `provenance.public_value_ciphertext_mult`); programs without the header
+      keep those rules `not_applicable` (asserted by `META-01` and unit tests).
+- [x] C++ gate final: **21/21 `native_pass`** (`META-01` added; `PARITY-01`
+      over 8 twin pairs), `artifact/feasibility/cpp-gcc152-openfhe151/`.
+- [x] Unit suite (Python 3.13, no binding): 258 passed, 364 subtests.

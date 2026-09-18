@@ -31,13 +31,14 @@ def build_manifest(trace: Mapping[str, Any]) -> dict[str, Any]:
         # The producer names its clocks; the Python frontend's are the default.
         "clocks": dict(run.get("clocks") or {"wall": "time.perf_counter_ns", "cpu": "time.process_time_ns"}),
         "parameter_set": {
-            "scheme": context.get("scheme", "CKKS"),
+            "scheme": context.get("scheme"),
             "ring_dimension": context.get("ring_dimension"),
             "configured_multiplicative_depth": context.get(
                 "configured_multiplicative_depth"
             ),
             "scaling_technique": context.get("scaling_technique"),
             "security_level": context.get("security_level"),
+            "plaintext_modulus": context.get("plaintext_modulus"),
         },
     }
     if run.get("synthetic_contract") is True:

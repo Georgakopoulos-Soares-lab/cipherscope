@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from types import TracebackType
 from typing import Any, Generic, Literal, TypeVar
 
-from .compatibility import DEFAULT_COMPATIBILITY, CompatibilityRegistry
+from .compatibility import DEFAULT_COMPATIBILITY, CompatibilityRegistry, available_slots_for
 from .context import TracedCryptoContext
 from .errors import (
     AlreadyTracedError,
@@ -119,6 +119,15 @@ class _Ownership:
 
 _OWNERS: dict[int, _Ownership] = {}
 _OWNERS_LOCK = threading.RLock()
+
+
+def _merge_declared_parameters(metadata: dict[str, Any], declared: Mapping[str, Any]) -> None:
+    """Fold CCParams facts into the context block; the scheme decides the slot capacity."""
+
+    metadata.update(declared)
+    scheme = metadata.get("scheme")
+    if isinstance(scheme, str):
+        metadata["available_slots"] = available_slots_for(scheme, metadata.get("ring_dimension"))
 
 
 def _session_for_ciphertext(ciphertext: Any) -> Session[Any] | None:
@@ -303,7 +312,7 @@ class Session(Generic[ContextT]):
         with self._lock:
             self._declared_parameters = snapshot
             if self._context_metadata is not None:
-                self._context_metadata.update(snapshot)
+                _merge_declared_parameters(self._context_metadata, snapshot)
 
     def attach(
         self, native_context: Any, *, parameters: Any = None
@@ -356,7 +365,7 @@ class Session(Generic[ContextT]):
                     native_context
                 )
                 if self._declared_parameters is not None:
-                    self._context_metadata.update(self._declared_parameters)
+                    _merge_declared_parameters(self._context_metadata, self._declared_parameters)
             return proxy
 
     def annotate(

@@ -16,7 +16,7 @@ do not need to rerun them to check the artifact.
 | Scaling sweep (`evaluation/scaling/run_scaling.py`) | real binding; ~4 GB RAM for the 10⁵ point | ~4 min on arm64; ~25 min on the LS6 VM lanes |
 | `evaluation/parity/run_lane.sh <lane> <out>` | real binding; runs the 16 examples, the seeded benchmark, and the scaling sweep for one lane | ~30 min |
 | `evaluation/parity/compare_lanes.py` | the archived `feasibility.json` files plus any `run_lane.sh` outputs; stdlib only | seconds |
-| `python3 -m tests.integration_cpp.run_gate --openfhe-dir …` | GCC with plugin headers, CMake, an OpenFHE C++ install | ~1 min (18 checks, 6 fixture programs) |
+| `python3 -m tests.integration_cpp.run_gate --openfhe-dir …` | GCC with plugin headers, CMake, an OpenFHE C++ install | ~2 min (21 checks, 10 fixture programs) |
 
 Real-binding lanes and how to build them are in [docs/evidence.md](evidence.md).
 The primary source lane is built either from the Dockerfile under

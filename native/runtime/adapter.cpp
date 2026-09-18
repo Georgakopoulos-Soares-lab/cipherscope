@@ -175,6 +175,31 @@ void describe_argument(std::string& out, void* registry, int kind, const void* p
             out += ",\"state\":"; append_state(out, registry, full, ct);
             return;
         }
+        case CS_KIND_CIPHERTEXT_VECTOR: {
+            // std::vector<shared_ptr<T>> and std::vector<shared_ptr<const T>> share a layout; read as const.
+            const auto& handles = *static_cast<const std::vector<ConstCtPtr>*>(pointer);
+            // One placeholder keeps ciphertext_args aligned with ciphertext argument
+            // positions (in-place detection indexes by position); the elements are
+            // described under "items" and the normalizer takes the inputs from there.
+            ciphertext_args->push_back(nullptr);
+            ids->push_back("");
+            out += "\"kind\":\"ciphertext_vector\",\"items\":[";
+            for (size_t i = 0; i < handles.size(); ++i) {
+                if (i) out += ",";
+                const CiphertextImpl<DCRTPoly>* ct = handles[i].get();
+                if (ct == nullptr) { out += "{\"id\":null,\"state\":null}"; continue; }
+                std::shared_ptr<const void> witness(handles[i], static_cast<const void*>(ct));
+                bool is_new = false;
+                auto [id, version] = registry_ciphertext(registry, ct, witness, &is_new);
+                std::string full = id + ":v" + std::to_string(version);
+                out += "{\"id\":"; json_string(out, full);
+                out += ",\"first_seen\":" + std::string(is_new ? "true" : "false");
+                out += ",\"state\":"; append_state(out, registry, full, ct);
+                out += "}";
+            }
+            out += "]";
+            return;
+        }
         case CS_KIND_PLAINTEXT: out += "\"kind\":\"plaintext\""; return;
         case CS_KIND_PLAINTEXT_OUT: out += "\"kind\":\"plaintext_out\""; return;
         case CS_KIND_PUBLIC_KEY: out += "\"kind\":\"key\",\"key_kind\":\"public\""; return;
@@ -197,7 +222,9 @@ void describe_argument(std::string& out, void* registry, int kind, const void* p
             out += "\"kind\":\"complex_vector\",\"length\":" + std::to_string(values.size());
             return;
         }
-        case CS_KIND_CCPARAMS: out += "\"kind\":\"ccparams\""; return;
+        case CS_KIND_CCPARAMS:
+        case CS_KIND_CCPARAMS_BFV:
+        case CS_KIND_CCPARAMS_BGV: out += "\"kind\":\"ccparams\""; return;
         case CS_KIND_STRING: out += "\"kind\":\"string\""; return;
         case CS_KIND_FUNCTION: out += "\"kind\":\"function\""; return;
         default: out += "\"kind\":\"unknown\""; return;
@@ -254,19 +281,44 @@ void describe_result(std::string& out, void* registry, const char* operation, in
     }
 }
 
-void describe_ccparams(std::string& out, const void* pointer) {
-    if (pointer == nullptr) { out += "\"available\":false"; return; }
-    const auto& params = *static_cast<const lbcrypto::CCParams<lbcrypto::CryptoContextCKKSRNS>*>(pointer);
+namespace {
+
+// CCParams<T> derives from lbcrypto::Params for every scheme; the fields the
+// trace carries all live in the base, so one body serves CKKS, BFV and BGV.
+// `scheme` is the OpenFHE enum name (CKKSRNS_SCHEME, BFVRNS_SCHEME,
+// BGVRNS_SCHEME); the normalizer maps it onto the canonical scheme label.
+void append_params(std::string& out, const lbcrypto::Params& params) {
     out += "\"available\":true";
-    out += ",\"scheme\":\"CKKS\"";
+    out += ",\"scheme\":"; json_string(out, enum_name(params.GetScheme()));
     out += ",\"security_level\":"; json_string(out, enum_name(params.GetSecurityLevel()));
     out += ",\"ring_dimension\":" + std::to_string(params.GetRingDim());
     out += ",\"multiplicative_depth\":" + std::to_string(params.GetMultiplicativeDepth());
     out += ",\"scaling_mod_size\":" + std::to_string(params.GetScalingModSize());
     out += ",\"first_mod_size\":" + std::to_string(params.GetFirstModSize());
     out += ",\"batch_size\":" + std::to_string(params.GetBatchSize());
+    out += ",\"plaintext_modulus\":" + std::to_string(params.GetPlaintextModulus());
     out += ",\"scaling_technique\":"; json_string(out, enum_name(params.GetScalingTechnique()));
     out += ",\"key_switch_technique\":"; json_string(out, enum_name(params.GetKeySwitchTechnique()));
+}
+
+}  // namespace
+
+void describe_ccparams(std::string& out, int kind, const void* pointer) {
+    if (pointer == nullptr) { out += "\"available\":false"; return; }
+    switch (kind) {
+        case CS_KIND_CCPARAMS:
+            append_params(out, *static_cast<const lbcrypto::CCParams<lbcrypto::CryptoContextCKKSRNS>*>(pointer));
+            return;
+        case CS_KIND_CCPARAMS_BFV:
+            append_params(out, *static_cast<const lbcrypto::CCParams<lbcrypto::CryptoContextBFVRNS>*>(pointer));
+            return;
+        case CS_KIND_CCPARAMS_BGV:
+            append_params(out, *static_cast<const lbcrypto::CCParams<lbcrypto::CryptoContextBGVRNS>*>(pointer));
+            return;
+        default:
+            out += "\"available\":false";
+            return;
+    }
 }
 
 }  // namespace cs::adapter
@@ -276,6 +328,49 @@ void describe_ccparams(std::string& out, const void* pointer) {
 namespace cs { class Registry; std::vector<std::pair<const void*, std::string>> registry_contexts(void* registry); }
 
 namespace cs::adapter {
+
+bool decrypt_real_values(std::string& out, const void* context, const void* ciphertext,
+                         const void* secret_key, size_t length, std::string* error) {
+    using CcPtr = std::shared_ptr<CryptoContextImpl<DCRTPoly>>;
+    using SkPtr = std::shared_ptr<lbcrypto::PrivateKeyImpl<DCRTPoly>>;
+    if (context == nullptr || ciphertext == nullptr || secret_key == nullptr) { *error = "null handle"; return false; }
+    const CcPtr& cc = *static_cast<const CcPtr*>(context);
+    const ConstCtPtr& ct = *static_cast<const ConstCtPtr*>(ciphertext);
+    const SkPtr& sk = *static_cast<const SkPtr*>(secret_key);
+    if (!cc || !ct || !sk) { *error = "empty handle"; return false; }
+    try {
+        lbcrypto::Plaintext plaintext;
+        // Decrypt takes a const ciphertext: the checkpoint never changes the operand.
+        cc->Decrypt(sk, ct, &plaintext);
+        if (!plaintext) { *error = "decryption produced no plaintext"; return false; }
+        plaintext->SetLength(length);
+        std::vector<double> values = plaintext->GetRealPackedValue();
+        out += "[";
+        for (size_t i = 0; i < values.size() && i < length; ++i) { if (i) out += ","; out += json_double(values[i]); }
+        out += "]";
+        return true;
+    } catch (const std::exception& e) {
+        *error = e.what();
+        return false;
+    } catch (...) {
+        *error = "unknown native error";
+        return false;
+    }
+}
+
+std::string plaintext_representation(const void* plaintext) {
+    if (plaintext == nullptr) return "";
+    const auto& handle = *static_cast<const lbcrypto::Plaintext*>(plaintext);
+    if (!handle) return "";
+    try {
+        // Same text as the Python binding's repr(): "<Plaintext Object: " + operator<< + ">".
+        std::ostringstream stream;
+        stream << "<Plaintext Object: " << *handle << ">";
+        return stream.str();
+    } catch (...) {
+        return "";
+    }
+}
 
 void describe_contexts(std::string& out, void* registry) {
     auto entries = cs::registry_contexts(registry);
@@ -292,6 +387,8 @@ void describe_contexts(std::string& out, void* registry) {
         catch (...) { out += ",\"cyclotomic_order\":null"; missing.push_back("cyclotomic_order"); }
         try { out += ",\"batch_size\":" + std::to_string(cc->GetEncodingParams()->GetBatchSize()); }
         catch (...) { out += ",\"batch_size\":null"; missing.push_back("batch_size"); }
+        try { out += ",\"plaintext_modulus\":" + std::to_string(cc->GetEncodingParams()->GetPlaintextModulus()); }
+        catch (...) { out += ",\"plaintext_modulus\":null"; missing.push_back("plaintext_modulus"); }
         std::shared_ptr<lbcrypto::CryptoParametersRNS> rns;
         try { rns = std::dynamic_pointer_cast<lbcrypto::CryptoParametersRNS>(cc->GetCryptoParameters()); } catch (...) {}
         if (rns) {

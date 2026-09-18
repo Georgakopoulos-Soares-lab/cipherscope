@@ -1,7 +1,8 @@
 # C++ frontend fixtures
 
-`fixtures/` is an ordinary OpenFHE CMake project — no CipherScope include,
-macro, wrapper or build hook. Each program exercises one property the native
+`fixtures/` is an ordinary OpenFHE CMake project — no CipherScope wrapper or
+build hook; only `checkpoints.cpp` opts into the annotation header, which is
+an inline no-op outside a shadow build. Each program exercises one property the native
 frontend must get right; `tests/integration_cpp/run_gate.py` builds the
 project plainly, profiles every binary with `cipherscope profile`, and checks
 the traces (see [docs/cpp_frontend.md](../../docs/cpp_frontend.md)).
@@ -13,7 +14,11 @@ the traces (see [docs/cpp_frontend.md](../../docs/cpp_frontend.md)).
 | `aliasing.cpp` | copies, moves, container storage keep one identity; destroyed temporaries never hand their ID to a reused address | `twins/aliasing.py` |
 | `exception.cpp` | a throwing call becomes an error event; the application's `catch` and later calls are untouched | `twins/exception.py` |
 | `threads.cpp` | OpenMP threads record concurrently with their own thread IDs | — |
-| `unmatched.cpp` | `EvalAddMany`/`EvalMultMany` outside the manifest deny `COMPLETE` and are named | — |
+| `unmatched.cpp` | `EvalAddMutable`/`EvalMultMutable` outside the manifest deny `COMPLETE` and are named | — |
+| `many_and_series.cpp` | `EvalAddMany`/`EvalMultMany`/`EvalLinearWSum` record every vector element as an input; `EvalChebyshevSeries` its degree and bounds; `EvalAtIndex[KeyGen]` under the canonical `EvalRotate[KeyGen]` | `twins/many_and_series.py` |
+| `bfv_arithmetic.cpp` | BFV: scheme, N slots and plaintext modulus from `CCParams<CryptoContextBFVRNS>`; `MakePackedPlaintext`; level stays 0 | `twins/bfv_arithmetic.py` |
+| `bgv_arithmetic.cpp` | BGV: scheme from `CCParams<CryptoContextBGVRNS>`; a vector composite on integer ciphertexts | `twins/bgv_arithmetic.py` |
+| `checkpoints.cpp` | opt-in `cipherscope/annotate.h`: plaintext/ciphertext annotations and two precision checkpoints become `annotation`/`checkpoint` events; `shadow_mode` follows the evidence; five annotation-dependent rules fire on both frontends | `twins/checkpoints.py` (session API) |
 
 `expected/<fixture>/` holds the runtime spool, the site table and the Python
 twin's `trace.json` recorded on LS6 (GCC 15.2.0, OpenFHE 1.5.1) so that

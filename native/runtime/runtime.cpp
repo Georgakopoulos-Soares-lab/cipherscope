@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cerrno>
+#include <cmath>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -84,6 +85,14 @@ void append_json_string(std::string& out, const char* text) {
 
 void append_json_string(std::string& out, const std::string& text) {
     append_json_string(out, text.c_str());
+}
+
+// Shortest round-trip decimal; non-finite values become null (JSON has none).
+std::string json_double(double value) {
+    if (!std::isfinite(value)) return "null";
+    char buffer[64];
+    std::snprintf(buffer, sizeof buffer, "%.17g", value);
+    return buffer;
 }
 
 // ---------------------------------------------------------------------------
@@ -320,13 +329,125 @@ public:
 
     void allowed(const char*) { allowed_.fetch_add(1, std::memory_order_relaxed); }
 
-    void declared_parameters(const char* site_id, const void* params) {
+    void declared_parameters(const char* site_id, int kind, const void* params) {
         std::string line = "{\"record\":\"declared_parameters\",\"site_id\":";
         append_json_string(line, site_id);
         line += ",\"parameters\":{";
-        adapter::describe_ccparams(line, params);
+        adapter::describe_ccparams(line, kind, params);
         line += "}}\n";
         emit(thread_state(), line);
+    }
+
+    // ---- optional user annotations (cipherscope/annotate.h) ----------------
+    // These are meta events: they share the sequence counter with semantic
+    // events, carry the caller's own source position (no site table entry),
+    // and never touch the ciphertext except the checkpoint's decryption.
+
+    void annotate_ciphertext(const char* file, int line, const char* function, const void* ciphertext,
+                             const int64_t* shape, size_t shape_length, const char* packing,
+                             int64_t meaningful_slots, const char* provenance) {
+        if (!accepting()) { calls_dropped_.fetch_add(1, std::memory_order_relaxed); return; }
+        std::string error;
+        std::string annotation = "{";
+        bool any = false;
+        if (shape != nullptr && shape_length > 0) {
+            annotation += "\"shape\":[";
+            for (size_t i = 0; i < shape_length; ++i) {
+                if (shape[i] < 0) error = "shape must be a sequence of non-negative integers";
+                if (i) annotation += ",";
+                annotation += std::to_string(shape[i]);
+            }
+            annotation += "]";
+            any = true;
+        }
+        if (packing != nullptr) {
+            if (*packing == '\0') error = "packing must be a non-empty string";
+            annotation += std::string(any ? "," : "") + "\"packing\":"; append_json_string(annotation, packing);
+            any = true;
+        }
+        if (meaningful_slots >= 0) {
+            annotation += std::string(any ? "," : "") + "\"meaningful_slots\":" + std::to_string(meaningful_slots);
+            any = true;
+        }
+        if (provenance != nullptr) {
+            if (*provenance == '\0') error = "provenance must be a non-empty string";
+            annotation += std::string(any ? "," : "") + "\"provenance\":"; append_json_string(annotation, provenance);
+            any = true;
+        }
+        annotation += "}";
+        if (!any) error = "at least one annotation field is required";
+        std::string line_text = meta_header("annotation", "Annotate", file, line, function);
+        {
+            std::lock_guard<std::mutex> guard(registry_mutex_);
+            line_text += ",\"ciphertext\":{";
+            std::vector<const void*> args; std::vector<std::string> ids;
+            adapter::describe_argument(line_text, &registry_, CS_KIND_CIPHERTEXT, ciphertext, 0, 0.0, &args, &ids);
+            line_text += "}";
+        }
+        line_text += ",\"annotation\":" + annotation;
+        finish_meta(line_text, error);
+    }
+
+    void annotate_plaintext(const char* file, int line, const char* function, const void* plaintext,
+                            const char* provenance, const char* constant_id) {
+        if (!accepting()) { calls_dropped_.fetch_add(1, std::memory_order_relaxed); return; }
+        std::string error;
+        if (provenance == nullptr || *provenance == '\0') error = "provenance must be a non-empty string";
+        if (constant_id != nullptr && *constant_id == '\0') error = "constant_id must be a non-empty string";
+        std::string line_text = meta_header("annotation", "AnnotatePlaintext", file, line, function);
+        line_text += ",\"annotation\":{\"provenance\":"; append_json_string(line_text, provenance ? provenance : "");
+        line_text += ",\"plaintext_representation\":"; append_json_string(line_text, adapter::plaintext_representation(plaintext));
+        if (constant_id != nullptr) { line_text += ",\"constant_id\":"; append_json_string(line_text, constant_id); }
+        line_text += "}";
+        finish_meta(line_text, error);
+    }
+
+    void checkpoint(const char* file, int line, const char* function, const char* name,
+                    const void* context, const void* ciphertext, const void* secret_key,
+                    const double* expected, size_t expected_length,
+                    const double* tol_abs, const double* tol_rel, const double* tol_bits) {
+        if (!accepting()) { calls_dropped_.fetch_add(1, std::memory_order_relaxed); return; }
+        std::string error, error_class = "annotation_error";
+        if (name == nullptr || *name == '\0') error = "checkpoint name must be a non-empty string";
+        const double* tolerances[3] = {tol_abs, tol_rel, tol_bits};
+        for (const double* t : tolerances) {
+            if (t != nullptr && (!std::isfinite(*t) || *t < 0)) error = "tolerance must be finite and non-negative";
+        }
+        std::string line_text = meta_header("checkpoint", "PrecisionCheckpoint", file, line, function);
+        {
+            std::lock_guard<std::mutex> guard(registry_mutex_);
+            line_text += ",\"ciphertext\":{";
+            std::vector<const void*> args; std::vector<std::string> ids;
+            adapter::describe_argument(line_text, &registry_, CS_KIND_CIPHERTEXT, ciphertext, 0, 0.0, &args, &ids);
+            line_text += "}";
+        }
+        line_text += ",\"checkpoint\":{\"name\":"; append_json_string(line_text, name ? name : "");
+        line_text += ",\"expected_values\":[";
+        for (size_t i = 0; i < expected_length; ++i) { if (i) line_text += ","; line_text += json_double(expected[i]); }
+        line_text += "]";
+        if (tol_abs || tol_rel || tol_bits) {
+            line_text += ",\"tolerance\":{";
+            bool first = true;
+            if (tol_abs) { line_text += "\"absolute\":" + json_double(*tol_abs); first = false; }
+            if (tol_rel) { line_text += std::string(first ? "" : ",") + "\"relative\":" + json_double(*tol_rel); first = false; }
+            if (tol_bits) { line_text += std::string(first ? "" : ",") + "\"min_bits\":" + json_double(*tol_bits); }
+            line_text += "}";
+        } else {
+            line_text += ",\"tolerance\":null";
+        }
+        if (error.empty()) {
+            std::string values, native_error;
+            if (adapter::decrypt_real_values(values, context, ciphertext, secret_key, expected_length, &native_error)) {
+                line_text += ",\"observed_values\":" + values;
+            } else {
+                line_text += ",\"observed_values\":null";
+                error = native_error; error_class = "native_error";
+            }
+        } else {
+            line_text += ",\"observed_values\":null";
+        }
+        line_text += "}";
+        finish_meta(line_text, error, error_class);
     }
 
     // Thread states register themselves so finalisation can close events left
@@ -385,6 +506,30 @@ public:
 
 private:
     bool accepting() { std::lock_guard<std::mutex> guard(write_mutex_); return !truncated_; }
+
+    std::string meta_header(const char* kind, const char* operation, const char* file, int line, const char* function) {
+        std::string text = "{\"record\":\"meta\",\"sequence\":" + std::to_string(next_sequence_.fetch_add(1, std::memory_order_relaxed) + 1);
+        text += ",\"kind\":"; append_json_string(text, kind);
+        text += ",\"operation\":"; append_json_string(text, operation);
+        text += ",\"thread_id\":" + std::to_string(native_thread_id());
+        text += ",\"start_ns\":" + std::to_string(clock_ns(CLOCK_MONOTONIC));
+        text += ",\"source\":{\"file\":"; append_json_string(text, file ? file : "");
+        text += ",\"line\":" + std::to_string(line);
+        text += ",\"function\":"; append_json_string(text, function ? function : "");
+        text += "}";
+        return text;
+    }
+
+    void finish_meta(std::string& text, const std::string& error, const std::string& error_class = "annotation_error") {
+        if (error.empty()) {
+            text += ",\"status\":\"ok\"}\n";
+        } else {
+            text += ",\"status\":\"error\",\"error_class\":"; append_json_string(text, error_class);
+            text += ",\"error_message\":"; append_json_string(text, error);
+            text += "}\n";
+        }
+        emit(thread_state(), text);
+    }
 
     void close_unwound(ThreadState& ts) {
         OpenEvent& ev = ts.open;
@@ -510,8 +655,29 @@ void cs_allowed_call(const char* site_id) {
     cs::Runtime::instance().allowed(site_id);
 }
 
-void cs_declared_parameters(const char* site_id, const void* ccparams) {
-    cs::Runtime::instance().declared_parameters(site_id, ccparams);
+void cs_declared_parameters(const char* site_id, int kind, const void* ccparams) {
+    cs::Runtime::instance().declared_parameters(site_id, kind, ccparams);
+}
+
+void cs_annotate_ciphertext(const char* file, int line, const char* function, const void* ciphertext,
+                            const int64_t* shape, size_t shape_length, const char* packing,
+                            int64_t meaningful_slots, const char* provenance) {
+    cs::Runtime::instance().annotate_ciphertext(file, line, function, ciphertext, shape, shape_length, packing,
+                                                meaningful_slots, provenance);
+}
+
+void cs_annotate_plaintext(const char* file, int line, const char* function, const void* plaintext,
+                           const char* provenance, const char* constant_id) {
+    cs::Runtime::instance().annotate_plaintext(file, line, function, plaintext, provenance, constant_id);
+}
+
+void cs_checkpoint(const char* file, int line, const char* function, const char* name,
+                   const void* context, const void* ciphertext, const void* secret_key,
+                   const double* expected, size_t expected_length,
+                   const double* tolerance_absolute, const double* tolerance_relative,
+                   const double* tolerance_min_bits) {
+    cs::Runtime::instance().checkpoint(file, line, function, name, context, ciphertext, secret_key, expected,
+                                       expected_length, tolerance_absolute, tolerance_relative, tolerance_min_bits);
 }
 
 void cs_finalize(void) {

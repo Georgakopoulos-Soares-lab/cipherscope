@@ -9,6 +9,7 @@ tests/integration_cpp and need the toolchain.
 from __future__ import annotations
 
 import json
+import math
 import struct
 import tempfile
 import unittest
@@ -20,6 +21,7 @@ from cipherscope.frontend_parity import compare_traces, semantic_signature
 from cipherscope.native_profile import MARKER_SECTION, read_marker
 from cipherscope.native_trace import NativeTraceError, normalize
 from cipherscope.pipeline import build_analysis_bundle
+from cipherscope.validation import validate_trace
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "native" / "openfhe" / "openfhe-1.5.operations.json"
@@ -76,13 +78,133 @@ class NormalizerTests(unittest.TestCase):
         self.assertEqual(positives, {"depth.critical_path.v1", "keys.unused_in_observed_run.v1", "rotation.hoist_same_input.v1", "parameters.depth_headroom_observed.v1"})
 
     def test_every_archived_twin_pair_is_equivalent(self) -> None:
-        for name in ("repeated_rotations", "operators_inplace", "aliasing", "exception"):
+        for name in ("repeated_rotations", "operators_inplace", "aliasing", "exception",
+                     "many_and_series", "bfv_arithmetic", "bgv_arithmetic", "checkpoints"):
             with self.subTest(fixture=name):
                 root = ROOT / "tests" / "cpp" / "expected" / name
                 cpp = normalize(root / "spool.jsonl", root / "sites", MANIFEST, run_id=f"run_{name}", instrumented_binary_verified=True, expected_translation_units=1)
                 python = json.loads((root / "python_trace.json").read_text(encoding="utf-8"))
                 report = compare_traces(python, cpp, left_name="python", right_name="c++")
                 self.assertTrue(report.equivalent, report.differences)
+
+    def test_vector_composites_series_and_aliases_normalize_like_python(self) -> None:
+        root = ROOT / "tests" / "cpp" / "expected" / "many_and_series"
+        trace = normalize(root / "spool.jsonl", root / "sites", MANIFEST, run_id="run_many", instrumented_binary_verified=True, expected_translation_units=1)
+        by_op = {}
+        for event in trace["events"]:
+            by_op.setdefault(event["operation"], event)
+        # EvalAtIndexKeyGen / EvalAtIndex are recorded under their canonical names.
+        self.assertIn("EvalRotateKeyGen", by_op)
+        self.assertIn("EvalRotate", by_op)
+        self.assertNotIn("EvalAtIndex", by_op)
+        self.assertNotIn("EvalAtIndexKeyGen", by_op)
+        for operation in ("EvalAddMany", "EvalMultMany", "EvalLinearWSum"):
+            with self.subTest(operation=operation):
+                event = by_op[operation]
+                # Every element of the std::vector is an input, in order, like a Python list.
+                self.assertEqual(event["input_ciphertexts"], ["ct_0001:v0", "ct_0002:v0", "ct_0003:v0"])
+                self.assertEqual(len(event["input_states"]), 3)
+                self.assertEqual(event["operand_kinds"][0], "collection")
+                self.assertEqual(event["semantic_arguments"], {"operand_count": 3})
+                self.assertEqual(len(event["output_ciphertexts"]), 1)
+        series = by_op["EvalChebyshevSeries"]
+        self.assertEqual(series["operand_kinds"], ["ciphertext", "collection", "scalar", "scalar"])
+        self.assertEqual(series["semantic_arguments"], {"polynomial_degree": 3, "lower_bound": -8, "upper_bound": 8})
+        self.assertEqual(series["input_ciphertexts"], ["ct_0001:v0"])
+        lineage = {c["id"]: c for c in trace["ciphertexts"]}
+        self.assertEqual(lineage[by_op["EvalMultMany"]["output_ciphertexts"][0]]["parent_ids"], ["ct_0001:v0", "ct_0002:v0", "ct_0003:v0"])
+        self.assertEqual(trace["run"]["coverage"]["unmatched_openfhe_candidates"], 0)
+        self.assertEqual(classify_run(trace).coverage_class, COMPLETE)
+
+    def test_bfv_and_bgv_schemes_come_from_declared_parameters(self) -> None:
+        expectations = {
+            "bfv_arithmetic": ("BFV", 8192, "NORESCALE"),
+            "bgv_arithmetic": ("BGV", 16384, "FLEXIBLEAUTOEXT"),
+        }
+        for name, (scheme, ring, scaling) in expectations.items():
+            with self.subTest(fixture=name):
+                root = ROOT / "tests" / "cpp" / "expected" / name
+                trace = normalize(root / "spool.jsonl", root / "sites", MANIFEST, run_id=f"run_{name}", instrumented_binary_verified=True, expected_translation_units=1)
+                context = trace["context"]
+                self.assertEqual(context["scheme"], scheme)
+                self.assertEqual(context["scheme_evidence"], "declared_parameters")
+                self.assertEqual(context["ring_dimension"], ring)
+                # Integer schemes pack N slots (CKKS packs N/2) and the batch size is N.
+                self.assertEqual(context["available_slots"], ring)
+                self.assertEqual(context["batch_size"], ring)
+                self.assertEqual(context["plaintext_modulus"], 65537)
+                self.assertEqual(context["scaling_technique"], scaling)
+                self.assertEqual(context["declared_multiplicative_depth"], 2)
+                self.assertTrue(any(e["operation"] == "MakePackedPlaintext" for e in trace["events"]))
+                self.assertEqual(validate_trace(trace).issues, ())
+        # A CKKS spool reports no plaintext modulus: that slot holds the scaling modulus size.
+        self.assertIsNone(normalize_fixture()["context"]["plaintext_modulus"])
+        self.assertEqual(normalize_fixture()["context"]["scheme"], "CKKS")
+
+    def test_annotations_and_checkpoints_are_evidence_not_inference(self) -> None:
+        root = ROOT / "tests" / "cpp" / "expected" / "checkpoints"
+        trace = normalize(root / "spool.jsonl", root / "sites", MANIFEST, run_id="run_checkpoints", instrumented_binary_verified=True, expected_translation_units=1)
+        self.assertTrue(trace["run"]["shadow_mode"])
+        kinds = [(e["kind"], e["operation"]) for e in trace["events"] if e["kind"] in {"annotation", "checkpoint"}]
+        self.assertEqual(kinds, [("annotation", "AnnotatePlaintext"), ("annotation", "AnnotatePlaintext"), ("annotation", "Annotate"),
+                                 ("checkpoint", "PrecisionCheckpoint"), ("annotation", "Annotate"), ("checkpoint", "PrecisionCheckpoint")])
+        by_op = {}
+        for event in trace["events"]:
+            by_op.setdefault(event["operation"], []).append(event)
+        packing = by_op["Annotate"][0]
+        self.assertEqual(packing["semantic_arguments"], {"shape": [4], "packing": "row_major", "meaningful_slots": 4})
+        self.assertEqual(packing["input_ciphertexts"], ["ct_0001:v0"])
+        self.assertEqual(packing["operand_kinds"], ["ciphertext"])
+        self.assertTrue(packing["source"]["file"].endswith("checkpoints.cpp"))
+        self.assertEqual((packing["source"]["line"], packing["source"]["function"]), (40, "main"))
+        self.assertIsNone(packing["overload"])
+        states = {c["id"]: c for c in trace["ciphertexts"]}
+        self.assertEqual(states["ct_0001:v0"]["annotations"], packing["semantic_arguments"])
+        self.assertEqual(states["ct_0002:v0"]["annotations"], {"provenance": "model_parameter"})
+        plaintext = by_op["AnnotatePlaintext"][0]
+        self.assertEqual(plaintext["operand_kinds"], ["plaintext"])
+        self.assertEqual(plaintext["semantic_arguments"]["constant_id"], "layer0")
+        fresh, later = by_op["PrecisionCheckpoint"]
+        for checkpoint in (fresh, later):
+            arguments = checkpoint["semantic_arguments"]
+            self.assertEqual(arguments["status"], "ok")
+            self.assertEqual(len(arguments["expected_values"]), len(arguments["observed_values"]))
+            # Same metric functions as the Python session.
+            self.assertEqual(arguments["absolute_bits"], -math.log2(arguments["max_abs_error"]))
+        self.assertEqual(fresh["semantic_arguments"]["tolerance_status"], "undeclared")
+        self.assertEqual(later["semantic_arguments"]["tolerance"], {"min_bits": 40.0})
+        self.assertEqual(later["semantic_arguments"]["violated"], ["min_bits"])
+        self.assertLess(later["semantic_arguments"]["absolute_bits"], fresh["semantic_arguments"]["absolute_bits"])
+        self.assertEqual(sum(e["operation"] == "Decrypt" for e in trace["events"]), 1, "the runtime's own decryption is not an event")
+        statuses = build_analysis_bundle(trace)["recommendations"]["analyzer_status"]
+        for rule in ("precision.checkpoint_drop.v1", "precision.tolerance_violated.v1", "packing.low_utilization_annotated.v1",
+                     "encoding.repeated_public_constant.v1", "provenance.public_value_ciphertext_mult.v1"):
+            self.assertEqual(statuses[rule], "positive", rule)
+        # A program without the opt-in header yields no such evidence: not_applicable, never faked.
+        plain = build_analysis_bundle(normalize_fixture())["recommendations"]["analyzer_status"]
+        self.assertFalse(normalize_fixture()["run"]["shadow_mode"])
+        for rule in ("precision.checkpoint_drop.v1", "packing.low_utilization_annotated.v1", "provenance.public_value_ciphertext_mult.v1"):
+            self.assertEqual(plain[rule], "not_applicable", rule)
+
+    def test_invalid_annotation_records_become_error_events(self) -> None:
+        root = ROOT / "tests" / "cpp" / "expected" / "checkpoints"
+        lines = (root / "spool.jsonl").read_text(encoding="utf-8").splitlines()
+        meta_index = next(i for i, line in enumerate(lines) if '"record":"meta"' in line)
+        bad = json.loads(lines[meta_index])
+        bad.update({"sequence": 900, "status": "error", "error_class": "annotation_error", "error_message": "at least one annotation field is required",
+                    "operation": "Annotate", "annotation": {}, "ciphertext": {"id": "ct_0001:v0", "state": None}})
+        lines.insert(meta_index + 1, json.dumps(bad))
+        with tempfile.TemporaryDirectory() as directory:
+            spool = Path(directory) / "spool.jsonl"
+            spool.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            trace = normalize(spool, root / "sites", MANIFEST, run_id="run_bad", instrumented_binary_verified=True, expected_translation_units=1)
+        errors = [e for e in trace["events"] if e["status"] == "error"]
+        self.assertEqual(len(errors), 1)
+        self.assertEqual((errors[0]["kind"], errors[0]["error_class"]), ("annotation", "annotation_error"))
+        self.assertEqual(errors[0]["output_ciphertexts"], [])
+        # An invalid annotation never reaches the ciphertext's recorded annotations.
+        states = {c["id"]: c for c in trace["ciphertexts"]}
+        self.assertEqual(states["ct_0001:v0"]["annotations"], {"shape": [4], "packing": "row_major", "meaningful_slots": 4})
 
     def test_parity_comparator_reports_semantic_differences_only(self) -> None:
         cpp = normalize_fixture()

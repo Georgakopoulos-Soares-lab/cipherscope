@@ -1,7 +1,7 @@
 // Uses CryptoContext members the operation manifest does not cover
-// (EvalAddMany / EvalMultMany, the same composites the Python gate's GAP-04
-// exercises). Strict tracing must not claim COMPLETE coverage: the run is
-// PARTIAL-PERMISSIVE and names the calls.
+// (EvalAddMutable / EvalMultMutable, the level-adjusting variants the Python
+// gate's GAP-04 exercises). Strict tracing must not claim COMPLETE coverage:
+// the run is PARTIAL-PERMISSIVE and names the calls.
 #include "openfhe.h"
 
 #include <iostream>
@@ -25,9 +25,8 @@ int main() {
     std::vector<double> x = {1, 2, 3, 4, 5, 6, 7, 8};
     auto a = cc->Encrypt(keys.publicKey, cc->MakeCKKSPackedPlaintext(x));
     auto b = cc->Encrypt(keys.publicKey, cc->MakeCKKSPackedPlaintext(x));
-    std::vector<Ciphertext<DCRTPoly>> many = {a, b};
-    auto sum = cc->EvalAddMany(many);        // not in the manifest
-    auto product = cc->EvalMultMany(many);   // not in the manifest
+    auto sum = cc->EvalAddMutable(a, b);       // not in the manifest
+    auto product = cc->EvalMultMutable(a, b);  // not in the manifest
     auto c = cc->EvalAdd(sum, product);
     Plaintext out;
     cc->Decrypt(keys.secretKey, c, &out);

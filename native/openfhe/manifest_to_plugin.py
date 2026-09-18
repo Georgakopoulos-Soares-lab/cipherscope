@@ -24,6 +24,9 @@ def render(manifest: dict) -> str:
             continue
         arity = len([part for part in match.group(2).split(",") if part.strip()])
         lines.append(f"alias {match.group(1)}/{arity} {target}")
+    for method, target in manifest.get("method_aliases", {}).items():
+        if method != "comment":
+            lines.append(f"method {method} {target}")
     allowed = manifest.get("allowed_nonsemantic", {})
     for name in allowed.get("names", []):
         lines.append(f"allow {name}")

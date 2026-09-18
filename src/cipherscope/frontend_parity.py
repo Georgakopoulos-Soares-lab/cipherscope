@@ -58,6 +58,22 @@ def _state_signature(state: Mapping[str, Any] | None) -> dict[str, Any] | None:
     return {"level": state.get("level"), "noise_scale_degree": state.get("noise_scale_degree"), "slots": state.get("slots")}
 
 
+# A precision checkpoint's contract is producer-neutral; its measurement is
+# not: CKKS decryption noise differs between any two runs, so observed values
+# and the derived error metrics are excluded from the signature. The outcome
+# fields (status, tolerance_status, violated) stay: twin programs declare
+# tolerances far from the noise floor.
+_CHECKPOINT_CONTRACT_KEYS = ("checkpoint_name", "status", "reason", "expected_values", "tolerance",
+                             "tolerance_status", "violated")
+
+
+def _semantic_arguments_signature(event: Mapping[str, Any]) -> dict[str, Any]:
+    arguments = dict(event.get("semantic_arguments") or {})
+    if event.get("operation") == "PrecisionCheckpoint":
+        return {k: arguments[k] for k in _CHECKPOINT_CONTRACT_KEYS if k in arguments}
+    return arguments
+
+
 def semantic_signature(trace: Mapping[str, Any]) -> list[dict[str, Any]]:
     """The producer-independent content of every event, in order."""
 
@@ -75,7 +91,7 @@ def semantic_signature(trace: Mapping[str, Any]) -> list[dict[str, Any]]:
             "outputs": [_relative(ct, order) for ct in event.get("output_ciphertexts") or ()],
             "input_states": [_state_signature(s) for s in event.get("input_states") or ()],
             "output_states": [_state_signature(s) for s in event.get("output_states") or ()],
-            "semantic_arguments": dict(event.get("semantic_arguments") or {}),
+            "semantic_arguments": _semantic_arguments_signature(event),
         })
     return signature
 
@@ -103,11 +119,15 @@ def compare_traces(left: Mapping[str, Any], right: Mapping[str, Any], *, left_na
                 report.differences.append(
                     f"event {index} ({a['operation']}) {key}: {left_name}={json.dumps(a[key], sort_keys=True)} {right_name}={json.dumps(b.get(key), sort_keys=True)}"
                 )
-    left_context = {k: (left.get("context") or {}).get(k) for k in ("ring_dimension", "batch_size", "configured_multiplicative_depth", "scaling_technique", "key_switch_technique", "security_level")}
+    left_context = {k: (left.get("context") or {}).get(k) for k in ("scheme", "ring_dimension", "available_slots", "plaintext_modulus", "batch_size", "configured_multiplicative_depth", "scaling_technique", "key_switch_technique", "security_level")}
     right_context = {k: (right.get("context") or {}).get(k) for k in left_context}
     for key, value in left_context.items():
         if value != right_context[key]:
             report.differences.append(f"context {key}: {left_name}={value!r} {right_name}={right_context[key]!r}")
+    left_shadow = bool((left.get("run") or {}).get("shadow_mode"))
+    right_shadow = bool((right.get("run") or {}).get("shadow_mode"))
+    if left_shadow != right_shadow:
+        report.differences.append(f"run shadow_mode: {left_name}={left_shadow!r} {right_name}={right_shadow!r}")
     left_analysis = analysis_signature(left)
     right_analysis = analysis_signature(right)
     for key in ("analysis_status", "analyzer_status", "findings"):

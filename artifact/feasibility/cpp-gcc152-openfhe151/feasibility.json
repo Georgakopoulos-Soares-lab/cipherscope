@@ -3,7 +3,7 @@
   "checks": [
     {
       "description": "BUILD-01: the plain fixture project builds and runs without CipherScope",
-      "duration_ns": 18091401766,
+      "duration_ns": 18050424498,
       "id": "BUILD-01",
       "observed": {
         "programs": [
@@ -12,7 +12,11 @@
           "aliasing",
           "exception",
           "threads",
-          "unmatched"
+          "unmatched",
+          "many_and_series",
+          "bfv_arithmetic",
+          "bgv_arithmetic",
+          "checkpoints"
         ]
       },
       "required": true,
@@ -20,7 +24,7 @@
     },
     {
       "description": "BUILD-02: CMakeCache.txt yields source root, GCC, OpenFHE and the CMake target; the plain binary has no marker",
-      "duration_ns": 14993402,
+      "duration_ns": 7726772,
       "id": "BUILD-02",
       "observed": {
         "compiler_version": "15.2.0",
@@ -32,7 +36,7 @@
     },
     {
       "description": "BUILD-03: `cipherscope profile <binary>` creates an instrumented shadow build for every fixture without touching the source tree",
-      "duration_ns": 95960323299,
+      "duration_ns": 98232833521,
       "id": "BUILD-03",
       "observed": {
         "aliasing": {
@@ -40,9 +44,29 @@
           "events": 10,
           "exit": 0
         },
+        "bfv_arithmetic": {
+          "coverage": "COMPLETE",
+          "events": 13,
+          "exit": 0
+        },
+        "bgv_arithmetic": {
+          "coverage": "COMPLETE",
+          "events": 14,
+          "exit": 0
+        },
+        "checkpoints": {
+          "coverage": "COMPLETE",
+          "events": 18,
+          "exit": 0
+        },
         "exception": {
           "coverage": "COMPLETE",
           "events": 7,
+          "exit": 0
+        },
+        "many_and_series": {
+          "coverage": "COMPLETE",
+          "events": 17,
           "exit": 0
         },
         "operators_inplace": {
@@ -71,7 +95,7 @@
     },
     {
       "description": "BUILD-04: the shadow binary carries the marker, every translation unit was instrumented, and the original binary is untouched",
-      "duration_ns": 12175163,
+      "duration_ns": 3224653,
       "id": "BUILD-04",
       "observed": {
         "marker": {
@@ -79,17 +103,17 @@
           "frontend": "gcc-openfhe",
           "frontend_version": "0.1.0",
           "gcc": "15.2.0",
-          "manifest": "openfhe-1.5-v2",
+          "manifest": "openfhe-1.5-v3",
           "schema_major": "1"
         },
-        "original_mtime_ns": 1789700785000000000
+        "original_mtime_ns": 1789759395690355316
       },
       "required": true,
       "status": "pass"
     },
     {
       "description": "OP-01: every application-level OpenFHE call is intercepted exactly once with its semantic arguments",
-      "duration_ns": 16340,
+      "duration_ns": 17011,
       "id": "OP-01",
       "observed": {
         "operations": [
@@ -110,7 +134,7 @@
     },
     {
       "description": "OP-02: operator*, operator+, operator+=, unary operator- and ct*pt normalize to one canonical event each",
-      "duration_ns": 11652,
+      "duration_ns": 11763,
       "id": "OP-02",
       "observed": {
         "operations": [
@@ -136,7 +160,7 @@
     },
     {
       "description": "MUT-01: in-place operations produce the next immutable version of their operand and later calls read it",
-      "duration_ns": 8816,
+      "duration_ns": 7794,
       "id": "MUT-01",
       "observed": {
         "add_in_place": [
@@ -150,8 +174,75 @@
       "status": "pass"
     },
     {
+      "description": "OP-03: EvalAddMany/EvalMultMany/EvalLinearWSum record every vector element as an input, EvalChebyshevSeries its degree and bounds, and EvalAtIndex[KeyGen] their canonical names",
+      "duration_ns": 23515,
+      "id": "OP-03",
+      "observed": {
+        "operations": [
+          "KeyGen",
+          "EvalMultKeyGen",
+          "EvalRotateKeyGen",
+          "MakeCKKSPackedPlaintext",
+          "Encrypt",
+          "MakeCKKSPackedPlaintext",
+          "Encrypt",
+          "MakeCKKSPackedPlaintext",
+          "Encrypt",
+          "EvalAddMany",
+          "EvalMultMany",
+          "EvalLinearWSum",
+          "EvalChebyshevSeries",
+          "EvalRotate",
+          "EvalAdd",
+          "Decrypt",
+          "Decrypt"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "META-01: cipherscope/annotate.h annotations and precision checkpoints become annotation/checkpoint events with the caller's source line, shadow_mode follows the evidence, and the annotation-dependent analyzers fire only on that evidence",
+      "duration_ns": 13221679,
+      "id": "META-01",
+      "observed": {
+        "fresh_bits": 43.160796211903055,
+        "later_bits": 28.208837111444982,
+        "positives": [
+          "depth.critical_path.v1",
+          "encoding.repeated_public_constant.v1",
+          "packing.low_utilization_annotated.v1",
+          "parameters.depth_headroom_observed.v1",
+          "precision.checkpoint_drop.v1",
+          "precision.tolerance_violated.v1",
+          "provenance.public_value_ciphertext_mult.v1"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "SCHEME-01: BFV and BGV programs report their scheme from the declared CCParams, N packed slots and the plaintext modulus; CKKS keeps N/2 slots and no plaintext modulus",
+      "duration_ns": 24437,
+      "id": "SCHEME-01",
+      "observed": {
+        "bfv_arithmetic": {
+          "events": 13,
+          "ring_dimension": 8192,
+          "scheme": "BFV"
+        },
+        "bgv_arithmetic": {
+          "events": 14,
+          "ring_dimension": 16384,
+          "scheme": "BGV"
+        }
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
       "description": "ID-01: handle copies, moves and container storage keep one identity; destroyed objects never hand their ID to a reused address",
-      "duration_ns": 21110,
+      "duration_ns": 19085,
       "id": "ID-01",
       "observed": {
         "identities": [
@@ -169,7 +260,7 @@
     },
     {
       "description": "SRC-01: events resolve to the exact user source file, line and function",
-      "duration_ns": 14167,
+      "duration_ns": 11461,
       "id": "SRC-01",
       "observed": {
         "lines": [
@@ -190,7 +281,7 @@
     },
     {
       "description": "SRC-02: the same events and source lines are recorded at -O0, -O2 and -O3 (instrumentation precedes optimization)",
-      "duration_ns": 19246371892,
+      "duration_ns": 18783531149,
       "id": "SRC-02",
       "observed": {
         "-O0": [
@@ -235,7 +326,7 @@
     },
     {
       "description": "EXC-01: a throwing OpenFHE call becomes an error event, the application's catch runs unchanged, and tracing continues",
-      "duration_ns": 12163,
+      "duration_ns": 13866,
       "id": "EXC-01",
       "observed": {
         "error_event": "event_0005"
@@ -245,14 +336,14 @@
     },
     {
       "description": "THR-01: concurrent semantic calls from OpenMP threads are recorded once each with their own thread IDs and complete lineage",
-      "duration_ns": 21820,
+      "duration_ns": 22843,
       "id": "THR-01",
       "observed": {
         "thread_ids": [
-          2044645,
-          2044646,
-          2044647,
-          2044656
+          2317704,
+          2317705,
+          2317706,
+          2317715
         ]
       },
       "required": true,
@@ -260,11 +351,15 @@
     },
     {
       "description": "NUM-01: the instrumented binaries print exactly what the plain binaries print (same decrypted results, same control flow)",
-      "duration_ns": 6147810,
+      "duration_ns": 353274,
       "id": "NUM-01",
       "observed": {
         "aliasing": true,
+        "bfv_arithmetic": true,
+        "bgv_arithmetic": true,
+        "checkpoints": true,
         "exception": true,
+        "many_and_series": true,
         "operators_inplace": true,
         "repeated_rotations": true,
         "threads": true,
@@ -275,12 +370,12 @@
     },
     {
       "description": "COV-01: an executed OpenFHE call outside the manifest denies COMPLETE and is named; every other fixture is COMPLETE",
-      "duration_ns": 57529,
+      "duration_ns": 73098,
       "id": "COV-01",
       "observed": {
         "unmatched": [
-          "EvalAddMany",
-          "EvalMultMany"
+          "EvalAddMutable",
+          "EvalMultMutable"
         ]
       },
       "required": true,
@@ -288,7 +383,7 @@
     },
     {
       "description": "LIMIT-01: a hard event limit stops recording, never the workload, and the truncated bundle validates as incomplete",
-      "duration_ns": 21544422184,
+      "duration_ns": 18060674045,
       "id": "LIMIT-01",
       "observed": {
         "calls_dropped": 6,
@@ -299,7 +394,7 @@
     },
     {
       "description": "TRACE-01: every bundle validates against the canonical schemas and runs through the unchanged graph/analyzer/export pipeline",
-      "duration_ns": 93326773,
+      "duration_ns": 91989955,
       "id": "TRACE-01",
       "observed": {
         "validated": [
@@ -308,7 +403,11 @@
           "aliasing",
           "exception",
           "threads",
-          "unmatched"
+          "unmatched",
+          "many_and_series",
+          "bfv_arithmetic",
+          "bgv_arithmetic",
+          "checkpoints"
         ]
       },
       "required": true,
@@ -316,7 +415,7 @@
     },
     {
       "description": "PIPE-01: the existing analyzers reach the expected diagnoses on the C++ trace and mark unavailable evidence not_applicable",
-      "duration_ns": 5014299,
+      "duration_ns": 5054083,
       "id": "PIPE-01",
       "observed": {
         "positives": [
@@ -330,12 +429,16 @@
       "status": "pass"
     },
     {
-      "description": "PARITY-01: the C++ traces of the twin programs (rotations, operators/in-place, aliasing, exception) are semantically equivalent to the Python frontend's traces",
-      "duration_ns": 43353057,
+      "description": "PARITY-01: the C++ traces of the twin programs (rotations, operators/in-place, aliasing, exception, vector composites/series, BFV, BGV, annotations/checkpoints) are semantically equivalent to the Python frontend's traces",
+      "duration_ns": 103362458,
       "id": "PARITY-01",
       "observed": {
         "aliasing": 10,
+        "bfv_arithmetic": 13,
+        "bgv_arithmetic": 14,
+        "checkpoints": 18,
         "exception": 7,
+        "many_and_series": 17,
         "operators_inplace": 15,
         "repeated_rotations": 10
       },
@@ -343,13 +446,13 @@
       "status": "pass"
     }
   ],
-  "duration_ns": 155366995796,
+  "duration_ns": 153393426178,
   "environment": {
     "compiler": "/opt/apps/gcc/15.2.0/bin/g++",
     "compiler_version": "15.2.0",
     "frontend": "gcc-openfhe",
     "frontend_version": "0.1.0",
-    "instrumentation_manifest": "openfhe-1.5-v2",
+    "instrumentation_manifest": "openfhe-1.5-v3",
     "lane": "cpp-gcc152-openfhe151",
     "machine": "x86_64",
     "openfhe_dir": "/work/10899/kimopro/ls6/cipherscope-openfhe-build/opt/openfhe/lib/OpenFHE",
@@ -383,7 +486,11 @@
     "tests/cpp/fixtures/aliasing.cpp",
     "tests/cpp/fixtures/exception.cpp",
     "tests/cpp/fixtures/threads.cpp",
-    "tests/cpp/fixtures/unmatched.cpp"
+    "tests/cpp/fixtures/unmatched.cpp",
+    "tests/cpp/fixtures/many_and_series.cpp",
+    "tests/cpp/fixtures/bfv_arithmetic.cpp",
+    "tests/cpp/fixtures/bgv_arithmetic.cpp",
+    "tests/cpp/fixtures/checkpoints.cpp"
   ],
   "gate": "CipherScope GCC/OpenFHE C++ frontend feasibility",
   "lane": "cpp-gcc152-openfhe151",
@@ -394,12 +501,12 @@
     "Fixtures use HEStd_128_classic defaults with small batch sizes for tractability; they are coverage evidence, not benchmarks."
   ],
   "schema_version": "1.0.0",
-  "started_unix_ns": 1789700767285483276,
+  "started_unix_ns": 1789759387362137300,
   "status": "native_pass",
   "summary": {
     "fail": 0,
-    "pass": 18,
+    "pass": 21,
     "skip": 0,
-    "total": 18
+    "total": 21
   }
 }

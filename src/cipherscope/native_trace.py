@@ -32,6 +32,8 @@ from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+from .compatibility import available_slots_for, normalize_scheme
+from .session import _precision_metrics, _real_values
 from .fingerprint import build_fingerprint
 from .state import SCHEMA_VERSION, TOOL_NAME, TOOL_VERSION
 from .validation import ValidationError, validate_trace
@@ -44,6 +46,7 @@ STATE_FIELDS = (
 BINARY_OPERATIONS = {"EvalAdd", "EvalAddInPlace", "EvalSub", "EvalSubInPlace", "EvalMult", "EvalMultNoRelin"}
 _KIND_LABELS = {
     "ciphertext": "ciphertext",
+    "ciphertext_vector": "collection",
     "plaintext": "plaintext",
     "key": "key",
     "key_pair": "unknown",
@@ -137,12 +140,19 @@ def _state_and_missing(state: Mapping[str, Any] | None, prefix: str) -> tuple[di
     return snapshot, missing
 
 
-def _semantic_value(argument: Mapping[str, Any]) -> Any:
+def _semantic_value(argument: Mapping[str, Any], key: str) -> Any:
     kind = argument.get("kind")
     if kind in {"integer", "scalar", "boolean"}:
         return argument.get("value")
     if kind == "integer_vector":
         return list(argument.get("values") or [])
+    if kind == "ciphertext_vector" and key == "operand_count":
+        return len(argument.get("items") or [])
+    if kind == "real_vector" and key == "polynomial_degree":
+        # Chebyshev coefficients: the degree, never the coefficients themselves
+        # (the adapter only spools their count) -- same as the Python frontend.
+        length = argument.get("length")
+        return max(int(length) - 1, 0) if isinstance(length, int) else None
     return None
 
 
@@ -181,15 +191,21 @@ def _event_from_record(
         # passes every defaulted parameter too. Keep the documented positions.
         operand_kinds = operand_kinds[: max(roles) + 1]
 
-    ciphertext_positions = [i for i, a in enumerate(operands) if a.get("kind") == "ciphertext" and a.get("id")]
+    # A std::vector of ciphertexts contributes its elements in order, exactly
+    # as the Python frontend flattens a list argument.
+    ciphertext_inputs: list[Mapping[str, Any]] = []
     selected = spec.get("ciphertext_input_indices")
-    if selected is not None:
-        ciphertext_positions = [i for i in ciphertext_positions if i in set(selected)]
+    for position, argument in enumerate(operands):
+        if selected is not None and position not in set(selected):
+            continue
+        if argument.get("kind") == "ciphertext" and argument.get("id"):
+            ciphertext_inputs.append(argument)
+        elif argument.get("kind") == "ciphertext_vector":
+            ciphertext_inputs.extend(item for item in (argument.get("items") or []) if item.get("id"))
     input_ids: list[str] = []
     input_states: list[dict[str, Any]] = []
     missing: list[str] = []
-    for position in ciphertext_positions:
-        argument = operands[position]
+    for argument in ciphertext_inputs:
         if argument["id"] in input_ids:
             continue
         snapshot, absent = _state_and_missing(argument.get("state"), f"input[{len(input_ids)}]")
@@ -220,7 +236,7 @@ def _event_from_record(
     for index_text, key in (spec.get("semantic_arguments") or {}).items():
         index = int(index_text)
         if index < len(operands):
-            value = _semantic_value(operands[index])
+            value = _semantic_value(operands[index], key)
             if value is not None:
                 semantic[key] = value
 
@@ -261,16 +277,122 @@ def _event_from_record(
     return event, created
 
 
+def _meta_event_from_record(record: Mapping[str, Any], sequence: int) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """Canonical `annotation` / `checkpoint` event for one cipherscope/annotate.h call.
+
+    Returns the event and, for a ciphertext annotation, ``{"id": ..., "annotations": {...}}``
+    to merge into that ciphertext's state (as the Python registry does).
+    Metrics are computed here with the Python session's own functions, so a
+    C++ checkpoint reports exactly what the Python checkpoint would.
+    """
+
+    kind = str(record.get("kind"))
+    operation = str(record.get("operation"))
+    source_record = dict(record.get("source") or {})
+    file = source_record.get("file") or None
+    line = source_record.get("line") if isinstance(source_record.get("line"), int) and source_record.get("line") > 0 else None
+    function = source_record.get("function") or None
+    source = {
+        "file": file,
+        "line": line,
+        "function": function,
+        "qualified_function": function,
+        "call_site_id": ":".join(("site", file or "unknown", str(line), function or "unknown", operation)),
+    }
+    status = str(record.get("status") or "ok")
+    ciphertext = record.get("ciphertext") or {}
+    input_ids: list[str] = []
+    input_states: list[dict[str, Any]] = []
+    missing: list[str] = []
+    if ciphertext.get("id"):
+        input_ids.append(str(ciphertext["id"]))
+        snapshot, absent = _state_and_missing(ciphertext.get("state"), "input[0]")
+        if snapshot is not None:
+            input_states.append(snapshot)
+        missing.extend(absent)
+
+    semantic: dict[str, Any] = {}
+    merge: dict[str, Any] | None = None
+    if operation == "PrecisionCheckpoint":
+        checkpoint = dict(record.get("checkpoint") or {})
+        expected_values = _real_values(checkpoint.get("expected_values") or [])
+        observed_raw = checkpoint.get("observed_values")
+        observed_values = _real_values(observed_raw) if isinstance(observed_raw, list) else []
+        tolerance = checkpoint.get("tolerance")
+        contract = {k: float(v) for k, v in tolerance.items()} if isinstance(tolerance, Mapping) and tolerance else None
+        comparison: dict[str, Any] = {
+            "status": "ok" if expected_values and len(expected_values) == len(observed_values) else "failed",
+            "expected_values": expected_values,
+            "observed_values": observed_values,
+        }
+        if comparison["status"] == "failed":
+            comparison["reason"] = "shape_mismatch"
+        else:
+            comparison.update(_precision_metrics(expected_values, observed_values, contract))
+        semantic = {"checkpoint_name": checkpoint.get("name"), **comparison}
+        operand_kinds = ["ciphertext"]
+    elif operation == "AnnotatePlaintext":
+        semantic = dict(record.get("annotation") or {})
+        operand_kinds = ["plaintext"]
+    else:
+        semantic = dict(record.get("annotation") or {})
+        operand_kinds = ["ciphertext"]
+        if status == "ok" and input_ids:
+            merge = {"id": input_ids[0], "annotations": dict(semantic)}
+
+    event: dict[str, Any] = {
+        "event_id": f"event_{sequence:04d}",
+        "sequence": sequence,
+        "kind": kind,
+        "operation": operation,
+        "overload": None,
+        "granularity": None,
+        "status": status,
+        "argument_representations": [],
+        "keyword_argument_representations": {},
+        "source": source,
+        "input_ciphertexts": input_ids,
+        "output_ciphertexts": [],
+        "operand_kinds": operand_kinds,
+        "timing": {"start_ns": int(record.get("start_ns") or 0), "wall_duration_ns": 0,
+                   "process_cpu_duration_ns": 0, "thread_cpu_duration_ns": None},
+        "input_states": input_states,
+        "output_states": [],
+        "semantic_arguments": semantic,
+        "thread_id": record.get("thread_id"),
+        "missing": sorted(set(missing)),
+    }
+    if status == "error":
+        event["error_class"] = str(record.get("error_class") or "annotation_error")
+        event["error_message"] = str(record.get("error_message") or "")
+    return event, merge
+
+
 def _context_block(contexts: Sequence[Mapping[str, Any]], declared: Mapping[str, Any] | None) -> dict[str, Any]:
     first = dict(contexts[0]) if contexts else {}
     ring = first.get("ring_dimension")
+    # Scheme: the CCParams observed at GenCryptoContext() names it (the
+    # adapter spools OpenFHE's enum name, e.g. BFVRNS_SCHEME). Without declared
+    # parameters, mirror the Python contract: a BFV/BGV context packs
+    # batch_size == ring_dimension, a CKKS context at most ring_dimension / 2.
+    scheme: str | None
+    if declared and declared.get("available") and declared.get("scheme"):
+        scheme = normalize_scheme(declared.get("scheme"))
+        scheme_evidence = "declared_parameters"
+    elif isinstance(ring, int) and first.get("batch_size") == ring:
+        scheme, scheme_evidence = None, "batch_size_equals_ring_dimension_not_ckks"
+    else:
+        scheme, scheme_evidence = "CKKS", "configured_ckks_contract"
     block: dict[str, Any] = {
         "context_id": first.get("context_id", "context_0001"),
-        "scheme": "CKKS",
-        "scheme_evidence": "configured_ckks_contract",
+        "scheme": scheme,
+        "scheme_evidence": scheme_evidence,
         "ring_dimension": ring,
-        "available_slots": (ring // 2) if isinstance(ring, int) else None,
+        "available_slots": available_slots_for(scheme, ring) if isinstance(ring, int) else None,
         "batch_size": first.get("batch_size"),
+        # CKKS keeps its scaling modulus size in the encoding parameters'
+        # plaintext-modulus slot; it is not a plaintext modulus. Python nulls it too.
+        "plaintext_modulus": (first.get("plaintext_modulus") or None) if scheme != "CKKS" else None,
         "configured_multiplicative_depth": first.get("configured_multiplicative_depth"),
         "scaling_technique": first.get("scaling_technique"),
         "key_switch_technique": first.get("key_switch_technique"),
@@ -328,7 +450,16 @@ def normalize(
 
     events: list[dict[str, Any]] = []
     ciphertexts: list[dict[str, Any]] = []
-    for record in sorted((r for r in records if r["record"] == "event"), key=lambda r: int(r["sequence"])):
+    annotations: dict[str, dict[str, Any]] = {}
+    checkpoints = 0
+    for record in sorted((r for r in records if r["record"] in {"event", "meta"}), key=lambda r: int(r["sequence"])):
+        if record["record"] == "meta":
+            event, merge = _meta_event_from_record(record, len(events) + 1)
+            events.append(event)
+            if merge is not None:
+                annotations.setdefault(merge["id"], {}).update(merge["annotations"])
+            checkpoints += event["kind"] == "checkpoint"
+            continue
         operation = str(record["operation"])
         spec = manifest.get(operation)
         if spec is None:
@@ -347,6 +478,9 @@ def normalize(
             state = next((s for s in event["input_states"] if s["id"] == ct), {"id": ct, **{f: None for f in STATE_FIELDS}})
             ciphertexts.append({**state, "created_by_event": None, "parent_ids": [], "origin": "preexisting"})
             known.add(ct)
+    for state in ciphertexts:
+        if state["id"] in annotations:
+            state["annotations"] = annotations[state["id"]]
     ciphertexts.sort(key=_ciphertext_order)
 
     traced_calls = sum(1 for e in events if e["kind"] == "crypto_operation")
@@ -418,7 +552,9 @@ def normalize(
         "runtime": runtime,
         "clocks": {"wall": "CLOCK_MONOTONIC", "cpu": "CLOCK_PROCESS_CPUTIME_ID", "thread_cpu": "CLOCK_THREAD_CPUTIME_ID"},
         "coverage": coverage,
-        "shadow_mode": False,
+        # Evidence-based: a program that called cipherscope::checkpoint()
+        # handed the runtime its secret key, exactly what shadow mode means.
+        "shadow_mode": checkpoints > 0,
         "testing_security_acknowledged": testing_security_acknowledged,
     }
     if name is not None:

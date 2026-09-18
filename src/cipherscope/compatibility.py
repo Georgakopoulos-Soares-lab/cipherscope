@@ -10,6 +10,47 @@ from typing import Any
 from .state import CiphertextMetadata
 
 
+# OpenFHE's SCHEME enum names (both bindings print them this way) -> trace vocabulary.
+SCHEME_NAMES: dict[str, str] = {
+    "CKKSRNS_SCHEME": "CKKS",
+    "BFVRNS_SCHEME": "BFV",
+    "BGVRNS_SCHEME": "BGV",
+    # OpenFHE C++ prints the SCHEME enum without the suffix.
+    "CKKSRNS": "CKKS",
+    "BFVRNS": "BFV",
+    "BGVRNS": "BGV",
+    "CKKS": "CKKS",
+    "BFV": "BFV",
+    "BGV": "BGV",
+}
+SCHEMES: tuple[str, ...] = ("CKKS", "BFV", "BGV")
+
+
+def normalize_scheme(value: Any) -> str | None:
+    """Map an OpenFHE scheme enum/name to ``CKKS``/``BFV``/``BGV``, or None if unknown."""
+
+    if value is None:
+        return None
+    name = getattr(value, "name", value)
+    return SCHEME_NAMES.get(str(name)) if isinstance(name, str) else None
+
+
+def available_slots_for(scheme: str | None, ring_dimension: Any) -> int | None:
+    """Slot capacity a scheme offers for a ring dimension.
+
+    CKKS packs N/2 complex slots; BGV and BFV pack N integer slots. With no
+    known scheme, nothing is claimed.
+    """
+
+    if not isinstance(ring_dimension, int) or isinstance(ring_dimension, bool):
+        return None
+    if scheme == "CKKS":
+        return ring_dimension // 2
+    if scheme in {"BFV", "BGV"}:
+        return ring_dimension
+    return None
+
+
 @dataclass(frozen=True)
 class OperationSpec:
     """Tracing settings for one OpenFHE context method."""
@@ -139,6 +180,48 @@ CORE_OPERATIONS: dict[str, OperationSpec] = {
         has_ciphertext_output=False,
         event_kind="key_generation",
     ),
+    # Vector-input composites. EvalAddManyInPlace reassigns the vector's
+    # handles to fresh objects and returns a copy, so nothing observable is
+    # mutated; EvalMultMany is a binary tree whose depth depends on the
+    # operand count and is therefore opaque to the depth model.
+    "EvalAddMany": OperationSpec("EvalAddMany", "ct_list"),
+    "EvalAddManyInPlace": OperationSpec("EvalAddManyInPlace", "ct_list"),
+    "EvalMultMany": OperationSpec("EvalMultMany", "ct_list"),
+    "EvalMultAndRelinearize": OperationSpec("EvalMultAndRelinearize", "ct_ct"),
+    "EvalLinearWSum": OperationSpec("EvalLinearWSum", "ct_list_constants"),
+    "EvalLinearWSumMutable": OperationSpec("EvalLinearWSumMutable", "ct_list_constants"),
+    "EvalMerge": OperationSpec("EvalMerge", "ct_list"),
+    # Polynomial/series approximations: one opaque semantic call each.
+    "EvalChebyshevSeries": OperationSpec("EvalChebyshevSeries", "ct_coefficients_bounds"),
+    "EvalChebyshevSeriesLinear": OperationSpec(
+        "EvalChebyshevSeriesLinear", "ct_coefficients_bounds"
+    ),
+    "EvalChebyshevSeriesPS": OperationSpec("EvalChebyshevSeriesPS", "ct_coefficients_bounds"),
+    "EvalSin": OperationSpec("EvalSin", "ct_bounds_degree"),
+    "EvalCos": OperationSpec("EvalCos", "ct_bounds_degree"),
+    "EvalDivide": OperationSpec("EvalDivide", "ct_bounds_degree"),
+    # BGV/BFV encodings.
+    "MakePackedPlaintext": OperationSpec(
+        "MakePackedPlaintext",
+        "values",
+        ciphertext_input_indices=(),
+        has_ciphertext_output=False,
+        event_kind="setup",
+    ),
+    "MakeCoefPackedPlaintext": OperationSpec(
+        "MakeCoefPackedPlaintext",
+        "values",
+        ciphertext_input_indices=(),
+        has_ciphertext_output=False,
+        event_kind="setup",
+    ),
+}
+
+# Binding methods that are another canonical operation under a second name.
+# OpenFHE's EvalRotate is EvalAtIndex; the trace uses the rotation names.
+METHOD_ALIASES: dict[str, str] = {
+    "EvalAtIndex": "EvalRotate",
+    "EvalAtIndexKeyGen": "EvalRotateKeyGen",
 }
 
 
@@ -185,10 +268,15 @@ class CompatibilityRegistry:
         )
 
     def operation(self, name: str) -> OperationSpec | None:
-        return CORE_OPERATIONS.get(name)
+        return CORE_OPERATIONS.get(METHOD_ALIASES.get(name, name))
+
+    def canonical_operation(self, name: str) -> str:
+        """The trace's name for a binding method (``EvalAtIndex`` -> ``EvalRotate``)."""
+
+        return METHOD_ALIASES.get(name, name)
 
     def classify_callable(self, name: str) -> str:
-        if name in CORE_OPERATIONS:
+        if METHOD_ALIASES.get(name, name) in CORE_OPERATIONS:
             return "traced"
         if name in self.allowed_nonsemantic_calls:
             return "allowed"
@@ -334,16 +422,42 @@ class CompatibilityRegistry:
         scaling_mod_size = self._read(
             parameters, "scaling_mod_size", ("GetScalingModSize",), ("scaling_mod_size",), missing
         )
-        # OpenFHE reports 0 when the library chose the ring dimension itself.
+        scheme_value = self._read(parameters, "scheme", ("GetScheme",), ("scheme",), missing)
+        plaintext_modulus = self._read(
+            parameters, "plaintext_modulus", ("GetPlaintextModulus",), ("plaintext_modulus",), missing
+        )
+        # OpenFHE reports 0 when the library chose the ring dimension itself,
+        # and 0 for the plaintext modulus of a CKKS parameter set.
         if ring_dimension == 0:
             ring_dimension = None
-        return {
+        if plaintext_modulus == 0:
+            plaintext_modulus = None
+        scheme = normalize_scheme(scheme_value)
+        if scheme is None and scheme_value is None:
+            # A binding without GetScheme(): the parameter class name says it.
+            scheme = self._scheme_from_type_name(type(parameters).__name__)
+        if scheme == "CKKS":
+            plaintext_modulus = None
+        snapshot: dict[str, Any] = {
             "security_level": security_level,
             "declared_ring_dimension": ring_dimension,
             "declared_multiplicative_depth": depth,
             "scaling_mod_size": scaling_mod_size,
+            "plaintext_modulus": plaintext_modulus,
             "parameters_missing": sorted(set(missing)),
         }
+        if scheme is not None:
+            snapshot["scheme"] = scheme
+            snapshot["scheme_evidence"] = "declared_parameters"
+        return snapshot
+
+    @staticmethod
+    def _scheme_from_type_name(type_name: str) -> str | None:
+        upper = type_name.upper()
+        for scheme in SCHEMES:
+            if scheme in upper:
+                return scheme
+        return None
 
     def snapshot_context(self, context: Any) -> dict[str, Any]:
         """Read the supported context metadata fields."""
@@ -364,10 +478,8 @@ class CompatibilityRegistry:
             ("batch_size",),
             missing,
         )
-        scheme = self._read(context, "scheme", (), ("scheme",), [])
-        if scheme is None:
-            # The supported wrapper has no GetScheme(), so use the configured scheme.
-            scheme = self.scheme
+        scheme = normalize_scheme(self._read(context, "scheme", (), ("scheme",), []))
+        scheme_evidence = "context_attribute"
         depth = self._read(
             context,
             "configured_multiplicative_depth",
@@ -396,16 +508,37 @@ class CompatibilityRegistry:
             ("cyclotomic_order",),
             missing,
         )
-        slots: int | None = None
-        if isinstance(ring_dimension, int) and not isinstance(ring_dimension, bool):
-            slots = ring_dimension // 2
+        plaintext_modulus = self._read(
+            context, "plaintext_modulus", ("GetPlaintextModulus",), ("plaintext_modulus",), []
+        )
+        if plaintext_modulus == 0:
+            plaintext_modulus = None
+        if scheme is None:
+            # The supported wrapper has no scheme getter. A CKKS batch size is
+            # at most N/2; a batch size equal to N is a BGV/BFV context. In
+            # that case the scheme is left unknown until parameters are
+            # declared, rather than labelled CKKS wrongly.
+            if (
+                isinstance(ring_dimension, int) and isinstance(batch_size, int)
+                and not isinstance(ring_dimension, bool) and not isinstance(batch_size, bool)
+                and ring_dimension > 0 and batch_size == ring_dimension
+            ):
+                scheme = None
+                scheme_evidence = "batch_size_equals_ring_dimension_not_ckks"
+            else:
+                scheme = self.scheme
+                scheme_evidence = "configured_ckks_contract"
+        if scheme == "CKKS":
+            # CKKS keeps its scaling modulus size in that slot; not a plaintext modulus.
+            plaintext_modulus = None
         return {
             "context_id": context_id,
             "scheme": scheme,
-            "scheme_evidence": "configured_ckks_contract",
+            "scheme_evidence": scheme_evidence,
             "ring_dimension": ring_dimension,
-            "available_slots": slots,
+            "available_slots": available_slots_for(scheme, ring_dimension),
             "batch_size": batch_size,
+            "plaintext_modulus": plaintext_modulus,
             "configured_multiplicative_depth": depth,
             "scaling_technique": scaling,
             "key_switch_technique": key_switch,
@@ -517,7 +650,7 @@ class CompatibilityRegistry:
                 else self.operand_kind(value)
                 for index, value in enumerate(values)
             ]
-        if operation == "MakeCKKSPackedPlaintext":
+        if operation in {"MakeCKKSPackedPlaintext", "MakePackedPlaintext", "MakeCoefPackedPlaintext"}:
             return [
                 "plaintext_values" if index == 0 else self.operand_kind(value)
                 for index, value in enumerate(values)
@@ -593,7 +726,27 @@ class CompatibilityRegistry:
             cols: Any = args[1] if len(args) > 1 else kwargs.get("numCols")
             if isinstance(cols, int) and not isinstance(cols, bool):
                 return {"column_count": cols}
-        if operation == "EvalLogistic":
+        if operation in {"EvalChebyshevSeries", "EvalChebyshevSeriesLinear", "EvalChebyshevSeriesPS"}:
+            series_lower: Any = args[2] if len(args) > 2 else kwargs.get("a")
+            series_upper: Any = args[3] if len(args) > 3 else kwargs.get("b")
+            coefficients: Any = args[1] if len(args) > 1 else kwargs.get("coefficients")
+            arguments: dict[str, Any] = {}
+            if isinstance(series_lower, (int, float)) and not isinstance(series_lower, bool):
+                arguments["lower_bound"] = series_lower
+            if isinstance(series_upper, (int, float)) and not isinstance(series_upper, bool):
+                arguments["upper_bound"] = series_upper
+            if isinstance(coefficients, (list, tuple)):
+                # The degree, never the public coefficients themselves.
+                arguments["polynomial_degree"] = max(len(coefficients) - 1, 0)
+            return arguments
+        if operation in {"EvalAddMany", "EvalAddManyInPlace", "EvalMultMany", "EvalMerge",
+                         "EvalLinearWSum", "EvalLinearWSumMutable"}:
+            first: Any = args[0] if args else next(iter(kwargs.values()), None)
+            second: Any = args[1] if len(args) > 1 else None
+            vector = first if isinstance(first, (list, tuple)) else second
+            if isinstance(vector, (list, tuple)):
+                return {"operand_count": len(vector)}
+        if operation in {"EvalLogistic", "EvalSin", "EvalCos", "EvalDivide"}:
             lower_bound: Any = args[1] if len(args) > 1 else kwargs.get("a")
             upper_bound: Any = args[2] if len(args) > 2 else kwargs.get("b")
             logistic_degree: Any = args[3] if len(args) > 3 else kwargs.get("degree")
