@@ -325,7 +325,7 @@ def main(argv: list[str] | None = None) -> int:
         assessment = classify_run(traces["unmatched"])
         coverage = traces["unmatched"]["run"]["coverage"]
         assert assessment.coverage_class == PARTIAL_PERMISSIVE, assessment
-        assert coverage["unmatched_candidate_names"] == ["EvalSumRows", "EvalSumRowsKeyGen"], coverage["unmatched_candidate_names"]
+        assert coverage["unmatched_candidate_names"] == ["EvalAddMany", "EvalMultMany"], coverage["unmatched_candidate_names"]
         assert coverage["unsupported_operations"] == coverage["unmatched_candidate_names"]
         for name in PROGRAMS:
             if name != "unmatched":
@@ -417,7 +417,7 @@ def main(argv: list[str] | None = None) -> int:
             "openfhe_dir": str(args.openfhe_dir),
             "frontend": "gcc-openfhe",
             "frontend_version": "0.1.0",
-            "instrumentation_manifest": "openfhe-1.5-v1",
+            "instrumentation_manifest": json.loads(MANIFEST.read_text(encoding="utf-8"))["name"],
         },
         "summary": {**counts, "total": len(gate.checks)},
         "checks": gate.checks,

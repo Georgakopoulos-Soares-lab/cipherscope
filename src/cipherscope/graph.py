@@ -19,6 +19,8 @@ _ZERO_WEIGHT_OPERATIONS = {
     "EvalFastRotation",
     "EvalFastRotationPrecompute",
     "EvalSum",
+    "EvalSumRows",
+    "EvalSumCols",
     "EvalSub",
     "EvalSubInPlace",
     "ModReduce",
@@ -28,7 +30,7 @@ _ZERO_WEIGHT_OPERATIONS = {
     "Rescale",
     "RescaleInPlace",
 }
-_OPAQUE_OPERATIONS = {"EvalPoly", "EvalChebyshevFunction", "EvalInnerProduct"}
+_OPAQUE_OPERATIONS = {"EvalPoly", "EvalChebyshevFunction", "EvalInnerProduct", "EvalLogistic"}
 
 
 def _event_sort_key(event: Mapping[str, Any]) -> tuple[int, str]:

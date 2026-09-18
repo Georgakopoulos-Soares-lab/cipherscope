@@ -25,6 +25,7 @@ Bootstrap confidence intervals use a fixed seed recorded in the manifest.
 | `raw/seeded/case_results.json` | `cipherscope seeded --output` | The seeded benchmark's raw result (copy `case_results.json` here; bundles are regenerable and stay out). |
 | `raw/scaling.csv` | `scaling/run_scaling.py` | One row per (machine, event count, arm) kernel process; `baseline` is the untraced loop. Rows from different machines (`machine` column) coexist and are reported separately. |
 | `raw/semantic_ablation.csv` | `cipherscope ablate --output` | One row per (bundle, mode, rule). |
+| `raw/native_overhead.csv` | `native_overhead/run_native_overhead.py` | One row per (size, arm, repetition) process of the C++ scaling kernel: `plain` build, instrumented build without a spool (`hooks`), instrumented with a spool (`full`). Summarized by `native_overhead/summarize.py`; not yet a `tables/` generator. |
 | `raw/CHECKSUMS.sha256` | `make checksums` | SHA-256 of every raw file; `make verify-checksums` checks them. |
 | `adjudication/findings.csv` | `cipherscope findings` + human verdicts | One row per finding from a `COMPLETE` real run; see `adjudication/GUIDE.md`. |
 | `tables/` | generated | `precision.csv`, `recall.csv`, `seeded_cases.csv`, `coverage.csv`, `overhead.csv`, `scaling.csv`, `semantic_ablation.csv`, `generic_profiler_comparison.csv`, `MANIFEST.json`. |

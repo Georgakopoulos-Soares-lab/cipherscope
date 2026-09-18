@@ -42,7 +42,7 @@ class OperationManifestTests(unittest.TestCase):
                 self.assertIn(target, self.by_name)
 
     def test_manifest_is_versioned(self) -> None:
-        self.assertEqual(self.manifest["name"], "openfhe-1.5-v1")
+        self.assertEqual(self.manifest["name"], "openfhe-1.5-v2")
         self.assertTrue(self.manifest["supported_toolchain"]["versions_tested"])
 
 

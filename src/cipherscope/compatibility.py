@@ -115,6 +115,30 @@ CORE_OPERATIONS: dict[str, OperationSpec] = {
     "EvalInnerProduct": OperationSpec("EvalInnerProduct", "ct_ct_size"),
     "EvalSum": OperationSpec("EvalSum", "ct_batch"),
     "EvalBootstrap": OperationSpec("EvalBootstrap", "ct"),
+    # Hoisted rotation: one precompute (digit decomposition, not a ciphertext)
+    # shared by several fast rotations of the same ciphertext version.
+    "EvalFastRotationPrecompute": OperationSpec(
+        "EvalFastRotationPrecompute", "ct", has_ciphertext_output=False
+    ),
+    "EvalFastRotation": OperationSpec("EvalFastRotation", "ct_index_order_precompute"),
+    "EvalPoly": OperationSpec("EvalPoly", "ct_coefficients"),
+    "EvalLogistic": OperationSpec("EvalLogistic", "ct_bounds_degree"),
+    "EvalSumRows": OperationSpec("EvalSumRows", "ct_rows_keys"),
+    "EvalSumCols": OperationSpec("EvalSumCols", "ct_cols_keys"),
+    "EvalSumRowsKeyGen": OperationSpec(
+        "EvalSumRowsKeyGen",
+        "key",
+        ciphertext_input_indices=(),
+        has_ciphertext_output=False,
+        event_kind="key_generation",
+    ),
+    "EvalSumColsKeyGen": OperationSpec(
+        "EvalSumColsKeyGen",
+        "key",
+        ciphertext_input_indices=(),
+        has_ciphertext_output=False,
+        event_kind="key_generation",
+    ),
 }
 
 
@@ -479,7 +503,7 @@ class CompatibilityRegistry:
                 else self.operand_kind(value)
                 for index, value in enumerate(values)
             ]
-        if operation in {"EvalMultKeyGen", "EvalSumKeyGen"}:
+        if operation in {"EvalMultKeyGen", "EvalSumKeyGen", "EvalSumRowsKeyGen", "EvalSumColsKeyGen"}:
             return [
                 "key" if index == 0 else self.operand_kind(value)
                 for index, value in enumerate(values)
@@ -557,10 +581,35 @@ class CompatibilityRegistry:
         args: tuple[Any, ...],
         kwargs: Mapping[str, Any],
     ) -> dict[str, Any]:
-        if operation == "EvalRotate":
+        if operation in {"EvalRotate", "EvalFastRotation"}:
             index: Any = args[1] if len(args) > 1 else kwargs.get("index")
             if isinstance(index, int) and not isinstance(index, bool):
                 return {"rotation_index_requested": index}
+        if operation == "EvalSumRows":
+            rows: Any = args[1] if len(args) > 1 else kwargs.get("numRows")
+            if isinstance(rows, int) and not isinstance(rows, bool):
+                return {"row_count": rows}
+        if operation == "EvalSumCols":
+            cols: Any = args[1] if len(args) > 1 else kwargs.get("numCols")
+            if isinstance(cols, int) and not isinstance(cols, bool):
+                return {"column_count": cols}
+        if operation == "EvalLogistic":
+            lower_bound: Any = args[1] if len(args) > 1 else kwargs.get("a")
+            upper_bound: Any = args[2] if len(args) > 2 else kwargs.get("b")
+            logistic_degree: Any = args[3] if len(args) > 3 else kwargs.get("degree")
+            if (
+                isinstance(lower_bound, (int, float))
+                and not isinstance(lower_bound, bool)
+                and isinstance(upper_bound, (int, float))
+                and not isinstance(upper_bound, bool)
+                and isinstance(logistic_degree, int)
+                and not isinstance(logistic_degree, bool)
+            ):
+                return {
+                    "lower_bound": lower_bound,
+                    "upper_bound": upper_bound,
+                    "polynomial_degree": logistic_degree,
+                }
         if operation == "EvalRotateKeyGen":
             indices: Any = (
                 args[1]

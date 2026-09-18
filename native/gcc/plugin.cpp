@@ -76,7 +76,7 @@ enum Kind {
 struct Config {
     std::string manifest_path;
     std::string site_dir;
-    std::string manifest_name = "openfhe-1.5-v1";
+    std::string manifest_name = "unknown";  // set by the `name` line of the manifest file
     bool debug = false;
     bool strict = true;
 };

@@ -13,7 +13,7 @@ the traces (see [docs/cpp_frontend.md](../../docs/cpp_frontend.md)).
 | `aliasing.cpp` | copies, moves, container storage keep one identity; destroyed temporaries never hand their ID to a reused address | `twins/aliasing.py` |
 | `exception.cpp` | a throwing call becomes an error event; the application's `catch` and later calls are untouched | `twins/exception.py` |
 | `threads.cpp` | OpenMP threads record concurrently with their own thread IDs | — |
-| `unmatched.cpp` | `EvalSumRows[KeyGen]` outside the manifest denies `COMPLETE` and is named | — |
+| `unmatched.cpp` | `EvalAddMany`/`EvalMultMany` outside the manifest deny `COMPLETE` and are named | — |
 
 `expected/<fixture>/` holds the runtime spool, the site table and the Python
 twin's `trace.json` recorded on LS6 (GCC 15.2.0, OpenFHE 1.5.1) so that

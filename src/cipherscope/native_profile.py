@@ -181,7 +181,7 @@ def ensure_toolchain(compiler: Path, compiler_version: str, openfhe: OpenFHEInst
     stamp.write_text(json.dumps({
         "compiler": str(compiler), "compiler_version": compiler_version, "openfhe_version": openfhe.version,
         "openfhe_include": str(openfhe.include_dir), "openfhe_lib": str(openfhe.lib_dir), "fingerprint": fingerprint,
-        "frontend_version": "0.1.0", "manifest": "openfhe-1.5-v1", "built_unix": int(time.time()),
+        "frontend_version": "0.1.0", "manifest": json.loads(MANIFEST_JSON.read_text(encoding="utf-8"))["name"], "built_unix": int(time.time()),
     }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return NativeToolchain(directory, plugin, runtime, manifest_txt, launcher, fingerprint)
 

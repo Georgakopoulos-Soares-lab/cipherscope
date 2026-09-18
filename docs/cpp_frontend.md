@@ -157,7 +157,7 @@ static source scan is not applied to C++ files.
 | GCC 15.2.0 on Rocky 8.10, GCC 13.3.0 on Ubuntu 24.04 (x86_64) | tested, 18/18 each (`artifact/feasibility/cpp-gcc152-openfhe151/`, `cpp-gcc133-openfhe151/`) |
 | other GCC versions with plugin headers | expected to work; plugins are version-locked, so each is built on demand — untested |
 | Clang, MSVC, `LD_PRELOAD` | not supported by design |
-| OpenFHE 1.5.1 C++ API (CKKS) | tested; manifest `openfhe-1.5-v1`, 30 operations + 7 operator aliases |
+| OpenFHE 1.5.1 C++ API (CKKS) | tested; manifest `openfhe-1.5-v2`, 38 operations + 7 operator aliases |
 | build systems | CMake only (`CMakeCache.txt` + `compile_commands.json`) |
 | already-instrumented binaries | run directly when the marker is present |
 
@@ -166,8 +166,8 @@ invokes during another instrumented call is read as an unwound call; only the
 first `GenCryptoContext(CCParams<CryptoContextCKKSRNS>)` populates the
 declared parameters; precision checkpoints and annotations have no C++
 counterpart yet, so those rules report `not_applicable` (they are never
-faked); `EvalSum{Rows,Cols}[KeyGen]` and `EvalLogistic` are outside the
-manifest in both frontends.
+faked); `EvalAddMany`/`EvalMultMany`, `EvalChebyshevSeries` and the BGV/BFV
+API are outside the manifest in both frontends.
 
 ## Files
 
