@@ -11,6 +11,21 @@ counterpart produced on LS6, that the two agree where they must agree, and
 that the repository no longer contains anything that only works on one
 platform.
 
+**2026-09-18 update:** rows 9, B3, B5 and 5.6 below describe the `run_*.slurm`
+launchers and PRS harnesses as they stood on 2026-09-13 (kept as history, not
+rewritten). Those SLURM launchers, and the "later batch use" they were kept
+around for, have since been retired entirely, consistent with this file's own
+opening line: everything here always ran directly in the allocated shell, and
+`sbatch` was never actually exercised in any session. `run_build.slurm`,
+`run_profile.slurm`, `run_analysis.slurm`, `run_memory.slurm`,
+`run_external_suite.slurm` and the three duplicate `run_sol_*.slurm` launchers
+are now `tacc/run_build.sh`, `tacc/run_profile.sh`, `tacc/run_analysis.sh`,
+`tacc/run_memory.sh` and one parameterized `tacc/run_external_suite.sh`
+(`tacc/run_external_suite.sh sol_lin_reg` replaces the three duplicates) — no
+`#SBATCH` directives, no scheduler commands, same `ls6_env.sh` sourcing. The
+PRS harness scripts moved alongside them to `tacc/prs_dot_product.py`,
+`tacc/benchmark_prs_overhead.py`, `tacc/memory_profile_prs.py`.
+
 ---
 
 ## 0. Ground truth verified in this session
@@ -401,15 +416,15 @@ green gates are three anecdotes.
 
 ## 5. Acceptance criteria ("LS6 is equivalent to the M4 items")
 
-- [ ] `artifact/feasibility/primary-source-py311/feasibility.json` exists, `status = "pass"`, `38 / 0 / 38`, `authoritative_for_primary_target = true`, environment `ubuntu 24.04`, `x86_64`, `3.11.15`; `build-manifest.json` beside it.
-- [ ] `artifact/feasibility/ls6-native-py311/feasibility.json` exists, `native_pass`, `38 / 0 / 38`, environment `rocky 8.10`, `x86_64`, `3.11.15`, gcc 15.2.0 in the manifest.
-- [ ] `tests/test_evidence.py` and the whole fake-backend suite pass on LS6 (0 errors, 38 skips) **and** on the Mac.
-- [ ] `evaluation/parity/parity_report.md` shows zero disagreements outside the allowed list in §6.
-- [ ] All 16 example programs and the seeded benchmark are `COMPLETE`/`all_matched` on both LS6 lanes.
-- [ ] `evaluation/raw/scaling.csv` carries both `arm64` and `x86_64` rows and `tables/scaling.csv` reports them per machine.
-- [ ] `evaluation/tables/MANIFEST.json` regenerated on LS6 is byte-identical to one regenerated on the Mac from the same raw inputs.
-- [ ] No file in the repository references `gcc/15.1.0`, `/home1/apps/gcc`, `gh-dev`, or `/Users/`; `grep -rn` returns nothing outside git history.
-- [ ] `docs/evidence.md`, `README.md`, `docs/ARTIFACT.md`, `examples/README.md` agree with the archived artifacts (the evidence test enforces the table; the rest is a read-through).
+- [x] `artifact/feasibility/primary-source-py311/feasibility.json` exists, `status = "pass"`, `38 / 0 / 38` (now 40 / 0 / 40 with API-07/08), `authoritative_for_primary_target = true`, environment `ubuntu 24.04`, `x86_64`, `3.11.15`; `build-manifest.json` beside it.
+- [x] `artifact/feasibility/ls6-native-py311/feasibility.json` exists, `native_pass`, `38 / 0 / 38` (now 40 / 0 / 40), environment `rocky 8.10`, `x86_64`, `3.11.15`, gcc 15.2.0 in the manifest.
+- [ ] `tests/test_evidence.py` and the whole fake-backend suite pass on LS6 (0 errors, 38 skips) **and** on the Mac. *(LS6 half done 2026-11-01: 0 failures, 40 skips with the binding absent; Mac half needs the Mac.)*
+- [x] `evaluation/parity/parity_report.md` shows zero disagreements outside the allowed list in §6. *(2026-11-01, `--allow-missing-cases`: API-07/08 are absent from the older macOS archive and listed.)*
+- [x] All 16 example programs and the seeded benchmark are `COMPLETE`/`all_matched` on both LS6 lanes. *(re-run 2026-11-01 with the current analyzer)*
+- [x] `evaluation/raw/scaling.csv` carries both `arm64` and `x86_64` rows and `tables/scaling.csv` reports them per machine.
+- [ ] `evaluation/tables/MANIFEST.json` regenerated on LS6 is byte-identical to one regenerated on the Mac from the same raw inputs. *(needs the Mac; generation is stdlib-only and path-independent by construction)*
+- [x] No file in the repository references `gcc/15.1.0`, `/home1/apps/gcc`, `gh-dev`, or `/Users/`; `grep -rn` returns nothing outside git history. *(remaining hits are deliberate: tests asserting their absence, one comment recording the retirement of gcc/15.1.0, and the archived macOS `developer` feasibility.json, which is evidence and is not rewritten)*
+- [x] `docs/evidence.md`, `README.md`, `docs/ARTIFACT.md`, `examples/README.md` agree with the archived artifacts (the evidence test enforces the table; the rest is a read-through).
 
 ## 6. Time budget against the current allocation (11 h 19 m at 15:20)
 

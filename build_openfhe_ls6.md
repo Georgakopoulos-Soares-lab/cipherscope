@@ -303,8 +303,13 @@ Implements `docs/cpp_gcc_design.md` phases 0–6 on LS6 (node `v320-008`, job 34
       (`artifact/feasibility/cpp-gcc133-openfhe151/`). The plugin is built on
       demand by whichever GCC built the target, so the frontend follows the
       project's toolchain.
-- [ ] Phase 7 (thread-local buffering / native overhead study) — not started;
-      the runtime uses one locked write per event.
+- [x] Phase 7 (thread-local buffering / native overhead study) — closed
+      2026-11-01. The overhead study is done (see the 2026-09-17 entry below):
+      one locked write per event is within run-to-run noise of millisecond-scale
+      FHE work, so thread-local buffering was deliberately **not** implemented —
+      it would trade cross-thread event order and crash-safety of the spool for
+      a cost that cannot be measured. Reopen only for a workload whose events
+      are sub-microsecond.
 
 ### Manifest v2, bootstrap positive, corrected depth accounting (2026-09-17, later)
 
@@ -423,3 +428,41 @@ checkpoints/annotations, and `EvalAddMany`/`EvalMultMany`,
 - [x] C++ gate final: **21/21 `native_pass`** (`META-01` added; `PARITY-01`
       over 8 twin pairs), `artifact/feasibility/cpp-gcc152-openfhe151/`.
 - [x] Unit suite (Python 3.13, no binding): 258 passed, 364 subtests.
+
+### Finishing the branch (2026-11-01)
+
+- [x] Analyzer: `parameters.depth_headroom_observed` reserves a level for a
+      pending FLEXIBLEAUTO rescale (`deferred_rescale_levels`). The C++ twin
+      expectation (`PIPE-01`, `tests/test_native_frontend.py`) is now `clean`
+      for the depth-1 `repeated_rotations` program, which is exactly enough.
+- [x] **C++ frontend use-after-free fixed.** Re-profiling the upstream
+      `simple-real-numbers-serial.cpp` crashed at exit (`SIGSEGV` in
+      `describe_contexts`): the runtime described contexts at finalisation
+      from raw pointers, and the program calls
+      `CryptoContextFactory::ReleaseAllContexts()` midway. Contexts are now
+      described at first registration (snapshot kept in the registry, released
+      ones retained), with a weak witness wherever a shared handle is seen so a
+      reused address gets a new ID. The manifest allow-list spelled the
+      accessor `GetSchemeId`; OpenFHE's is `getSchemeId` (reached through an
+      inline header function), which had made the example
+      `PARTIAL-PERMISSIVE`. All six upstream examples re-profiled: **6/6
+      COMPLETE** (`$SCRATCH/cipherscope-ls6/cpp-upstream-v3/`).
+- [x] C++ gate re-run on the fixed runtime: **21/21 `native_pass` on GCC
+      15.2.0 (Rocky)** and **21/21 on GCC 13.3.0 (Ubuntu 24.04 image)**, both
+      on manifest `openfhe-1.5-v3`, both re-archived.
+- [x] RQ4 D-03 complete: the three untried actionable findings measured
+      (`run_transformations.py --only …`, one clone per transformation, 4-epoch
+      scale edit on both arms, `OMP_NUM_THREADS=16`). `sol_log_reg` depth
+      33→31: 1.09×, 7 % less RSS. `HEStd_128_classic` on the log_reg pair
+      needs ring 131072 (the config's own TODO), costs ~4× wall and RSS, and
+      changes the training trajectory (loss after 4 epochs 0.654 → 0.574):
+      recorded as `fix_changes_result`. New statuses `refused`,
+      `validated_fix`, `fix_changes_result` in the schema.
+- [x] RQ6 F-02: `evaluation/bug_hunt/run_bug_hunt.py` → `raw/bug_hunt.csv` →
+      `tables/security_cases.csv`; 10 real programs, 5 true `HEStd_NotSet`
+      positives, precision rules `not_applicable` without checkpoints.
+- [x] Phase 7 closed (see above); prior-art matrix verified for CryptOracle,
+      HEIR, Rotom, HERTA (HEProfiler: abstract only).
+- [ ] Mac: rerun `developer` lane (gate, `reproduce-small`) and the 3.12 wheel
+      lane on the current check set; needs the macOS machine.
+- [ ] A human second adjudicator for `findings.csv` before citing precision.

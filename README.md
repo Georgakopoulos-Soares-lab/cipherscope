@@ -21,9 +21,10 @@ are shared. It currently:
 This is pre-alpha research software. The included fake backend performs no
 cryptography. Real-OpenFHE evidence comes from four lanes, described in
 [docs/evidence.md](docs/evidence.md): the authoritative Python 3.11 source
-build on Ubuntu 24.04 x86_64 (38 of 38 gate checks), the same pins built
-natively on a Rocky Linux 8.10 cluster host with GCC 15.2 (38 of 38), a macOS
-ARM64 developer build (37 of 38; the one skip is Linux-only), and a
+build on Ubuntu 24.04 x86_64 (40 of 40 gate checks), the same pins built
+natively on a Rocky Linux 8.10 cluster host with GCC 15.2 (40 of 40), a macOS
+ARM64 developer build (37 of 38 on the older check set; the one skip is
+Linux-only), and a
 provisional Ubuntu/Python 3.12 wheel (33 of 33 at the time it was archived).
 `evaluation/parity/parity_report.md` shows that the platform-independent
 results (seeded benchmark, ablation, example diagnoses) are identical across
@@ -222,9 +223,8 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 
 - The C++ frontend supports GCC (with plugin headers) and CMake projects only;
   it is verified on GCC 15.2.0 (Rocky 8.10) and GCC 13.3.0 (Ubuntu 24.04) with
-  OpenFHE 1.5.1 by the 21-check gate archived under
-  `artifact/feasibility/cpp-gcc152-openfhe151/` (GCC 13.3.0 / Ubuntu 24.04 ran
-  the earlier 18-check gate, `cpp-gcc133-openfhe151/`). Annotations and
+  OpenFHE 1.5.1 by the 21-check gate, archived for both compilers under
+  `artifact/feasibility/cpp-gcc152-openfhe151/` and `cpp-gcc133-openfhe151/`. Annotations and
   precision checkpoints are available through the opt-in header
   `native/include/cipherscope/annotate.h` (inline no-ops outside a shadow
   build); without it those rules report `not_applicable` on C++ traces.

@@ -24,10 +24,11 @@ programs". Do not lead with "the first FHE profiler".
    Python line, and reconstructs immutable ciphertext versions, level and scale
    transitions, rotation-key use, and lineage into a validated graph. The
    coverage boundary is explicit and measured, not assumed.
-2. **Conservative diagnoses over that model.** Ten rules (repeated compatible
+2. **Conservative diagnoses over that model.** Twelve rules (repeated compatible
    rotations, rotation keys unused in the observed run, observed depth headroom,
    bootstrap underuse, annotated packing utilization, public-value provenance,
-   repeated public encodings, serial associative products, precision checkpoints,
+   repeated public encodings, serial associative products, precision checkpoint
+   drops, declared-tolerance violations, testing-only security configuration,
    depth critical path) that fire only on observed evidence and explicit user
    assertions, never on inferred contents.
 3. **An evidence methodology for FHE tooling.** Coverage classes that keep
@@ -35,10 +36,11 @@ programs". Do not lead with "the first FHE profiler".
    finding under a fixed rubric for precision; a seeded known-answer benchmark
    with hard negatives for recall; and a data contract under which every paper
    table regenerates from raw records.
-4. **Validated impact on real workloads** *(pending D-03/D-04)*: measured
-   before/after results for every actionable true positive, including a
-   rotation-hoisting case study on an independently authored program, with
-   non-improving transformations retained.
+4. **Validated impact on real workloads**: measured before/after results for
+   every actionable true positive on the independently authored external
+   corpus (`before_after.csv`), with refused and result-changing
+   transformations retained, plus a designed before/after pair for every
+   prescriptive rule (`impact.csv`).
 
 ## Research questions
 
@@ -67,8 +69,9 @@ current status.
 - Not a compiler or an optimizer. It recommends measured experiments; it does
   not rewrite programs or predict speedups.
 - Not complete outside the coverage boundary. Calls through the original
-  context object, module-level free functions, `GetCryptoContext()`, operator
-  overloads, and work inside native calls are not observed. Runs are labeled
+  context object, module-level free functions, `GetCryptoContext()`, and work
+  inside native calls are not observed (ciphertext operator overloads are,
+  since GAP-01). Runs are labeled
   `COMPLETE`, `PARTIAL-PERMISSIVE`, or `UNSUPPORTED`, and only `COMPLETE` runs
   enter quality tables.
 - **Traces are not safe to publish.** A trace records argument and result
@@ -79,10 +82,13 @@ current status.
 - Recall on real workloads is undefined and is never reported; recall comes
   only from the seeded benchmark, and precision only from adjudicated real
   findings.
-- Two rules have documented real-binding limits: bootstrap underuse cannot be
-  observed through `GetLevel()` on OpenFHE Python 1.5.1.0, and the precision
-  rule has no minimum threshold and can fire on decryption noise. Both are
-  reported as limitations, not hidden.
+- Two rules have documented limits: bootstrap underuse is visible only for an
+  input deeper than the level OpenFHE returns every bootstrap output at
+  (`depth - levelsAvailableAfterBootstrap`), and observed depth headroom is an
+  upper bound, because levels a library call consumes internally (inside an
+  iterative `EvalBootstrap`) are not observed. Both are reported as
+  limitations, not hidden; the second produced the two false positives in the
+  real-workload precision.
 
 ## Rule for new analyzers
 

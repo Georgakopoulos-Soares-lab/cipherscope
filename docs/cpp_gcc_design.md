@@ -3,6 +3,11 @@
 
 ## A GCC-only design for zero-source-change OpenFHE profiling with a language-independent trace boundary
 
+**This is the original design proposal, kept for historical/rationale
+reference.** The C++ frontend it proposes has since been implemented; for how
+it actually works today, read [cpp_frontend.md](cpp_frontend.md) instead. Where
+the two disagree, the implementation and `cpp_frontend.md` are authoritative.
+
 **Status:** Proposed implementation architecture based on the current CipherScope repository uploaded September 2026.
 **Scope:** OpenFHE C++ programs compiled with GCC.
 **Explicitly out of scope here:** Clang/LLVM, MSVC, generic binary instrumentation, `LD_PRELOAD`-only tracing, and rewriting the CipherScope analyzers in C++.
