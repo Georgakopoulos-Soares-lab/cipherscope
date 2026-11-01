@@ -12,8 +12,8 @@ the artifacts.
 | `developer` | macOS ARM64 (Darwin arm64) | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`) | `incomplete` | 37 / 1 / 38 | no | `artifact/feasibility/developer/feasibility.json` |
 | `provisional-wheel-py312` | Ubuntu 24.04 x86_64 | 3.12.3 | PyPI wheel `1.5.1.0.24.4` | `provisional_pass` | 33 / 0 / 33 | no | `artifact/feasibility/provisional-wheel-py312/feasibility.json` |
 | `ls6-native-py311` | Rocky Linux 8.10 x86_64, bare TACC LS6 host (AMD EPYC 7763), `gcc/15.2.0` + `cmake/3.31.5` modules | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`), GCC 15.2.0 | `native_pass` | 40 / 0 / 40 | no | `artifact/feasibility/ls6-native-py311/feasibility.json` |
-| `cpp-gcc152-openfhe151` | Rocky Linux 8.10 x86_64, bare TACC LS6 host; GCC 15.2.0 plugin frontend against the native OpenFHE 1.5.1 C++ install | 3.11.15 (driver) | C++ API of the same native v1.5.1 build (`1306d14f`), instrumentation manifest `openfhe-1.5-v1` | `native_pass` | 21 / 0 / 21 | no | `artifact/feasibility/cpp-gcc152-openfhe151/feasibility.json` |
-| `cpp-gcc133-openfhe151` | Ubuntu 24.04 x86_64 container (the primary lane's image, GCC 13.3.0 with `gcc-13-plugin-dev`) against its `/opt/openfhe` 1.5.1 install | 3.11.15 (driver) | same manifest, second compiler and distribution | `native_pass` | 18 / 0 / 18 | no | `artifact/feasibility/cpp-gcc133-openfhe151/feasibility.json` |
+| `cpp-gcc152-openfhe151` | Rocky Linux 8.10 x86_64, bare TACC LS6 host; GCC 15.2.0 plugin frontend against the native OpenFHE 1.5.1 C++ install | 3.11.15 (driver) | C++ API of the same native v1.5.1 build (`1306d14f`), instrumentation manifest `openfhe-1.5-v3` | `native_pass` | 21 / 0 / 21 | no | `artifact/feasibility/cpp-gcc152-openfhe151/feasibility.json` |
+| `cpp-gcc133-openfhe151` | Ubuntu 24.04 x86_64 container (the primary lane's image, GCC 13.3.0 with `gcc-13-plugin-dev`) against its `/opt/openfhe` 1.5.1 install | 3.11.15 (driver) | same manifest, second compiler and distribution | `native_pass` | 21 / 0 / 21 | no | `artifact/feasibility/cpp-gcc133-openfhe151/feasibility.json` |
 | `primary-source-py311` | Ubuntu 24.04 x86_64 container (Apptainer 1.4.1 `--fakeroot` image built and run on TACC LS6; Rocky 8.10 host, AMD EPYC 7763) | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`), Ubuntu gcc 13.3.0 | `pass` | 40 / 0 / 40 | yes | `artifact/feasibility/primary-source-py311/feasibility.json` |
 
 ## What each lane proves
@@ -78,10 +78,10 @@ unchanged pipeline (TRACE-01, PIPE-01), vector composites, Chebyshev series
 and the `EvalAtIndex` aliases (OP-03), BFV/BGV schemes from the declared
 parameters (SCHEME-01), opt-in annotations and precision checkpoints through
 `cipherscope/annotate.h` (META-01), and semantic parity with the Python
-frontend's traces of the eight twin programs (PARITY-01). The 18 checks that
-existed on 2026-09-17 also pass inside the Ubuntu 24.04 image with GCC 13.3.0
-(`cpp-gcc133-openfhe151`): the plugin is built on demand by whichever GCC
-built the target. It is a
+frontend's traces of the eight twin programs (PARITY-01). All 21 checks also
+pass inside the Ubuntu 24.04 image with GCC 13.3.0 (`cpp-gcc133-openfhe151`,
+re-run 2026-11-01 on manifest `openfhe-1.5-v3`): the plugin is built on demand
+by whichever GCC built the target. It is a
 frontend gate, not a compatibility claim about OpenFHE itself, so it is never
 authoritative.
 

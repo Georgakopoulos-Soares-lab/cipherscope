@@ -72,6 +72,45 @@ const CiphertextImpl<DCRTPoly>* ciphertext_of(const void* pointer, std::shared_p
     return handle.get();
 }
 
+// The context record's fields after "context_id" (leading comma, no braces).
+// Called once, when the registry first sees the context.
+std::string context_description(const CryptoContextImpl<DCRTPoly>* cc) {
+    std::string out;
+    std::vector<std::string> missing;
+    try { out += ",\"ring_dimension\":" + std::to_string(cc->GetRingDimension()); }
+    catch (...) { out += ",\"ring_dimension\":null"; missing.push_back("ring_dimension"); }
+    try { out += ",\"cyclotomic_order\":" + std::to_string(cc->GetCyclotomicOrder()); }
+    catch (...) { out += ",\"cyclotomic_order\":null"; missing.push_back("cyclotomic_order"); }
+    try { out += ",\"batch_size\":" + std::to_string(cc->GetEncodingParams()->GetBatchSize()); }
+    catch (...) { out += ",\"batch_size\":null"; missing.push_back("batch_size"); }
+    try { out += ",\"plaintext_modulus\":" + std::to_string(cc->GetEncodingParams()->GetPlaintextModulus()); }
+    catch (...) { out += ",\"plaintext_modulus\":null"; missing.push_back("plaintext_modulus"); }
+    std::shared_ptr<lbcrypto::CryptoParametersRNS> rns;
+    try { rns = std::dynamic_pointer_cast<lbcrypto::CryptoParametersRNS>(cc->GetCryptoParameters()); } catch (...) {}
+    if (rns) {
+        out += ",\"configured_multiplicative_depth\":" + std::to_string(rns->GetMultiplicativeDepth());
+        out += ",\"scaling_technique\":"; json_string(out, enum_name(rns->GetScalingTechnique()));
+        out += ",\"key_switch_technique\":"; json_string(out, enum_name(rns->GetKeySwitchTechnique()));
+    } else {
+        out += ",\"configured_multiplicative_depth\":null,\"scaling_technique\":null,\"key_switch_technique\":null";
+        missing.push_back("configured_multiplicative_depth");
+        missing.push_back("scaling_technique");
+        missing.push_back("key_switch_technique");
+    }
+    out += ",\"missing\":[";
+    for (size_t i = 0; i < missing.size(); ++i) { if (i) out += ","; json_string(out, missing[i]); }
+    out += "]";
+    return out;
+}
+
+// Registry ID for a live context, describing it the first time it is seen.
+std::string context_id(void* registry, const CryptoContextImpl<DCRTPoly>* cc, std::shared_ptr<const void> witness) {
+    bool is_new = false;
+    std::string id = registry_context(registry, cc, std::move(witness), &is_new);
+    if (is_new) registry_set_context_description(registry, cc, context_description(cc));
+    return id;
+}
+
 // Level/scale/slots/key metadata for one ciphertext; the trace's state_snapshot.
 void append_state(std::string& out, void* registry, const std::string& id_with_version,
                   const CiphertextImpl<DCRTPoly>* ct) {
@@ -94,7 +133,7 @@ void append_state(std::string& out, void* registry, const std::string& id_with_v
     catch (...) { out += ",\"slots\":null"; missing.push_back("slots"); }
     std::shared_ptr<CryptoContextImpl<DCRTPoly>> cc;
     try { cc = ct->GetCryptoContext(); } catch (...) { cc = nullptr; }
-    if (cc) { out += ",\"context_id\":"; json_string(out, registry_context(registry, cc.get())); }
+    if (cc) { out += ",\"context_id\":"; json_string(out, context_id(registry, cc.get(), std::shared_ptr<const void>(cc, cc.get()))); }
     else { out += ",\"context_id\":null"; missing.push_back("context_id"); }
     try { out += ",\"key_tag\":"; json_string(out, ct->GetKeyTag()); }
     catch (...) { out += "null"; missing.push_back("key_tag"); }
@@ -147,13 +186,13 @@ void describe_argument(std::string& out, void* registry, int kind, const void* p
     switch (kind) {
         case CS_KIND_CONTEXT: {
             out += "\"kind\":\"context\",\"context_id\":";
-            json_string(out, registry_context(registry, pointer));
+            json_string(out, context_id(registry, static_cast<const CryptoContextImpl<DCRTPoly>*>(pointer), nullptr));
             return;
         }
         case CS_KIND_CRYPTOCONTEXT_PTR: {
             const auto& handle = *static_cast<const std::shared_ptr<CryptoContextImpl<DCRTPoly>>*>(pointer);
             out += "\"kind\":\"context\",\"context_id\":";
-            if (handle) json_string(out, registry_context(registry, handle.get())); else out += "null";
+            if (handle) json_string(out, context_id(registry, handle.get(), std::shared_ptr<const void>(handle, handle.get()))); else out += "null";
             return;
         }
         case CS_KIND_CIPHERTEXT: {
@@ -325,7 +364,7 @@ void describe_ccparams(std::string& out, int kind, const void* pointer) {
 
 // Context snapshots need the registry's ordered view; declared here to keep
 // runtime.cpp free of OpenFHE types.
-namespace cs { class Registry; std::vector<std::pair<const void*, std::string>> registry_contexts(void* registry); }
+namespace cs { class Registry; std::vector<std::pair<std::string, std::string>> registry_contexts(void* registry); }
 
 namespace cs::adapter {
 
@@ -373,37 +412,13 @@ std::string plaintext_representation(const void* plaintext) {
 }
 
 void describe_contexts(std::string& out, void* registry) {
-    auto entries = cs::registry_contexts(registry);
     bool first = true;
-    for (const auto& [raw, id] : entries) {
+    for (const auto& [id, description] : cs::registry_contexts(registry)) {
         if (!first) out += ",";
         first = false;
-        const auto* cc = static_cast<const CryptoContextImpl<DCRTPoly>*>(raw);
         out += "{\"context_id\":"; json_string(out, id);
-        std::vector<std::string> missing;
-        try { out += ",\"ring_dimension\":" + std::to_string(cc->GetRingDimension()); }
-        catch (...) { out += ",\"ring_dimension\":null"; missing.push_back("ring_dimension"); }
-        try { out += ",\"cyclotomic_order\":" + std::to_string(cc->GetCyclotomicOrder()); }
-        catch (...) { out += ",\"cyclotomic_order\":null"; missing.push_back("cyclotomic_order"); }
-        try { out += ",\"batch_size\":" + std::to_string(cc->GetEncodingParams()->GetBatchSize()); }
-        catch (...) { out += ",\"batch_size\":null"; missing.push_back("batch_size"); }
-        try { out += ",\"plaintext_modulus\":" + std::to_string(cc->GetEncodingParams()->GetPlaintextModulus()); }
-        catch (...) { out += ",\"plaintext_modulus\":null"; missing.push_back("plaintext_modulus"); }
-        std::shared_ptr<lbcrypto::CryptoParametersRNS> rns;
-        try { rns = std::dynamic_pointer_cast<lbcrypto::CryptoParametersRNS>(cc->GetCryptoParameters()); } catch (...) {}
-        if (rns) {
-            out += ",\"configured_multiplicative_depth\":" + std::to_string(rns->GetMultiplicativeDepth());
-            out += ",\"scaling_technique\":"; json_string(out, enum_name(rns->GetScalingTechnique()));
-            out += ",\"key_switch_technique\":"; json_string(out, enum_name(rns->GetKeySwitchTechnique()));
-        } else {
-            out += ",\"configured_multiplicative_depth\":null,\"scaling_technique\":null,\"key_switch_technique\":null";
-            missing.push_back("configured_multiplicative_depth");
-            missing.push_back("scaling_technique");
-            missing.push_back("key_switch_technique");
-        }
-        out += ",\"missing\":[";
-        for (size_t i = 0; i < missing.size(); ++i) { if (i) out += ","; json_string(out, missing[i]); }
-        out += "]}";
+        out += description;
+        out += "}";
     }
 }
 

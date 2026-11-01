@@ -15,7 +15,11 @@ namespace cs::adapter {
 std::pair<std::string, uint32_t> registry_ciphertext(void* registry, const void* raw,
                                                      std::shared_ptr<const void> witness, bool* is_new);
 uint32_t registry_bump_version(void* registry, const void* raw);
-std::string registry_context(void* registry, const void* raw);
+// Returns "context_NNNN"; `witness` (may be empty) is the shared handle when the
+// call site has one, so a released context's address is never confused with a
+// new one. `is_new` is set when this call registered the context.
+std::string registry_context(void* registry, const void* raw, std::shared_ptr<const void> witness, bool* is_new);
+void registry_set_context_description(void* registry, const void* raw, std::string description);
 
 // OpenFHE version string ("1.5.1"), read from the library headers.
 std::string framework_version();
@@ -51,7 +55,8 @@ bool decrypt_real_values(std::string& out, const void* context, const void* ciph
 // binding's repr() shows), or "" for an empty handle.
 std::string plaintext_representation(const void* plaintext);
 
-// Append JSON objects (comma separated) for every context seen.
+// Append JSON objects (comma separated) for every context seen, from the
+// descriptions taken when each was first registered.
 void describe_contexts(std::string& out, void* registry);
 
 }  // namespace cs::adapter

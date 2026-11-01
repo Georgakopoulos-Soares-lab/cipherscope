@@ -819,7 +819,7 @@
       "GetScheme",
       "GetKeyGenLevel",
       "GetElementParams",
-      "GetSchemeId",
+      "getSchemeId",
       "GetPlaintextModulus"
     ]
   },

@@ -102,6 +102,18 @@ std::string json_double(double value) {
 // ---------------------------------------------------------------------------
 }  // namespace
 
+// Contexts are described when first seen, while they are certainly alive: a
+// program may release every context (CryptoContextFactory::ReleaseAllContexts)
+// long before exit, so finalisation must never dereference one. The witness,
+// when the call site had the shared handle, detects address reuse the same way
+// the ciphertext registry does.
+struct ContextEntry {
+    std::string id;           // "context_0001"
+    std::string description;  // JSON body after "context_id", taken at first sight
+    std::weak_ptr<const void> witness;
+    bool has_witness = false;
+};
+
 struct CiphertextEntry {
     std::string id;           // "ct_0042"
     uint32_t version = 0;     // current version
@@ -146,12 +158,31 @@ public:
         return ++found->second.version;
     }
 
-    std::string context(const void* raw) {
+    std::string context(const void* raw, std::shared_ptr<const void> witness, bool* is_new) {
         auto found = contexts_.find(raw);
-        if (found != contexts_.end()) return found->second;
-        std::string id = format_id("context_", contexts_.size() + 1);
-        contexts_.emplace(raw, id);
-        return id;
+        if (found != contexts_.end()) {
+            ContextEntry& entry = found->second;
+            bool reused = entry.has_witness && (entry.witness.expired() || entry.witness.lock().get() != raw);
+            if (!reused) {
+                if (!entry.has_witness && witness) { entry.witness = witness; entry.has_witness = true; }
+                if (is_new) *is_new = false;
+                return entry.id;
+            }
+            // Address reuse: the context that lived here was released.
+            retired_contexts_.push_back(std::move(entry));
+            contexts_.erase(found);
+        }
+        ContextEntry entry;
+        entry.id = format_id("context_", ++context_counter_);
+        if (witness) { entry.witness = witness; entry.has_witness = true; }
+        auto inserted = contexts_.emplace(raw, std::move(entry)).first;
+        if (is_new) *is_new = true;
+        return inserted->second.id;
+    }
+
+    void set_context_description(const void* raw, std::string description) {
+        auto found = contexts_.find(raw);
+        if (found != contexts_.end()) found->second.description = std::move(description);
     }
 
     bool context_known(const void* raw) const { return contexts_.count(raw) != 0; }
@@ -166,15 +197,20 @@ public:
 private:
     static constexpr size_t kPruneEvery = 1024;
     std::unordered_map<const void*, CiphertextEntry> ciphertexts_;
-    std::unordered_map<const void*, std::string> contexts_;
+    std::unordered_map<const void*, ContextEntry> contexts_;
+    std::vector<ContextEntry> retired_contexts_;
+    size_t context_counter_ = 0;
     size_t ciphertext_counter_ = 0;
     size_t registrations_since_prune_ = 0;
 
 public:
-    // Ordered view for the contexts record at finalisation.
-    std::vector<std::pair<const void*, std::string>> contexts_ordered() const {
-        std::vector<std::pair<const void*, std::string>> out(contexts_.begin(), contexts_.end());
-        std::sort(out.begin(), out.end(), [](auto& a, auto& b) { return a.second < b.second; });
+    // Every context ever seen (released ones included), as (id, description)
+    // in ID order, for the contexts record at finalisation.
+    std::vector<std::pair<std::string, std::string>> contexts_ordered() const {
+        std::vector<std::pair<std::string, std::string>> out;
+        for (const auto& [raw, entry] : contexts_) out.emplace_back(entry.id, entry.description);
+        for (const auto& entry : retired_contexts_) out.emplace_back(entry.id, entry.description);
+        std::sort(out.begin(), out.end());
         return out;
     }
 };
@@ -608,7 +644,7 @@ ThreadState::~ThreadState() {
 }  // namespace cs
 
 namespace cs {
-std::vector<std::pair<const void*, std::string>> registry_contexts(void* registry) {
+std::vector<std::pair<std::string, std::string>> registry_contexts(void* registry) {
     return static_cast<cs::Registry*>(registry)->contexts_ordered();
 }
 }  // namespace cs
@@ -624,8 +660,11 @@ std::pair<std::string, uint32_t> registry_ciphertext(void* registry, const void*
 uint32_t registry_bump_version(void* registry, const void* raw) {
     return static_cast<cs::Registry*>(registry)->bump_version(raw);
 }
-std::string registry_context(void* registry, const void* raw) {
-    return static_cast<cs::Registry*>(registry)->context(raw);
+std::string registry_context(void* registry, const void* raw, std::shared_ptr<const void> witness, bool* is_new) {
+    return static_cast<cs::Registry*>(registry)->context(raw, std::move(witness), is_new);
+}
+void registry_set_context_description(void* registry, const void* raw, std::string description) {
+    static_cast<cs::Registry*>(registry)->set_context_description(raw, std::move(description));
 }
 
 }  // namespace cs::adapter

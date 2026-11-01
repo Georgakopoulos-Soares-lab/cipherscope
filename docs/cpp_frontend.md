@@ -177,8 +177,10 @@ overloads, operand roles, lineage as first-appearance indices, level and
 noise transitions, semantic arguments, analyzer statuses and finding IDs — and
 lists every difference. `tests/cpp/fixtures/repeated_rotations.cpp` and
 `examples/synthetic/repeated_rotations.py` are twins; their traces are
-equivalent and both produce the same four findings (`PARITY-01`,
-`tests/test_native_frontend.py`). Where the two APIs differ the normalizer
+equivalent and both produce the same three findings (`PARITY-01`,
+`tests/test_native_frontend.py`); the depth-headroom rule is `clean` on both,
+because depth 1 with the last product's rescale still pending is exactly
+enough. Where the two APIs differ the normalizer
 takes the Python shape: `Decrypt(key, ct, &pt)` is recorded with operands
 `ciphertext, key`; defaulted C++ parameters are dropped from role-labelled
 operations; Python labels plaintext operands and `ct_pt` overloads the way
@@ -193,7 +195,16 @@ candidate, every compiled translation unit instrumented
 binary that ran verified to carry the marker. `PARTIAL-PERMISSIVE` names the
 unmatched calls (`coverage.unmatched_candidate_names`, mirrored into
 `unsupported_operations`). `UNSUPPORTED` covers failed runs and unmarked
-binaries. Python's proxy pass-through counters are `0` for native runs and its
+binaries.
+
+Contexts are described (ring dimension, batch size, depth, techniques) the
+first time the registry sees them, while they are certainly alive, and the
+`contexts` record at exit is written from those snapshots. A program may
+release every context long before exit (`CryptoContextFactory::ReleaseAllContexts()`
+in upstream `simple-real-numbers-serial.cpp`); reading them at exit was a
+use-after-free that crashed that example. A released context's address that
+is reused by a new context gets a new ID once a shared handle has been seen
+for the old one. Python's proxy pass-through counters are `0` for native runs and its
 static source scan is not applied to C++ files.
 
 ## Overhead
@@ -231,7 +242,7 @@ thread-local buffer (design §31) was not needed to reach this result, and
 
 | Component | Status |
 |---|---|
-| GCC 15.2.0 on Rocky 8.10, GCC 13.3.0 on Ubuntu 24.04 (x86_64) | tested, 18/18 each (`artifact/feasibility/cpp-gcc152-openfhe151/`, `cpp-gcc133-openfhe151/`) |
+| GCC 15.2.0 on Rocky 8.10, GCC 13.3.0 on Ubuntu 24.04 (x86_64) | tested, 21/21 each (`artifact/feasibility/cpp-gcc152-openfhe151/`, `cpp-gcc133-openfhe151/`) |
 | other GCC versions with plugin headers | expected to work; plugins are version-locked, so each is built on demand — untested |
 | Clang, MSVC, `LD_PRELOAD` | not supported by design |
 | OpenFHE 1.5.1 C++ API (CKKS, BFV, BGV) | tested; manifest `openfhe-1.5-v3`, 53 operations + 7 operator aliases + 2 method aliases (`EvalAtIndex[KeyGen]` → `EvalRotate[KeyGen]`) |
