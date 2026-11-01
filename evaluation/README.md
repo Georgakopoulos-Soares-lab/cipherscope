@@ -20,11 +20,14 @@ Bootstrap confidence intervals use a fixed seed recorded in the manifest.
 | Path | Owner | Contents |
 |---|---|---|
 | `schema/results.schema.json` | contract | The six record types and their column types. |
-| `raw/workload_runs.csv` | you (exported from the C-02 / E-01 runs) | One row per measured repetition per arm; PDF section 11.1 columns. |
+| `raw/workload_runs.csv` | `overhead/run_workloads.py` | One row per measured repetition per arm (baseline = the untraced program, traced = the same program through `cipherscope run`), fresh process each; PDF section 11.1 columns. |
+| `raw/impact.csv` | `impact/run_impact.py` | RQ4 impact suite: one row per traced verification run and per timed repetition of every rule's before/after program pair; summarized by `impact/summarize.py` into `tables/impact.csv` (outside the schema-validated generators, see `impact/README.md`). |
 | `raw/coverage_report.csv` | `cipherscope coverage --output` | One row per classified bundle. |
+| `raw/bug_hunt.csv` | `bug_hunt/run_bug_hunt.py` | F-02 (RQ6): one row per (real program, security/correctness rule) -- the 4 external Python workloads and the 6 upstream OpenFHE C++ examples, each archived trace re-analyzed with the current analyzers; positives carry their adjudication (from `findings.csv`, or from the example's own source for upstream C++). |
 | `raw/seeded/case_results.json` | `cipherscope seeded --output` | The seeded benchmark's raw result (copy `case_results.json` here; bundles are regenerable and stay out). |
 | `raw/scaling.csv` | `scaling/run_scaling.py` | One row per (machine, event count, arm) kernel process; `baseline` is the untraced loop. Rows from different machines (`machine` column) coexist and are reported separately. |
 | `raw/semantic_ablation.csv` | `cipherscope ablate --output` | One row per (bundle, mode, rule). |
+| `raw/native_overhead.csv` | `native_overhead/run_native_overhead.py` | One row per (size, arm, repetition) process of the C++ scaling kernel: `plain` build, instrumented build without a spool (`hooks`), instrumented with a spool (`full`). Summarized by `native_overhead/summarize.py`; not yet a `tables/` generator. |
 | `raw/CHECKSUMS.sha256` | `make checksums` | SHA-256 of every raw file; `make verify-checksums` checks them. |
 | `adjudication/findings.csv` | `cipherscope findings` + human verdicts | One row per finding from a `COMPLETE` real run; see `adjudication/GUIDE.md`. |
 | `tables/` | generated | `precision.csv`, `recall.csv`, `seeded_cases.csv`, `coverage.csv`, `overhead.csv`, `scaling.csv`, `semantic_ablation.csv`, `generic_profiler_comparison.csv`, `MANIFEST.json`. |
@@ -68,6 +71,8 @@ to count as the same diagnosis.
 | Table | From | What it reports |
 |---|---|---|
 | `precision.csv` | `findings.csv` | Per-rule verdict counts and precision with its explicit numerator and denominator (definition in `adjudication/GUIDE.md`). |
+| `before_after.csv` | `findings.csv` (transformation columns, filled by `adjudication/transformations/run_transformations.py`) | One row per `TP-ACTIONABLE` finding (and per revised verdict whose transformation was attempted): transformation id and status, before/after wall time and peak RSS medians, speedup, correctness values. Statuses: `validated_improvement` / `no_improvement` / `regression` (performance patches, by speedup), `refused` (OpenFHE will not run the patched program), `validated_fix` / `fix_changes_result` (security-level patches: rule clears; output unchanged vs moved beyond run-to-run spread — timing is the fix's cost). Untried actionable findings are listed as `not_attempted`, never omitted. |
+| `security_cases.csv` | `raw/seeded/case_results.json` + `raw/bug_hunt.csv` (or `findings.csv` when the hunt is absent) | RQ6: the configuration and precision-contract rules on controlled programs (seeded outcome) and on every real program (clean, not applicable, or the adjudicated outcome of a positive), joined. |
 | `recall.csv` | `raw/seeded/case_results.json` | Per-rule seeded recall and hard-negative false positives. |
 | `seeded_cases.csv` | same | The flat per-case record behind `recall.csv`. |
 | `coverage.csv` | `raw/coverage_report.csv` | Runs per coverage class and the `COMPLETE` fraction. |

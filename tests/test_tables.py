@@ -60,7 +60,7 @@ class ContractTests(unittest.TestCase):
     def test_schema_defines_the_plan_records(self) -> None:
         self.assertEqual(
             set(CONTRACT),
-            {"workload_run", "finding", "seeded_case", "coverage_run", "scaling_run", "ablation_run"},
+            {"workload_run", "finding", "seeded_case", "coverage_run", "scaling_run", "ablation_run", "bug_hunt_result"},
         )
         self.assertEqual(CONTRACT["finding"].columns, FINDINGS_COLUMNS)
         self.assertEqual(CONTRACT["workload_run"].columns[:6], (
@@ -236,8 +236,8 @@ class EndToEndTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             evaluation = self._evaluation_dir(Path(temporary))
             first = generate_tables(evaluation)
-            self.assertEqual(set(first["tables"]), {"precision.csv", "recall.csv", "seeded_cases.csv", "overhead.csv"})
-            self.assertEqual(sorted(first["skipped_inputs"]), ["ablation", "coverage", "scaling"])
+            self.assertEqual(set(first["tables"]), {"precision.csv", "before_after.csv", "security_cases.csv", "recall.csv", "seeded_cases.csv", "overhead.csv"})
+            self.assertEqual(sorted(first["skipped_inputs"]), ["ablation", "bug_hunt", "coverage", "scaling"])
             snapshot = {p.name: p.read_bytes() for p in (evaluation / "tables").iterdir()}
             shutil.rmtree(evaluation / "tables")
             second = generate_tables(evaluation)
@@ -266,3 +266,85 @@ class EndToEndTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BeforeAfterTableTests(unittest.TestCase):
+    def _finding(self, **overrides):
+        from cipherscope.adjudication import FINDINGS_COLUMNS
+        row = {c: "" for c in FINDINGS_COLUMNS}
+        row.update(finding_id="w:r:1", workload_id="w", rule_id="r", confidence="measured",
+                   severity="opportunity", coverage_class="COMPLETE", bundle="b", run_id="run",
+                   adjudication="TP-ACTIONABLE", evidence_summary="checked")
+        row.update(overrides)
+        return row
+
+    def test_actionable_without_transformation_is_listed_as_not_attempted(self) -> None:
+        from cipherscope.tables import before_after_rows
+        rows = before_after_rows([self._finding()])
+        self.assertEqual(rows[0]["transformation_status"], "not_attempted")
+        self.assertIsNone(rows[0]["speedup"])
+
+    def test_measured_transformation_carries_numbers_and_ratio(self) -> None:
+        from cipherscope.tables import before_after_rows
+        rows = before_after_rows([self._finding(
+            transformation_id="t", transformation_status="validated_improvement",
+            before_wall_ms="200", after_wall_ms="50", speedup="4.0", before_rss_mb="100", after_rss_mb="25",
+            correctness_before="1e-9", correctness_after="2e-9")])
+        row = rows[0]
+        self.assertEqual((row["speedup"], row["rss_ratio"]), (4.0, 4.0))
+        self.assertEqual(row["correctness_after"], 2e-9)
+
+    def test_revised_verdict_keeps_its_failed_transformation_row(self) -> None:
+        from cipherscope.tables import before_after_rows
+        rows = before_after_rows([
+            self._finding(adjudication="TP-NONACTIONABLE", transformation_id="t", transformation_status="regression"),
+            self._finding(finding_id="w:r:2", adjudication="TP-NONACTIONABLE"),
+        ])
+        self.assertEqual([r["finding_id"] for r in rows], ["w:r:1"])
+        self.assertEqual(rows[0]["transformation_status"], "regression")
+
+
+class SecurityCaseTableTests(unittest.TestCase):
+    def test_joins_seeded_and_real_rows_for_security_rules_only(self) -> None:
+        from cipherscope.tables import security_case_rows
+        seeded = [
+            {"case_id": "configuration.positive.not_set", "rule_id": "configuration.testing_only_security.v1",
+             "expected": "positive", "observed": "positive", "outcome": "detected", "hard_negative_reason": ""},
+            {"case_id": "rotation.x", "rule_id": "rotation.hoist_same_input.v1", "expected": "positive",
+             "observed": "positive", "outcome": "detected", "hard_negative_reason": ""},
+        ]
+        findings = [
+            {"workload_id": "sol_log_reg", "rule_id": "configuration.testing_only_security.v1",
+             "adjudication": "TP-NONACTIONABLE", "evidence_summary": "README tip #2"},
+            {"workload_id": "sol_log_reg", "rule_id": "depth.critical_path.v1", "adjudication": "NOT-IN-SCOPE", "evidence_summary": ""},
+        ]
+        rows = security_case_rows(seeded, findings)
+        self.assertEqual([(r["source"], r["subject"]) for r in rows],
+                         [("real_workload", "sol_log_reg"), ("seeded", "configuration.positive.not_set")])
+        self.assertEqual(rows[0]["outcome"], "true_positive")
+        self.assertEqual(rows[1]["outcome"], "detected")
+
+    def test_bug_hunt_replaces_findings_and_keeps_clean_and_not_applicable_rows(self) -> None:
+        from cipherscope.tables import security_case_rows
+        findings = [{"workload_id": "sol_log_reg", "rule_id": "configuration.testing_only_security.v1",
+                     "adjudication": "TP-ACTIONABLE", "evidence_summary": "from findings"}]
+        hunt = [
+            {"subject": "function-evaluation", "frontend": "gcc-openfhe", "rule_id": "configuration.testing_only_security.v1",
+             "status": "positive", "finding_summary": "HEStd_NotSet", "adjudication": "TP-NONACTIONABLE",
+             "adjudication_evidence": "demo comment"},
+            {"subject": "sol_lin_reg", "frontend": "python-openfhe", "rule_id": "configuration.testing_only_security.v1",
+             "status": "clean", "finding_summary": None, "adjudication": None, "adjudication_evidence": None},
+            {"subject": "sol_lin_reg", "frontend": "python-openfhe", "rule_id": "precision.checkpoint_drop.v1",
+             "status": "not_applicable", "finding_summary": "needs checkpoints", "adjudication": None, "adjudication_evidence": None},
+            {"subject": "sol_lin_reg", "frontend": "python-openfhe", "rule_id": "keys.unused_in_observed_run.v1",
+             "status": "positive", "finding_summary": "", "adjudication": "TP-ACTIONABLE", "adjudication_evidence": ""},
+        ]
+        rows = security_case_rows(None, findings, hunt)
+        self.assertEqual([(r["subject"], r["rule_id"].split(".")[0], r["outcome"]) for r in rows], [
+            ("function-evaluation", "configuration", "true_positive"),
+            ("sol_lin_reg", "configuration", "clean"),
+            ("sol_lin_reg", "precision", "not_applicable"),
+        ])
+        self.assertEqual(rows[0]["evidence"], "demo comment")
+        self.assertEqual(rows[2]["evidence"], "needs checkpoints")
+        self.assertIsNone(rows[1]["expected_or_adjudication"])

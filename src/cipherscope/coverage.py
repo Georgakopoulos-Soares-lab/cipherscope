@@ -244,6 +244,17 @@ def scan_source(source: str, *, filename: str = "<string>") -> tuple[CoverageRis
     return tuple(_RiskScanner().scan(tree))
 
 
+def scannable_entrypoint(path: Path | str | None) -> bool:
+    """Only Python sources can be scanned for proxy bypasses.
+
+    A C++ target's completeness is established by the compiler instrumentation
+    counters in the trace instead, so a `.cpp` entrypoint (or an ELF binary
+    recorded as the run name) is simply not scanned rather than mis-parsed.
+    """
+
+    return path is not None and Path(path).suffix in {".py", ".pyw"}
+
+
 def scan_file(path: Path | str) -> tuple[CoverageRisk, ...]:
     """Scan one Python file for coverage risks."""
 
@@ -306,6 +317,13 @@ def classify_run(
     forwarded = int(coverage.get("unclassified_proxy_passthrough_calls") or 0)
     truncated = bool(run.get("truncated") or coverage.get("truncated"))
 
+    # Compiler-instrumentation evidence (the C++ frontend). Absent for the
+    # Python proxy, whose completeness rests on the passthrough counters above.
+    unmatched = int(coverage.get("unmatched_openfhe_candidates") or 0)
+    verified = coverage.get("instrumented_binary_verified")
+    instrumented_units = coverage.get("instrumented_translation_units")
+    expected_units = coverage.get("expected_translation_units")
+
     reasons: list[str] = []
     if status != "completed":
         reasons.append(f"run status is {status}")
@@ -313,6 +331,8 @@ def classify_run(
         reasons.append(f"strict mode rejected {rejected} unsupported call(s)")
     if traced_calls == 0:
         reasons.append("no semantic call was traced")
+    if verified is False:
+        reasons.append("target binary carries no CipherScope instrumentation marker")
     if reasons:
         return CoverageAssessment(UNSUPPORTED, tuple(reasons), unsupported, static_risks)
 
@@ -322,6 +342,19 @@ def classify_run(
         reasons.append("trace is truncated")
     if not coverage.get("strict", True):
         reasons.append("run used permissive mode")
+    if unmatched > 0:
+        names = ", ".join(sorted(coverage.get("unmatched_candidate_names") or ())) or "unnamed"
+        reasons.append(
+            f"{unmatched} OpenFHE semantic call(s) were not in the instrumentation manifest: {names}"
+        )
+    if (
+        isinstance(instrumented_units, int)
+        and isinstance(expected_units, int)
+        and instrumented_units < expected_units
+    ):
+        reasons.append(
+            f"only {instrumented_units} of {expected_units} translation units were instrumented"
+        )
     bypassing = [risk for risk in static_risks if risk.bypasses_tracer]
     if bypassing:
         kinds = ", ".join(sorted({risk.kind for risk in bypassing}))
@@ -427,6 +460,7 @@ __all__ = [
     "report_row",
     "scan_file",
     "scan_source",
+    "scannable_entrypoint",
     "summarize_report",
     "write_coverage_report",
 ]

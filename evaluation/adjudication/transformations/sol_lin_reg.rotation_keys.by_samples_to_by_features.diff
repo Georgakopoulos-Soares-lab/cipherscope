@@ -1,0 +1,13 @@
+diff --git a/sol_lin_reg.py b/sol_lin_reg.py
+index aa0d965..0e75942 100644
+--- a/sol_lin_reg.py
++++ b/sol_lin_reg.py
+@@ -90,7 +90,7 @@ if __name__ == '__main__':
+     print("Encrypted Performance")
+ 
+     setup_crypto(
+-        num_data_points=-1 if config["crypto_params"]["run_bootstrap"] else len(X),
++        num_data_points=-1 if config["crypto_params"]["run_bootstrap"] else 16,
+         c_params=config["crypto_params"],
+         bootstrap_params=config["crypto_bootstrap_params"]
+     )

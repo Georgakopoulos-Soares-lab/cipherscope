@@ -45,6 +45,37 @@ SEEDED_CASE_COLUMNS = (
     "bundle",
 )
 COVERAGE_COLUMNS = ("coverage_class", "runs", "fraction")
+SECURITY_RULES = (
+    "configuration.testing_only_security.v1",
+    "precision.tolerance_violated.v1",
+    "precision.checkpoint_drop.v1",
+)
+SECURITY_CASE_COLUMNS = (
+    "source",
+    "subject",
+    "rule_id",
+    "expected_or_adjudication",
+    "observed_or_status",
+    "outcome",
+    "evidence",
+)
+BEFORE_AFTER_COLUMNS = (
+    "finding_id",
+    "workload_id",
+    "rule_id",
+    "adjudication",
+    "transformation_id",
+    "transformation_status",
+    "before_wall_ms",
+    "after_wall_ms",
+    "speedup",
+    "before_rss_mb",
+    "after_rss_mb",
+    "rss_ratio",
+    "correctness_before",
+    "correctness_after",
+    "notes",
+)
 GENERIC_PROFILER_COLUMNS = ("rule_id", "seeded_positives", "generic_profiler_can_diagnose", "needs")
 OVERHEAD_COLUMNS = (
     "workload_id",
@@ -97,6 +128,7 @@ INPUTS = {
     "workload_runs": Path("raw/workload_runs.csv"),
     "scaling": Path("raw/scaling.csv"),
     "ablation": Path("raw/semantic_ablation.csv"),
+    "bug_hunt": Path("raw/bug_hunt.csv"),
 }
 
 
@@ -312,6 +344,15 @@ def coverage_rows(report_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, An
     return rows
 
 
+def _float(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _median(values: Sequence[float]) -> float | None:
     return statistics.median(values) if values else None
 
@@ -352,6 +393,121 @@ def _bootstrap_ratio(
 
 def _series(arms: Mapping[str, Sequence[Mapping[str, Any]]], arm: str, column: str) -> list[float]:
     return [float(run[column]) for run in arms[arm] if run.get(column) is not None]
+
+
+def _verdict_outcome(adjudication: Any) -> str:
+    if adjudication in ("TP-ACTIONABLE", "TP-NONACTIONABLE"):
+        return "true_positive"
+    if adjudication == "FALSE-POSITIVE":
+        return "false_positive"
+    return str(adjudication or "pending").lower()
+
+
+def security_case_rows(
+    seeded_rows: Sequence[Mapping[str, Any]] | None,
+    findings: Sequence[Mapping[str, Any]] | None,
+    bug_hunt: Sequence[Mapping[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """RQ6: what the security/correctness rules did on controlled and real programs.
+
+    `seeded` rows come from case_results.json (known answer, outcome as
+    scored by the seeded runner). `real_workload` rows come from the F-02
+    hunt (raw/bug_hunt.csv) when it is present -- every rule on every real
+    program, clean and not-applicable included, positives with their
+    adjudication -- and otherwise from the adjudicated findings of the same
+    rules on the external corpus. All inputs are already schema-validated;
+    this only joins them.
+    """
+
+    rows: list[dict[str, Any]] = []
+    for row in seeded_rows or ():
+        if row.get("rule_id") not in SECURITY_RULES:
+            continue
+        rows.append(
+            {
+                "source": "seeded",
+                "subject": row["case_id"],
+                "rule_id": row["rule_id"],
+                "expected_or_adjudication": row.get("expected"),
+                "observed_or_status": row.get("observed"),
+                "outcome": row.get("outcome"),
+                "evidence": row.get("hard_negative_reason") or None,
+            }
+        )
+    for result in bug_hunt or ():
+        if result.get("rule_id") not in SECURITY_RULES:
+            continue
+        positive = result.get("status") == "positive"
+        rows.append(
+            {
+                "source": "real_workload",
+                "subject": result["subject"],
+                "rule_id": result["rule_id"],
+                "expected_or_adjudication": (result.get("adjudication") or "pending") if positive else None,
+                "observed_or_status": result.get("status"),
+                "outcome": _verdict_outcome(result.get("adjudication")) if positive else result.get("status"),
+                "evidence": (result.get("adjudication_evidence") if positive else result.get("finding_summary")) or None,
+            }
+        )
+    for finding in () if bug_hunt is not None else (findings or ()):
+        if finding.get("rule_id") not in SECURITY_RULES:
+            continue
+        rows.append(
+            {
+                "source": "real_workload",
+                "subject": finding["workload_id"],
+                "rule_id": finding["rule_id"],
+                "expected_or_adjudication": finding.get("adjudication") or "pending",
+                "observed_or_status": "positive",
+                "outcome": _verdict_outcome(finding.get("adjudication")),
+                "evidence": finding.get("evidence_summary") or None,
+            }
+        )
+    rows.sort(key=lambda row: (row["source"], row["rule_id"], row["subject"]))
+    return rows
+
+
+def before_after_rows(findings: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """One row per TP-ACTIONABLE finding: was its transformation tried, and what happened.
+
+    Findings adjudicated TP-ACTIONABLE with no transformation recorded are
+    listed as `not_attempted` so the table never silently omits them. A
+    finding whose verdict was revised after OpenFHE refused the patched program
+    keeps its transformation row (status `refused`) because the attempt is the
+    evidence for the revision. Security-level patches are fixes, not
+    optimizations: `validated_fix` (rule clears, result unchanged) or
+    `fix_changes_result`, with the timing columns as their cost.
+    """
+
+    rows: list[dict[str, Any]] = []
+    for finding in findings:
+        status = finding.get("transformation_status") or ""
+        actionable = finding.get("adjudication") == "TP-ACTIONABLE"
+        if not actionable and not status:
+            continue
+        before_rss = _float(finding.get("before_rss_mb"))
+        after_rss = _float(finding.get("after_rss_mb"))
+        rows.append(
+            {
+                "finding_id": finding["finding_id"],
+                "workload_id": finding["workload_id"],
+                "rule_id": finding["rule_id"],
+                "adjudication": finding.get("adjudication"),
+                "transformation_id": finding.get("transformation_id") or None,
+                "transformation_status": status or "not_attempted",
+                "before_wall_ms": _float(finding.get("before_wall_ms")),
+                "after_wall_ms": _float(finding.get("after_wall_ms")),
+                "speedup": _float(finding.get("speedup")),
+                "before_rss_mb": before_rss,
+                "after_rss_mb": after_rss,
+                "rss_ratio": (before_rss / after_rss) if before_rss is not None and after_rss else None,
+                "correctness_before": _float(finding.get("correctness_before")),
+                "correctness_after": _float(finding.get("correctness_after")),
+                "notes": finding.get("notes") or None,
+            }
+        )
+    rows.sort(key=lambda row: str(row["finding_id"]))
+    return rows
 
 
 def overhead_rows(runs: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -508,6 +664,9 @@ def generate_tables(
     scaling = None
     if "scaling" in present:
         scaling = validate_rows(contract["scaling_run"], read_csv(present["scaling"]))
+    bug_hunt = None
+    if "bug_hunt" in present:
+        bug_hunt = validate_rows(contract["bug_hunt_result"], read_csv(present["bug_hunt"]))
     ablation = None
     if "ablation" in present:
         ablation = validate_rows(contract["ablation_run"], read_csv(present["ablation"]))
@@ -528,12 +687,17 @@ def generate_tables(
         report = precision_report(findings)
         path = write_precision_table(report, output / "precision.csv")
         written["precision.csv"] = _sha256(path)
+        path = write_table(before_after_rows(findings), BEFORE_AFTER_COLUMNS, output / "before_after.csv")
+        written["before_after.csv"] = _sha256(path)
     if seeded_document is not None and seeded_rows is not None:
         results = results_from_json(seeded_document)
         path = write_recall_table(recall_table(results), output / "recall.csv")
         written["recall.csv"] = _sha256(path)
         path = write_table(seeded_rows, SEEDED_CASE_COLUMNS, output / "seeded_cases.csv")
         written["seeded_cases.csv"] = _sha256(path)
+    if findings is not None or seeded_rows is not None or bug_hunt is not None:
+        path = write_table(security_case_rows(seeded_rows, findings, bug_hunt), SECURITY_CASE_COLUMNS, output / "security_cases.csv")
+        written["security_cases.csv"] = _sha256(path)
     if coverage is not None:
         path = write_table(coverage_rows(coverage), COVERAGE_COLUMNS, output / "coverage.csv")
         written["coverage.csv"] = _sha256(path)
@@ -571,6 +735,7 @@ def generate_tables(
 
 
 __all__ = [
+    "BEFORE_AFTER_COLUMNS",
     "BOOTSTRAP_ROUNDS",
     "BOOTSTRAP_SEED",
     "COVERAGE_COLUMNS",
@@ -580,8 +745,11 @@ __all__ = [
     "PRECISION_COLUMNS",
     "RECALL_COLUMNS",
     "SCALING_COLUMNS",
+    "SECURITY_CASE_COLUMNS",
     "SEEDED_CASE_COLUMNS",
     "ContractError",
+    "before_after_rows",
+    "security_case_rows",
     "PropertySpec",
     "RecordSpec",
     "coverage_rows",

@@ -1,0 +1,62 @@
+// OpenFHE adapter interface used by the runtime. Only adapter.cpp includes
+// OpenFHE headers; the runtime hands it raw argument descriptions and a
+// registry handle and receives JSON fragments back.
+#pragma once
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+namespace cs::adapter {
+
+// Registry access implemented in runtime.cpp (opaque handle = cs::Registry*).
+std::pair<std::string, uint32_t> registry_ciphertext(void* registry, const void* raw,
+                                                     std::shared_ptr<const void> witness, bool* is_new);
+uint32_t registry_bump_version(void* registry, const void* raw);
+// Returns "context_NNNN"; `witness` (may be empty) is the shared handle when the
+// call site has one, so a released context's address is never confused with a
+// new one. `is_new` is set when this call registered the context.
+std::string registry_context(void* registry, const void* raw, std::shared_ptr<const void> witness, bool* is_new);
+void registry_set_context_description(void* registry, const void* raw, std::string description);
+
+// OpenFHE version string ("1.5.1"), read from the library headers.
+std::string framework_version();
+
+// Index of the in-place operand for a canonical operation, or -1.
+int mutated_argument(const char* operation);
+
+// Append the JSON body (no braces) describing one argument. Ciphertext
+// arguments are registered and their "ct_NNNN:vK" IDs appended to `ids`.
+void describe_argument(std::string& out, void* registry, int kind, const void* pointer,
+                       int64_t ivalue, double dvalue,
+                       std::vector<const void*>* ciphertext_args, std::vector<std::string>* ids);
+
+// Append the JSON body describing the call's result: output ciphertext IDs and
+// states, or the new version of the mutated operand for in-place operations.
+void describe_result(std::string& out, void* registry, const char* operation, int result_kind,
+                     const void* result, int mutated_argument,
+                     const std::vector<const void*>& ciphertext_args,
+                     const std::vector<std::string>& ciphertext_ids);
+
+// Append the JSON body describing declared CCParams<CryptoContextCKKSRNS|BFVRNS|BGVRNS>
+// (`kind` is the CS_KIND_CCPARAMS* the plugin classified).
+void describe_ccparams(std::string& out, int kind, const void* params);
+
+// Decrypt `ciphertext` (a Ciphertext<DCRTPoly> handle) with `secret_key` through
+// `context` and append the first `length` real packed values as a JSON array.
+// Returns false and sets `error` when OpenFHE throws or a handle is empty;
+// nothing is appended then. Used only by user-requested precision checkpoints.
+bool decrypt_real_values(std::string& out, const void* context, const void* ciphertext,
+                         const void* secret_key, size_t length, std::string* error);
+
+// OpenFHE's own textual rendering of a Plaintext handle (what the Python
+// binding's repr() shows), or "" for an empty handle.
+std::string plaintext_representation(const void* plaintext);
+
+// Append JSON objects (comma separated) for every context seen, from the
+// descriptions taken when each was first registered.
+void describe_contexts(std::string& out, void* registry);
+
+}  // namespace cs::adapter

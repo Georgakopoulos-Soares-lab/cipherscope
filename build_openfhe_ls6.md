@@ -250,3 +250,219 @@ container, plain `bash …` for the native lane. Outputs under
   four external workloads stay `PARTIAL-PERMISSIVE`.
 - Scaling repetitions: all LS6 sweep points are single runs on a shared VM;
   E-02 wants ≥3 repetitions on an otherwise idle node before ratios are quoted.
+
+## C++ frontend (branch `cpp-gcc-frontend`, 2026-09-17)
+
+Implements `docs/cpp_gcc_design.md` phases 0–6 on LS6 (node `v320-008`, job 3452489):
+
+- [x] Phase 0 — trace producer-neutral: `run.producer`, `run.runtime.language/
+      compiler/framework`, `run.clocks`, native coverage counters (one schema);
+      Python recorder declares `python-openfhe`; `classify_run` reads native
+      evidence; AST scan only for `.py`. `tests/test_frontend_neutral.py`.
+- [x] Phase 1 — native runtime (`native/runtime/runtime.cpp`): C ABI
+      (`native/include/cipherscope/runtime.h`), weak-ref identity registry,
+      in-place versions, three clocks, thread IDs, unwound-call detection,
+      limits, JSONL spool; OpenFHE adapter (`adapter.cpp`) the only
+      OpenFHE-including TU; `.cipherscope.marker` ELF section.
+- [x] Phase 2 — GCC plugin (`native/gcc/plugin.cpp`): GIMPLE pass after `cfg`,
+      instruments application-code calls to manifest-listed
+      `CryptoContextImpl` members and ciphertext operators; static operand
+      kinds via `type_as_string`; unmatched/allowed calls reported; site
+      tables; verified under `-fchecking=2`.
+- [x] Phase 3 — adapter reads level/noise/scale/slots/key tag/context/
+      techniques and `CCParams` at `GenCryptoContext`; C++ context block
+      identical to Python's.
+- [x] Phase 4 — manifest `native/openfhe/openfhe-1.5.operations.json`
+      (30 ops + 7 operator aliases), bound to `CORE_OPERATIONS` by
+      `tests/test_operation_manifest.py`; strict unmatched detection.
+- [x] Phase 5 — `cipherscope profile BINARY`: CMakeCache/compile_commands
+      discovery, toolchain built with the target's GCC into a fingerprinted
+      cache, isolated shadow build via `CMAKE_CXX_COMPILER_LAUNCHER`,
+      marker check, cached reuse (1.4 s second run).
+- [x] Phase 6 — coverage classes from native evidence (TUs instrumented,
+      unmatched candidates, marker).
+- [x] Gate `tests/integration_cpp/run_gate.py`: **18/18 `native_pass`** on
+      GCC 15.2.0 / OpenFHE 1.5.1 (Rocky), archived
+      `artifact/feasibility/cpp-gcc152-openfhe151/`.
+- [x] Parity: `frontend_parity.compare_traces`; four Python/C++ twin pairs
+      equivalent (rotations, operators/in-place, aliasing, exception) —
+      caught and fixed a Python-frontend bug (OpenFHE `Plaintext` has
+      `GetLevel/GetNoiseScaleDeg`, so plaintext operands were recorded as
+      ciphertexts and `ct×pt` as `ct_ct`).
+- [x] Report (`summary.html`): frontend/language/toolchain/framework header
+      and environment table, coverage evidence in each frontend's terms,
+      source files with language, lineage per event.
+- [x] Upstream unmodified examples: `simple-real-numbers.cpp` COMPLETE with a
+      real `rotation.hoist_same_input.v1` finding; `advanced-real-numbers.cpp`
+      PARTIAL-PERMISSIVE (`EvalFastRotation*` outside the manifest in both
+      frontends).
+- [x] Second GCC / distribution: `gcc-13-plugin-dev` added to the Apptainer
+      definition and the Dockerfile; image rebuilt (3 min), primary Python
+      gate re-run on it (38/0/38, artifact re-archived), and the C++ gate
+      run inside it: **18/18 `native_pass` on GCC 13.3.0 / Ubuntu 24.04**
+      (`artifact/feasibility/cpp-gcc133-openfhe151/`). The plugin is built on
+      demand by whichever GCC built the target, so the frontend follows the
+      project's toolchain.
+- [x] Phase 7 (thread-local buffering / native overhead study) — closed
+      2026-11-01. The overhead study is done (see the 2026-09-17 entry below):
+      one locked write per event is within run-to-run noise of millisecond-scale
+      FHE work, so thread-local buffering was deliberately **not** implemented —
+      it would trade cross-thread event order and crash-safety of the spool for
+      a cost that cannot be measured. Reopen only for a workload whose events
+      are sub-microsecond.
+
+### Manifest v2, bootstrap positive, corrected depth accounting (2026-09-17, later)
+
+- [x] Manifest `openfhe-1.5-v2` (38 ops): `EvalFastRotation[Precompute]`,
+      `EvalPoly`, `EvalLogistic`, `EvalSum{Rows,Cols}[KeyGen]` in both
+      frontends. Python gate 38/38 (both LS6 lanes) and C++ gate 18/18 re-run
+      and re-archived. External corpus: `sol_encrypted_inference` now
+      strict-COMPLETE (was PARTIAL); `sol_log_reg`/`sol_nag_log_reg` strict
+      re-runs in progress. Upstream `advanced-real-numbers.cpp` COMPLETE, with
+      its `FastRotationsDemo1` "before" block (7 `EvalRotate` on one
+      ciphertext) flagged and the hoisted block silent.
+- [x] **Bootstrap rule limitation was misdiagnosed.** The C++ frontend on
+      upstream `simple-ckks-bootstrapping.cpp` showed level 31 → 21 across
+      `EvalBootstrap`; the Python binding shows the same for a deep input.
+      OpenFHE returns bootstrap output at `depth − levelsAvailableAfterBootstrap`
+      regardless of input, so only deep inputs show a restoration. Added
+      seeded positive `bootstrap.positive.underused_deep`: **28/28 matched,
+      every rule now has a real positive** (recall table 14/14). README,
+      ARTIFACT, seeded README and the hard-negative case docstring corrected.
+- [x] Plaintext-operand fix corrected depth accounting in three seeded cases
+      (`ct × pt` no longer counts as depth); documented in
+      `evaluation/parity/README.md` as the two current developer-lane
+      disagreements pending a Mac rerun.
+- [x] More upstream C++ examples profiled COMPLETE: `function-evaluation`
+      (testing-only security fires: `HEStd_NotSet`), `polynomial-evaluation`,
+      `simple-ckks-bootstrapping` (bootstrap underuse + testing-only security).
+- [x] Native overhead (design phase 7, measurement half): plain / hooks /
+      full ×3 at 10²–10⁵, two allocator settings. Pinned allocator: hooks and
+      full within 0.3–7 % of plain, peak RSS 25–26 MB in every arm, spool
+      1.2 KB/event. Default glibc makes the instrumented binary 6–16 %
+      *faster* at 10⁴–10⁵ (heap trimming), so the raw record carries an
+      `allocator` column and the doc explains it. Registry now prunes expired
+      entries every 1024 registrations: 10⁵ full-arm peak RSS 49 MB → 26 MB.
+      Thread-local buffering deliberately not implemented: one locked write
+      per millisecond-scale FHE event is not measurable.
+- [x] External corpus strict under manifest v2: **4/4 COMPLETE** (was 1/4);
+      `evaluation/raw/coverage_report.csv` = 20/20 COMPLETE (16 examples +
+      4 workloads); `evaluation/adjudication/findings.csv` exported (12
+      findings, verdicts empty — human step).
+
+### Coverage boundary closed on both frontends (2026-09-18)
+
+User request: operator overloads in Python (GAP-01), a C++ counterpart for
+checkpoints/annotations, and `EvalAddMany`/`EvalMultMany`,
+`EvalChebyshevSeries`, BGV/BFV in the manifest — in both frontends.
+
+- [x] GAP-01 — `src/cipherscope/operators.py`: while a session is active the
+      binding's `Ciphertext.__add__` (and `__sub__`/`__mul__`/`__neg__`/in-place
+      forms where a binding defines them) is rerouted to the owning session's
+      proxy, so `a + b` records one `EvalAdd ct_ct` at the user's line; the
+      native call runs once; originals restored at close (refcounted across
+      sessions). Real-binding check `GAP-01` now asserts the traced event and
+      numerical equality; `operator_overload_coverage` is evidence-based.
+      Commit `ef85955`.
+- [x] Manifest **`openfhe-1.5-v3`** (53 operations, shared table
+      `CORE_OPERATIONS` ⇄ `native/openfhe/openfhe-1.5.operations.json`,
+      `tests/test_operation_manifest.py` keeps them identical):
+      `EvalAddMany`, `EvalAddManyInPlace` (non-mutating: reassigns handles),
+      `EvalMultMany` (opaque depth), `EvalMultAndRelinearize`,
+      `EvalLinearWSum[Mutable]`, `EvalMerge`, `EvalChebyshevSeries[Linear|PS]`
+      (records `polynomial_degree`, bounds — never coefficients),
+      `EvalSin`/`EvalCos`/`EvalDivide`, `MakePackedPlaintext`,
+      `MakeCoefPackedPlaintext`; method aliases `EvalAtIndex[KeyGen]` →
+      `EvalRotate[KeyGen]` (both frontends record the canonical name).
+- [x] Schemes — trace/manifest schema `scheme ∈ {CKKS, BFV, BGV, null}`;
+      Python reads `CCParams*.GetScheme()`; C++ adapter reads the base
+      `lbcrypto::Params` of `CCParams<CKKSRNS|BFVRNS|BGVRNS>` (new ABI kinds
+      22/23, `cs_declared_parameters(site, kind, params)`), spools the enum
+      name (`BFVRNS`; Python binding says `BFVRNS_SCHEME` — both normalized);
+      `available_slots` = N/2 (CKKS) or N (BFV/BGV); `plaintext_modulus`
+      reported for integer schemes, null for CKKS (that slot holds the scaling
+      mod size). Without declared params a `batch_size == N` context is left
+      `scheme = null` (`batch_size_equals_ring_dimension_not_ckks`), never
+      labelled CKKS.
+- [x] C++ vector operands — plugin classifies
+      `std::vector<std::shared_ptr<[const] CiphertextImpl>>` as
+      `CS_KIND_CIPHERTEXT_VECTOR` (checked before the single-handle spelling);
+      adapter describes every element (id, first_seen, state) under `items`;
+      normalizer flattens them into inputs/parents in order, exactly like the
+      Python list flattening; `operand_count` semantic argument.
+- [x] Fixtures + twins: `many_and_series` (17 events), `bfv_arithmetic`
+      (13), `bgv_arithmetic` (14); spools/sites/Python traces archived under
+      `tests/cpp/expected/`; `unmatched.cpp` and Python `GAP-04` now use
+      `EvalAddMutable`/`EvalMultMutable` as the out-of-manifest witnesses.
+- [x] C++ gate **20/20 `native_pass`** (new `OP-03`, `SCHEME-01`; `PARITY-01`
+      over 7 twin pairs) — GCC 15.2.0 / OpenFHE 1.5.1, archived
+      `artifact/feasibility/cpp-gcc152-openfhe151/`.
+- [x] Python gate gains `API-07` (vector composites, series, alias, numerics)
+      and `API-08` (BFV and BGV contexts traced with scheme/slots/modulus):
+      `ls6-native-py311` **40/40 `native_pass`**, `primary-source-py311`
+      **40/40 `pass`** (authoritative), both re-archived; `docs/evidence.md`
+      rows updated (macOS `developer` and the 3.12 wheel keep their older
+      counts — not rerun here).
+- [x] C++ counterpart for annotations/checkpoints —
+      `native/include/cipherscope/annotate.h` (opt-in): `cipherscope::annotate`,
+      `annotate_plaintext`, `checkpoint`. Inline no-ops unless the unit is
+      compiled through the CipherScope launcher, which now defines
+      `CIPHERSCOPE_INSTRUMENTED` (weak symbols were tried first and rejected:
+      GCC 15 at `-O2` non-PIE folds the null check away). Runtime records
+      `meta` records (`Annotate`, `AnnotatePlaintext`, `PrecisionCheckpoint`)
+      with `__builtin_FILE/LINE/FUNCTION`, ciphertext id + state, the
+      annotation, expected values and — via the adapter's own `Decrypt`, not a
+      traced event — observed values; invalid input → `status: error`
+      (`annotation_error`), never merged. Normalizer emits `annotation` /
+      `checkpoint` events, merges ciphertext `annotations`, computes metrics
+      with the session's `_precision_metrics` (identical numbers by
+      construction), sets `run.shadow_mode` iff a checkpoint ran. Parity
+      comparator ignores measured noise (observed values, error metrics) but
+      keeps the checkpoint contract and outcome, and compares `shadow_mode`.
+      Fixture `checkpoints.cpp` + twin `checkpoints.py`: 18 events,
+      equivalent; both frontends reach the same five positives
+      (`precision.checkpoint_drop`, `precision.tolerance_violated`,
+      `packing.low_utilization_annotated`, `encoding.repeated_public_constant`,
+      `provenance.public_value_ciphertext_mult`); programs without the header
+      keep those rules `not_applicable` (asserted by `META-01` and unit tests).
+- [x] C++ gate final: **21/21 `native_pass`** (`META-01` added; `PARITY-01`
+      over 8 twin pairs), `artifact/feasibility/cpp-gcc152-openfhe151/`.
+- [x] Unit suite (Python 3.13, no binding): 258 passed, 364 subtests.
+
+### Finishing the branch (2026-11-01)
+
+- [x] Analyzer: `parameters.depth_headroom_observed` reserves a level for a
+      pending FLEXIBLEAUTO rescale (`deferred_rescale_levels`). The C++ twin
+      expectation (`PIPE-01`, `tests/test_native_frontend.py`) is now `clean`
+      for the depth-1 `repeated_rotations` program, which is exactly enough.
+- [x] **C++ frontend use-after-free fixed.** Re-profiling the upstream
+      `simple-real-numbers-serial.cpp` crashed at exit (`SIGSEGV` in
+      `describe_contexts`): the runtime described contexts at finalisation
+      from raw pointers, and the program calls
+      `CryptoContextFactory::ReleaseAllContexts()` midway. Contexts are now
+      described at first registration (snapshot kept in the registry, released
+      ones retained), with a weak witness wherever a shared handle is seen so a
+      reused address gets a new ID. The manifest allow-list spelled the
+      accessor `GetSchemeId`; OpenFHE's is `getSchemeId` (reached through an
+      inline header function), which had made the example
+      `PARTIAL-PERMISSIVE`. All six upstream examples re-profiled: **6/6
+      COMPLETE** (`$SCRATCH/cipherscope-ls6/cpp-upstream-v3/`).
+- [x] C++ gate re-run on the fixed runtime: **21/21 `native_pass` on GCC
+      15.2.0 (Rocky)** and **21/21 on GCC 13.3.0 (Ubuntu 24.04 image)**, both
+      on manifest `openfhe-1.5-v3`, both re-archived.
+- [x] RQ4 D-03 complete: the three untried actionable findings measured
+      (`run_transformations.py --only …`, one clone per transformation, 4-epoch
+      scale edit on both arms, `OMP_NUM_THREADS=16`). `sol_log_reg` depth
+      33→31: 1.09×, 7 % less RSS. `HEStd_128_classic` on the log_reg pair
+      needs ring 131072 (the config's own TODO), costs ~4× wall and RSS, and
+      changes the training trajectory (loss after 4 epochs 0.654 → 0.574):
+      recorded as `fix_changes_result`. New statuses `refused`,
+      `validated_fix`, `fix_changes_result` in the schema.
+- [x] RQ6 F-02: `evaluation/bug_hunt/run_bug_hunt.py` → `raw/bug_hunt.csv` →
+      `tables/security_cases.csv`; 10 real programs, 5 true `HEStd_NotSet`
+      positives, precision rules `not_applicable` without checkpoints.
+- [x] Phase 7 closed (see above); prior-art matrix verified for CryptOracle,
+      HEIR, Rotom, HERTA (HEProfiler: abstract only).
+- [ ] Mac: rerun `developer` lane (gate, `reproduce-small`) and the 3.12 wheel
+      lane on the current check set; needs the macOS machine.
+- [ ] A human second adjudicator for `findings.csv` before citing precision.

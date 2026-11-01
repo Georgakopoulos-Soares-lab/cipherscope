@@ -1,0 +1,1008 @@
+{
+  "ciphertexts": [
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0004",
+      "id": "ct_0001:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [],
+      "scale": 1.0,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0006",
+      "id": "ct_0002:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [],
+      "scale": 1.0,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0008",
+      "id": "ct_0003:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [],
+      "scale": 1.0,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0009",
+      "id": "ct_0004:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0",
+        "ct_0002:v0",
+        "ct_0003:v0"
+      ],
+      "scale": 1.0,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0010",
+      "id": "ct_0005:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+      "level": 1,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0",
+        "ct_0002:v0"
+      ],
+      "scale": 1.0,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0011",
+      "id": "ct_0006:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0003:v0"
+      ],
+      "scale": 1.0,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0012",
+      "id": "ct_0007:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+      "level": 1,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0005:v0",
+        "ct_0006:v0"
+      ],
+      "scale": 1.0,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0013",
+      "id": "ct_0008:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+      "level": 1,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0007:v0",
+        "ct_0004:v0"
+      ],
+      "scale": 1.0,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 0
+    }
+  ],
+  "context": {
+    "available_slots": 16384,
+    "batch_size": 16384,
+    "configured_multiplicative_depth": 2,
+    "context_id": "context_0001",
+    "cyclotomic_order": 32768,
+    "declared_multiplicative_depth": 2,
+    "declared_ring_dimension": null,
+    "key_switch_technique": "HYBRID",
+    "missing": [],
+    "parameters_missing": [],
+    "plaintext_modulus": 65537,
+    "ring_dimension": 16384,
+    "scaling_mod_size": 0,
+    "scaling_technique": "FLEXIBLEAUTOEXT",
+    "scheme": "BGV",
+    "scheme_evidence": "declared_parameters",
+    "security_level": "HEStd_128_classic"
+  },
+  "events": [
+    {
+      "argument_representations": [],
+      "event_id": "event_0001",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "key_generation",
+      "missing": [],
+      "operand_kinds": [],
+      "operation": "KeyGen",
+      "output_ciphertexts": [],
+      "output_representation": "<openfhe.openfhe.KeyPair object at 0x14ba0f4911f0>",
+      "output_states": [],
+      "overload": "none",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 1,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:13:<module>:KeyGen",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 13,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 10089048,
+        "start_ns": 3255559360967562,
+        "thread_cpu_duration_ns": 10082676,
+        "wall_duration_ns": 10090289
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PrivateKey object at 0x14ba0f4825f0>"
+      ],
+      "event_id": "event_0002",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "key_generation",
+      "missing": [],
+      "operand_kinds": [
+        "key"
+      ],
+      "operation": "EvalMultKeyGen",
+      "output_ciphertexts": [],
+      "output_representation": "None",
+      "output_states": [],
+      "overload": "key",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 2,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:14:<module>:EvalMultKeyGen",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 14,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 21951461,
+        "start_ns": 3255559371711220,
+        "thread_cpu_duration_ns": 21951461,
+        "wall_duration_ns": 21950905
+      }
+    },
+    {
+      "argument_representations": [
+        "[1, 2, 3, 4, 5, 6, 7, 8]"
+      ],
+      "event_id": "event_0003",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "setup",
+      "missing": [],
+      "operand_kinds": [
+        "plaintext_values"
+      ],
+      "operation": "MakePackedPlaintext",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (1, 2, 3, 4, 5, 6, 7, 8, ... )>",
+      "output_states": [],
+      "overload": "values",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 3,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:19:<module>:MakePackedPlaintext",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 19,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 3704256,
+        "start_ns": 3255559394233801,
+        "thread_cpu_duration_ns": 3704056,
+        "wall_duration_ns": 3703966
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PublicKey object at 0x14ba0f49d370>",
+        "<Plaintext Object: (1, 2, 3, 4, 5, 6, 7, 8, ... )>"
+      ],
+      "event_id": "event_0004",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "plaintext"
+      ],
+      "operation": "Encrypt",
+      "output_ciphertexts": [
+        "ct_0001:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14ba0f49f3b0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "overload": "key_plaintext",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 4,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:19:<module>:Encrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 19,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 8789030,
+        "start_ns": 3255559398505865,
+        "thread_cpu_duration_ns": 8788970,
+        "wall_duration_ns": 8788711
+      }
+    },
+    {
+      "argument_representations": [
+        "[8, 7, 6, 5, 4, 3, 2, 1]"
+      ],
+      "event_id": "event_0005",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "setup",
+      "missing": [],
+      "operand_kinds": [
+        "plaintext_values"
+      ],
+      "operation": "MakePackedPlaintext",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (8, 7, 6, 5, 4, 3, 2, 1, ... )>",
+      "output_states": [],
+      "overload": "values",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 5,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:20:<module>:MakePackedPlaintext",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 20,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 1544476,
+        "start_ns": 3255559407908109,
+        "thread_cpu_duration_ns": 1544255,
+        "wall_duration_ns": 1544155
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PublicKey object at 0x14ba0f49fc30>",
+        "<Plaintext Object: (8, 7, 6, 5, 4, 3, 2, 1, ... )>"
+      ],
+      "event_id": "event_0006",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "plaintext"
+      ],
+      "operation": "Encrypt",
+      "output_ciphertexts": [
+        "ct_0002:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14ba0f4c4270>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "overload": "key_plaintext",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 6,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:20:<module>:Encrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 20,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 8118302,
+        "start_ns": 3255559409995926,
+        "thread_cpu_duration_ns": 8118302,
+        "wall_duration_ns": 8131865
+      }
+    },
+    {
+      "argument_representations": [
+        "[1, 1, 1, 1, 1, 1, 1, 1]"
+      ],
+      "event_id": "event_0007",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "setup",
+      "missing": [],
+      "operand_kinds": [
+        "plaintext_values"
+      ],
+      "operation": "MakePackedPlaintext",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (1, 1, 1, 1, 1, 1, 1, 1, ... )>",
+      "output_states": [],
+      "overload": "values",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 7,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:21:<module>:MakePackedPlaintext",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 21,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 1561528,
+        "start_ns": 3255559418823990,
+        "thread_cpu_duration_ns": 1561297,
+        "wall_duration_ns": 1561518
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PublicKey object at 0x14ba0f49fc30>",
+        "<Plaintext Object: (1, 1, 1, 1, 1, 1, 1, 1, ... )>"
+      ],
+      "event_id": "event_0008",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "plaintext"
+      ],
+      "operation": "Encrypt",
+      "output_ciphertexts": [
+        "ct_0003:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14ba0f4c45b0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "overload": "key_plaintext",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 8,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:21:<module>:Encrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 21,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 8054482,
+        "start_ns": 3255559420913060,
+        "thread_cpu_duration_ns": 8054664,
+        "wall_duration_ns": 8054188
+      }
+    },
+    {
+      "argument_representations": [
+        "[<openfhe.openfhe.Ciphertext object at 0x14ba0f49f3b0>, <openfhe.openfhe.Ciphertext object at 0x14ba0f4c4270>, <openfhe.openfhe.Ciphertext object at 0x14ba0f4c45b0>]"
+      ],
+      "event_id": "event_0009",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0",
+        "ct_0002:v0",
+        "ct_0003:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "collection"
+      ],
+      "operation": "EvalAddMany",
+      "output_ciphertexts": [
+        "ct_0004:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14ba0f4a4fb0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0004:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "overload": "ct_list",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {
+        "operand_count": 3
+      },
+      "sequence": 9,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:24:<module>:EvalAddMany",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 24,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 452549,
+        "start_ns": 3255559429672705,
+        "thread_cpu_duration_ns": 452167,
+        "wall_duration_ns": 452670
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14ba0f49f3b0>",
+        "<openfhe.openfhe.Ciphertext object at 0x14ba0f4c4270>"
+      ],
+      "event_id": "event_0010",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0",
+        "ct_0002:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "ciphertext"
+      ],
+      "operation": "EvalMult",
+      "output_ciphertexts": [
+        "ct_0005:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14ba0f4a6070>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0005:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 1,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "overload": "ct_ct",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 10,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:25:<module>:EvalMult",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 25,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 16794352,
+        "start_ns": 3255559430735013,
+        "thread_cpu_duration_ns": 16794492,
+        "wall_duration_ns": 16794237
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14ba0f4c45b0>"
+      ],
+      "event_id": "event_0011",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0003:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext"
+      ],
+      "operation": "EvalNegate",
+      "output_ciphertexts": [
+        "ct_0006:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14ba0f4a7db0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0006:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "overload": "ct",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 11,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:26:<module>:EvalNegate",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 26,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 238707,
+        "start_ns": 3255559448324255,
+        "thread_cpu_duration_ns": 238237,
+        "wall_duration_ns": 238849
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14ba0f4a6070>",
+        "<openfhe.openfhe.Ciphertext object at 0x14ba0f4a7db0>"
+      ],
+      "event_id": "event_0012",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0005:v0",
+        "ct_0006:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0005:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 1,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0006:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "ciphertext"
+      ],
+      "operation": "EvalSub",
+      "output_ciphertexts": [
+        "ct_0007:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14ba0f45d730>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0007:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 1,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "overload": "ct_ct",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 12,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:27:<module>:EvalSub",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 27,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 3273649,
+        "start_ns": 3255559449243394,
+        "thread_cpu_duration_ns": 3273317,
+        "wall_duration_ns": 3273687
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14ba0f45d730>",
+        "<openfhe.openfhe.Ciphertext object at 0x14ba0f4a4fb0>"
+      ],
+      "event_id": "event_0013",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0007:v0",
+        "ct_0004:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0007:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 1,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0004:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "ciphertext"
+      ],
+      "operation": "EvalSub",
+      "output_ciphertexts": [
+        "ct_0008:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14ba0f4bc130>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0008:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 1,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "overload": "ct_ct",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 13,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:28:<module>:EvalSub",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 28,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 3350392,
+        "start_ns": 3255559453240632,
+        "thread_cpu_duration_ns": 3350001,
+        "wall_duration_ns": 3350511
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14ba0f4bc130>",
+        "<openfhe.openfhe.PrivateKey object at 0x14ba0f45fe70>"
+      ],
+      "event_id": "event_0014",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0008:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0008:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "ed798aa9c9e52f3ae49557a4b749bf67",
+          "level": 1,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "key"
+      ],
+      "operation": "Decrypt",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (-1, 5, 9, 11, 11, 9, 5, -1, ... )>",
+      "output_states": [],
+      "overload": "ct_key",
+      "python_thread_id": 22789614556992,
+      "semantic_arguments": {},
+      "sequence": 14,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py:30:<module>:Decrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bgv_arithmetic.py",
+        "function": "<module>",
+        "line": 30,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303830,
+      "timing": {
+        "process_cpu_duration_ns": 2363451,
+        "start_ns": 3255559457216409,
+        "thread_cpu_duration_ns": 2363411,
+        "wall_duration_ns": 2363145
+      }
+    }
+  ],
+  "run": {
+    "clocks": {
+      "cpu": "time.process_time_ns",
+      "thread_cpu": "time.thread_time_ns",
+      "wall": "time.perf_counter_ns"
+    },
+    "coverage": {
+      "allowed_passthrough_calls": 4,
+      "failed_state_reads": 0,
+      "operator_overload_coverage": true,
+      "original_reference_bypass_observable": false,
+      "potentially_incomplete": false,
+      "rejected_unclassified_calls": 0,
+      "strict": true,
+      "traced_semantic_calls": 9,
+      "truncated": false,
+      "unclassified_proxy_passthrough_calls": 0,
+      "unsupported_operations": []
+    },
+    "name": "profile_unmodified",
+    "producer": {
+      "frontend": "python-openfhe",
+      "frontend_version": "0.1.0",
+      "instrumentation_manifest": null
+    },
+    "run_id": "run_24ea3a67925a9842f0d9cfc5",
+    "runtime": {
+      "architecture": "x86_64",
+      "backend": "CryptoContext",
+      "backend_representation": "<openfhe.openfhe.CryptoContext object at 0x14ba0f4810b0>",
+      "cipherscope_commit": "ef859552de0f3fcc079279f49690c0dfc72a5d27",
+      "cipherscope_dirty": true,
+      "cipherscope_version": "0.1.0",
+      "framework": "openfhe",
+      "framework_version": null,
+      "lane": "developer",
+      "language": "python",
+      "language_version": "3.11.15",
+      "openfhe_compatibility_target": "OpenFHE Python wrapper v1.5.1.0",
+      "openfhe_distribution": null,
+      "openfhe_native_module_hashes": {
+        "openfhe.cpython-311-x86_64-linux-gnu.so": "429513c3add220b9ca493e3d626c7e20adb4b18609c836804d9bbe2a1e6e3a06"
+      },
+      "platform": "linux",
+      "python": "3.11.15"
+    },
+    "shadow_mode": false,
+    "status": "completed",
+    "testing_security_acknowledged": false,
+    "tool": {
+      "name": "cipherscope",
+      "version": "0.1.0"
+    },
+    "truncated": false
+  },
+  "schema_version": "1.0.0"
+}

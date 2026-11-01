@@ -43,3 +43,31 @@ sweeps' baseline arms ran under different concurrent load, which is why the
 container lane's traced/baseline ratios fall below 1 while the native lane's
 sit at 1.08–1.11; the arm64 sweep gives 1.22 at 10⁵. Bytes per event
 (2 139–2 193) and peak RSS at 10⁵ (2.98–3.17 GB) agree across all three.
+
+## Frontend parity (Python vs C++)
+
+`cipherscope.frontend_parity.compare_traces` compares traces of the same
+workload recorded by the Python proxy and by the GCC plugin frontend:
+operation sequence and kinds, overloads, operand roles, lineage, level/noise
+transitions, semantic arguments, and every analyzer's conclusion must be
+identical; IDs, timings, thread IDs, source paths and provenance are ignored.
+The four twin pairs under `tests/cpp/fixtures` / `tests/cpp/twins` are
+equivalent (`tests/test_native_frontend.py`, gate check `PARITY-01`).
+
+## Known differences in the current report
+
+The developer (macOS) lane's archived seeded and ablation results were
+recorded before two changes made on branch `cpp-gcc-frontend`, and the report
+lists them rather than hiding them:
+
+- `bootstrap.positive.underused_deep` (seeded case 28) did not exist; it is
+  reported as *not run on developer* under `--allow-missing-cases`.
+- Six ablation rows for `encoding.*` and `provenance.negative.public_pt_only`
+  changed from `max_depth=1` to `max_depth=0`: the Python frontend used to
+  classify an OpenFHE `Plaintext` operand as a ciphertext (it exposes
+  `GetLevel`/`GetNoiseScaleDeg` too), so `ct × pt` counted as nonlinear depth.
+  The C++ frontend parity check exposed this; the fix is in
+  `cipherscope.compatibility.is_ciphertext`. Both LS6 lanes agree on the
+  corrected rows.
+
+Rerunning `make reproduce-small` on the Mac from this branch removes both.

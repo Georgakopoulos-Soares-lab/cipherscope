@@ -1,12 +1,11 @@
-"""Known limitation: an underused bootstrap that the real binding cannot expose.
+"""Hard negative: a bootstrap that restores nothing because it came too early.
 
 Five squarings, one bootstrap, one more multiplication: the refreshed budget is
-almost entirely wasted, which is the pathology the bootstrap rule describes. On
-OpenFHE Python 1.5.1.0, however, GetLevel() returns the same value before and
-after EvalBootstrap under every scaling technique that can bootstrap at all, so
-the rule measures a zero level delta. This case pins that behavior: the rule
-must stay silent rather than fabricate a restored-level count. The positive
-outcome is covered only by the fake-model test in tests/golden/test_bootstrap.py.
+almost entirely wasted. But the bootstrap happens at level 5 of about 23, and
+OpenFHE returns every bootstrapped ciphertext at the fixed level
+depth - levelsAvailableAfterBootstrap, so the output is deeper than the input
+and no levels were restored. The rule must stay silent rather than fabricate a
+restored-level count; bootstrap_underused_deep.py is the real positive.
 Expected: bootstrap.restored_levels_underused.v1 clean.
 """
 

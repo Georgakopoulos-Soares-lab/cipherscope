@@ -1,0 +1,511 @@
+{
+  "authoritative_for_primary_target": false,
+  "checks": [
+    {
+      "description": "BUILD-01: the plain fixture project builds and runs without CipherScope",
+      "duration_ns": 16726196702,
+      "id": "BUILD-01",
+      "observed": {
+        "programs": [
+          "repeated_rotations",
+          "operators_inplace",
+          "aliasing",
+          "exception",
+          "threads",
+          "unmatched",
+          "many_and_series",
+          "bfv_arithmetic",
+          "bgv_arithmetic",
+          "checkpoints"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "BUILD-02: CMakeCache.txt yields source root, GCC, OpenFHE and the CMake target; the plain binary has no marker",
+      "duration_ns": 9377386,
+      "id": "BUILD-02",
+      "observed": {
+        "compiler_version": "15.2.0",
+        "generator": "Unix Makefiles",
+        "openfhe_version": "1.5.1"
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "BUILD-03: `cipherscope profile <binary>` creates an instrumented shadow build for every fixture without touching the source tree",
+      "duration_ns": 92950942115,
+      "id": "BUILD-03",
+      "observed": {
+        "aliasing": {
+          "coverage": "COMPLETE",
+          "events": 10,
+          "exit": 0
+        },
+        "bfv_arithmetic": {
+          "coverage": "COMPLETE",
+          "events": 13,
+          "exit": 0
+        },
+        "bgv_arithmetic": {
+          "coverage": "COMPLETE",
+          "events": 14,
+          "exit": 0
+        },
+        "checkpoints": {
+          "coverage": "COMPLETE",
+          "events": 18,
+          "exit": 0
+        },
+        "exception": {
+          "coverage": "COMPLETE",
+          "events": 7,
+          "exit": 0
+        },
+        "many_and_series": {
+          "coverage": "COMPLETE",
+          "events": 17,
+          "exit": 0
+        },
+        "operators_inplace": {
+          "coverage": "COMPLETE",
+          "events": 15,
+          "exit": 0
+        },
+        "repeated_rotations": {
+          "coverage": "COMPLETE",
+          "events": 10,
+          "exit": 0
+        },
+        "threads": {
+          "coverage": "COMPLETE",
+          "events": 33,
+          "exit": 0
+        },
+        "unmatched": {
+          "coverage": "PARTIAL-PERMISSIVE",
+          "events": 8,
+          "exit": 0
+        }
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "BUILD-04: the shadow binary carries the marker, every translation unit was instrumented, and the original binary is untouched",
+      "duration_ns": 2987017,
+      "id": "BUILD-04",
+      "observed": {
+        "marker": {
+          "cipherscope.instrumented": "true",
+          "frontend": "gcc-openfhe",
+          "frontend_version": "0.1.0",
+          "gcc": "15.2.0",
+          "manifest": "openfhe-1.5-v3",
+          "schema_major": "1"
+        },
+        "original_mtime_ns": 1793543327105826705
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "OP-01: every application-level OpenFHE call is intercepted exactly once with its semantic arguments",
+      "duration_ns": 17172,
+      "id": "OP-01",
+      "observed": {
+        "operations": [
+          "KeyGen",
+          "EvalRotateKeyGen",
+          "MakeCKKSPackedPlaintext",
+          "Encrypt",
+          "EvalRotate",
+          "EvalRotate",
+          "EvalRotate",
+          "EvalAdd",
+          "EvalAdd",
+          "Decrypt"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "OP-02: operator*, operator+, operator+=, unary operator- and ct*pt normalize to one canonical event each",
+      "duration_ns": 13717,
+      "id": "OP-02",
+      "observed": {
+        "operations": [
+          "KeyGen",
+          "EvalMultKeyGen",
+          "MakeCKKSPackedPlaintext",
+          "MakeCKKSPackedPlaintext",
+          "MakeCKKSPackedPlaintext",
+          "Encrypt",
+          "Encrypt",
+          "EvalMult",
+          "EvalAdd",
+          "EvalAdd",
+          "EvalAddInPlace",
+          "RescaleInPlace",
+          "EvalNegate",
+          "EvalMult",
+          "Decrypt"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "MUT-01: in-place operations produce the next immutable version of their operand and later calls read it",
+      "duration_ns": 8166,
+      "id": "MUT-01",
+      "observed": {
+        "add_in_place": [
+          "ct_0004:v1"
+        ],
+        "rescale_in_place": [
+          "ct_0005:v1"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "OP-03: EvalAddMany/EvalMultMany/EvalLinearWSum record every vector element as an input, EvalChebyshevSeries its degree and bounds, and EvalAtIndex[KeyGen] their canonical names",
+      "duration_ns": 21451,
+      "id": "OP-03",
+      "observed": {
+        "operations": [
+          "KeyGen",
+          "EvalMultKeyGen",
+          "EvalRotateKeyGen",
+          "MakeCKKSPackedPlaintext",
+          "Encrypt",
+          "MakeCKKSPackedPlaintext",
+          "Encrypt",
+          "MakeCKKSPackedPlaintext",
+          "Encrypt",
+          "EvalAddMany",
+          "EvalMultMany",
+          "EvalLinearWSum",
+          "EvalChebyshevSeries",
+          "EvalRotate",
+          "EvalAdd",
+          "Decrypt",
+          "Decrypt"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "META-01: cipherscope/annotate.h annotations and precision checkpoints become annotation/checkpoint events with the caller's source line, shadow_mode follows the evidence, and the annotation-dependent analyzers fire only on that evidence",
+      "duration_ns": 12384152,
+      "id": "META-01",
+      "observed": {
+        "fresh_bits": 43.14201900487243,
+        "later_bits": 27.574784096700615,
+        "positives": [
+          "depth.critical_path.v1",
+          "encoding.repeated_public_constant.v1",
+          "packing.low_utilization_annotated.v1",
+          "parameters.depth_headroom_observed.v1",
+          "precision.checkpoint_drop.v1",
+          "precision.tolerance_violated.v1",
+          "provenance.public_value_ciphertext_mult.v1"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "SCHEME-01: BFV and BGV programs report their scheme from the declared CCParams, N packed slots and the plaintext modulus; CKKS keeps N/2 slots and no plaintext modulus",
+      "duration_ns": 22332,
+      "id": "SCHEME-01",
+      "observed": {
+        "bfv_arithmetic": {
+          "events": 13,
+          "ring_dimension": 8192,
+          "scheme": "BFV"
+        },
+        "bgv_arithmetic": {
+          "events": 14,
+          "ring_dimension": 16384,
+          "scheme": "BGV"
+        }
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "ID-01: handle copies, moves and container storage keep one identity; destroyed objects never hand their ID to a reused address",
+      "duration_ns": 18596,
+      "id": "ID-01",
+      "observed": {
+        "identities": [
+          "ct_0001",
+          "ct_0002",
+          "ct_0003",
+          "ct_0004",
+          "ct_0005",
+          "ct_0006",
+          "ct_0007"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "SRC-01: events resolve to the exact user source file, line and function",
+      "duration_ns": 10460,
+      "id": "SRC-01",
+      "observed": {
+        "lines": [
+          25,
+          27,
+          30,
+          31,
+          33,
+          34,
+          35,
+          36,
+          36,
+          39
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "SRC-02: the same events and source lines are recorded at -O0, -O2 and -O3 (instrumentation precedes optimization)",
+      "duration_ns": 18371500360,
+      "id": "SRC-02",
+      "observed": {
+        "-O0": [
+          25,
+          27,
+          30,
+          31,
+          33,
+          34,
+          35,
+          36,
+          36,
+          39
+        ],
+        "-O2": [
+          25,
+          27,
+          30,
+          31,
+          33,
+          34,
+          35,
+          36,
+          36,
+          39
+        ],
+        "-O3": [
+          25,
+          27,
+          30,
+          31,
+          33,
+          34,
+          35,
+          36,
+          36,
+          39
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "EXC-01: a throwing OpenFHE call becomes an error event, the application's catch runs unchanged, and tracing continues",
+      "duration_ns": 12284,
+      "id": "EXC-01",
+      "observed": {
+        "error_event": "event_0005"
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "THR-01: concurrent semantic calls from OpenMP threads are recorded once each with their own thread IDs and complete lineage",
+      "duration_ns": 20940,
+      "id": "THR-01",
+      "observed": {
+        "thread_ids": [
+          731656,
+          731659,
+          731660,
+          731669
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "NUM-01: the instrumented binaries print exactly what the plain binaries print (same decrypted results, same control flow)",
+      "duration_ns": 364359,
+      "id": "NUM-01",
+      "observed": {
+        "aliasing": true,
+        "bfv_arithmetic": true,
+        "bgv_arithmetic": true,
+        "checkpoints": true,
+        "exception": true,
+        "many_and_series": true,
+        "operators_inplace": true,
+        "repeated_rotations": true,
+        "threads": true,
+        "unmatched": true
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "COV-01: an executed OpenFHE call outside the manifest denies COMPLETE and is named; every other fixture is COMPLETE",
+      "duration_ns": 71676,
+      "id": "COV-01",
+      "observed": {
+        "unmatched": [
+          "EvalAddMutable",
+          "EvalMultMutable"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "LIMIT-01: a hard event limit stops recording, never the workload, and the truncated bundle validates as incomplete",
+      "duration_ns": 17288404753,
+      "id": "LIMIT-01",
+      "observed": {
+        "calls_dropped": 6,
+        "events": 4
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "TRACE-01: every bundle validates against the canonical schemas and runs through the unchanged graph/analyzer/export pipeline",
+      "duration_ns": 81349457,
+      "id": "TRACE-01",
+      "observed": {
+        "validated": [
+          "repeated_rotations",
+          "operators_inplace",
+          "aliasing",
+          "exception",
+          "threads",
+          "unmatched",
+          "many_and_series",
+          "bfv_arithmetic",
+          "bgv_arithmetic",
+          "checkpoints"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "PIPE-01: the existing analyzers reach the expected diagnoses on the C++ trace and mark unavailable evidence not_applicable",
+      "duration_ns": 4335274,
+      "id": "PIPE-01",
+      "observed": {
+        "positives": [
+          "depth.critical_path.v1",
+          "keys.unused_in_observed_run.v1",
+          "rotation.hoist_same_input.v1"
+        ]
+      },
+      "required": true,
+      "status": "pass"
+    },
+    {
+      "description": "PARITY-01: the C++ traces of the twin programs (rotations, operators/in-place, aliasing, exception, vector composites/series, BFV, BGV, annotations/checkpoints) are semantically equivalent to the Python frontend's traces",
+      "duration_ns": 91864686,
+      "id": "PARITY-01",
+      "observed": {
+        "aliasing": 10,
+        "bfv_arithmetic": 13,
+        "bgv_arithmetic": 14,
+        "checkpoints": 18,
+        "exception": 7,
+        "many_and_series": 17,
+        "operators_inplace": 15,
+        "repeated_rotations": 10
+      },
+      "required": true,
+      "status": "pass"
+    }
+  ],
+  "duration_ns": 145560523154,
+  "environment": {
+    "compiler": "/opt/apps/gcc/15.2.0/bin/g++",
+    "compiler_version": "15.2.0",
+    "frontend": "gcc-openfhe",
+    "frontend_version": "0.1.0",
+    "instrumentation_manifest": "openfhe-1.5-v3",
+    "lane": "cpp-gcc152-openfhe151",
+    "machine": "x86_64",
+    "openfhe_dir": "/work/10899/kimopro/ls6/cipherscope-openfhe-build/opt/openfhe/lib/OpenFHE",
+    "openfhe_version": "1.5.1",
+    "os_release": {
+      "ANSI_COLOR": "0;32",
+      "BUG_REPORT_URL": "https://bugs.rockylinux.org/",
+      "CPE_NAME": "cpe:/o:rocky:rocky:8:GA",
+      "HOME_URL": "https://rockylinux.org/",
+      "ID": "rocky",
+      "ID_LIKE": "rhel centos fedora",
+      "LOGO": "fedora-logo-icon",
+      "NAME": "Rocky Linux",
+      "PLATFORM_ID": "platform:el8",
+      "PRETTY_NAME": "Rocky Linux 8.10 (Green Obsidian)",
+      "REDHAT_SUPPORT_PRODUCT": "Rocky Linux",
+      "REDHAT_SUPPORT_PRODUCT_VERSION": "8.10",
+      "ROCKY_SUPPORT_PRODUCT": "Rocky-Linux-8",
+      "ROCKY_SUPPORT_PRODUCT_VERSION": "8.10",
+      "SUPPORT_END": "2029-05-31",
+      "VERSION": "8.10 (Green Obsidian)",
+      "VERSION_ID": "8.10"
+    },
+    "platform": "Linux",
+    "python": "3.11.15",
+    "python_implementation": "CPython"
+  },
+  "fixtures": [
+    "tests/cpp/fixtures/repeated_rotations.cpp",
+    "tests/cpp/fixtures/operators_inplace.cpp",
+    "tests/cpp/fixtures/aliasing.cpp",
+    "tests/cpp/fixtures/exception.cpp",
+    "tests/cpp/fixtures/threads.cpp",
+    "tests/cpp/fixtures/unmatched.cpp",
+    "tests/cpp/fixtures/many_and_series.cpp",
+    "tests/cpp/fixtures/bfv_arithmetic.cpp",
+    "tests/cpp/fixtures/bgv_arithmetic.cpp",
+    "tests/cpp/fixtures/checkpoints.cpp"
+  ],
+  "gate": "CipherScope GCC/OpenFHE C++ frontend feasibility",
+  "lane": "cpp-gcc152-openfhe151",
+  "limitations": [
+    "GCC only; the compiler that built the target must provide plugin headers.",
+    "CMake projects only; the CMake target is resolved from the binary name unless --cmake-target is given.",
+    "An instrumented call nested inside another (a user callback invoked by OpenFHE that calls the API) is read as an unwound call.",
+    "Fixtures use HEStd_128_classic defaults with small batch sizes for tractability; they are coverage evidence, not benchmarks."
+  ],
+  "schema_version": "1.0.0",
+  "started_unix_ns": 1793543319580999326,
+  "status": "native_pass",
+  "summary": {
+    "fail": 0,
+    "pass": 21,
+    "skip": 0,
+    "total": 21
+  }
+}

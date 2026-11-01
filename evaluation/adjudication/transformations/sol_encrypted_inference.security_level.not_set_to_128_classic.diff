@@ -1,0 +1,13 @@
+diff --git a/efficient_regression/inference_config.yml b/efficient_regression/inference_config.yml
+index a917025..2a46195 100644
+--- a/efficient_regression/inference_config.yml
++++ b/efficient_regression/inference_config.yml
+@@ -16,7 +16,7 @@ crypto_params:
+   # TODO: swap out the values below
+   ring_dimensionality: 32768 #131072  # 1 << 15
+   batch_size: 16384  # ring_dimensionality / 2
+-  security_level: HEStd_NotSet #HEStd_128_classic
++  security_level: HEStd_128_classic #HEStd_128_classic
+ 
+ # If run_bootstrap above is false, we do not use the following block
+ crypto_bootstrap_params:

@@ -1,0 +1,16 @@
+diff --git a/efficient_regression/config.yml b/efficient_regression/config.yml
+index 675a14e..50d0ec9 100644
+--- a/efficient_regression/config.yml
++++ b/efficient_regression/config.yml
+@@ -14,9 +14,9 @@ crypto_params:
+   max_relin_sk_deg: 1
+ 
+   # TODO: swap out the values below
+-  ring_dimensionality: 32768 #131072  # 1 << 15
++  ring_dimensionality: 131072  # 1 << 15
+   batch_size: 16384  # ring_dimensionality / 2
+-  security_level: HEStd_NotSet #HEStd_128_classic
++  security_level: HEStd_128_classic
+ 
+ # If run_bootstrap above is false, we do not use the following block
+ crypto_bootstrap_params:

@@ -52,6 +52,32 @@ class SerialReductionAnalyzerTests(unittest.TestCase):
         self.assertEqual(result["analysis_status"], "clean")
         self.assertEqual(result["findings"], [])
 
+    def test_balanced_tree_over_many_terms_is_clean(self) -> None:
+        # Sixteen terms reduced as a balanced tree: the longest chain is four
+        # multiplications, which is exactly ceil(log2(16)). The chain is longer
+        # than the three-mult minimum, but nothing shorter exists, so this is
+        # the fixed program and must not be flagged.
+        backend = FakeCryptoContext()
+        with cipherscope.trace(backend) as session:
+            with session.region("product", operator="multiply", associative=True, commutative=True):
+                level = [FakeCiphertext() for _ in range(16)]
+                while len(level) > 1:
+                    level = [
+                        session.context.EvalMult(level[i], level[i + 1])
+                        for i in range(0, len(level), 2)
+                    ]
+        result = analyze_serial_reductions(session.to_trace())
+        self.assertEqual(result["analysis_status"], "clean")
+        self.assertEqual(result["findings"], [])
+
+    def test_serial_fold_over_many_terms_reports_true_term_count(self) -> None:
+        result = analyze_serial_reductions(_serial_product(16, region=True))
+        self.assertEqual(result["analysis_status"], "positive")
+        evidence = result["findings"][0]["evidence"]
+        self.assertEqual(evidence["serial_multiplicative_depth"], 15)
+        self.assertEqual(evidence["reduced_terms"], 16)
+        self.assertEqual(evidence["balanced_multiplicative_depth"], 4)
+
     def test_serial_product_without_region_is_not_applicable(self) -> None:
         result = analyze_serial_reductions(_serial_product(5, region=False))
         self.assertEqual(result["analysis_status"], "not_applicable")

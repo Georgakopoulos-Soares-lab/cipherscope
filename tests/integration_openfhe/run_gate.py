@@ -59,6 +59,8 @@ EXPECTED_CHECKS = (
     "PROXY-05",
     "ROT-03",
     "SEED-01",
+    "API-07",
+    "API-08",
 )
 CHECK_PATTERN = re.compile(r"^([A-Z]+-[0-9]{2}):")
 

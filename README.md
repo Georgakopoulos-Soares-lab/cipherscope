@@ -1,7 +1,11 @@
 # CipherScope
 
-CipherScope traces CKKS programs written with OpenFHE Python and suggests
-possible optimizations. It currently:
+CipherScope traces CKKS programs written with OpenFHE — in Python through a
+proxy around the live context, or in C++ through a GCC plugin that
+instruments an unmodified program's OpenFHE calls at compile time — and
+suggests possible optimizations. Both frontends emit the same canonical
+trace; validation, the ciphertext graph, every analyzer, and every exporter
+are shared. It currently:
 
 - proxy encryption/decryption, core evaluation, state/depth, declared in-place,
   rotation-key generation, rotation, and bootstrap calls;
@@ -17,9 +21,10 @@ possible optimizations. It currently:
 This is pre-alpha research software. The included fake backend performs no
 cryptography. Real-OpenFHE evidence comes from four lanes, described in
 [docs/evidence.md](docs/evidence.md): the authoritative Python 3.11 source
-build on Ubuntu 24.04 x86_64 (38 of 38 gate checks), the same pins built
-natively on a Rocky Linux 8.10 cluster host with GCC 15.2 (38 of 38), a macOS
-ARM64 developer build (37 of 38; the one skip is Linux-only), and a
+build on Ubuntu 24.04 x86_64 (40 of 40 gate checks), the same pins built
+natively on a Rocky Linux 8.10 cluster host with GCC 15.2 (40 of 40), a macOS
+ARM64 developer build (37 of 38 on the older check set; the one skip is
+Linux-only), and a
 provisional Ubuntu/Python 3.12 wheel (33 of 33 at the time it was archived).
 `evaluation/parity/parity_report.md` shows that the platform-independent
 results (seeded benchmark, ablation, example diagnoses) are identical across
@@ -76,6 +81,24 @@ The primary Python 3.11 lane uses the source-build recipe under
 `artifact/docker/openfhe-py311-source/`, or its rootless Apptainer twin under
 `artifact/apptainer/`; the archived gate artifact was produced with the latter.
 
+## Profiling a C++ program
+
+For an OpenFHE C++ program built with GCC and CMake, no source change is
+needed:
+
+```bash
+PYTHONPATH=src python3 -m cipherscope profile --output cipherscope-results/app ./build/app -- --epochs 10
+```
+
+`profile` finds the build's `CMakeCache.txt`, compiles the CipherScope GCC
+plugin and runtime with the project's own compiler, creates an isolated
+instrumented shadow build under `.cipherscope/` (optimization flags kept),
+runs it with your arguments, and writes the same bundle a Python run writes.
+A binary that already carries the `.cipherscope.marker` section is run
+directly. The frontend, its coverage evidence, and its supported envelope are
+described in [docs/cpp_frontend.md](docs/cpp_frontend.md); `profile` also
+accepts `.py` targets and then behaves exactly like `run`.
+
 ## Instrumentation API
 
 The main API wraps a native context without modifying it:
@@ -89,25 +112,18 @@ with cipherscope.trace(native_context, name="example") as session:
     combined = cc.EvalAdd(rotated, encrypted_input)
 ```
 
-CipherScope records only calls made through `session.context`. It does not see
-operator overloads, free functions, calls through the original context,
-unexecuted branches, work inside a native call, or other processes. Strict mode
-rejects methods it cannot classify. Permissive mode calls them and marks the
-trace incomplete.
-
-The runner owns the top-level session; the target must call `attach()` or
-`trace()` and otherwise keeps its working directory, streams, arguments, and exit
-status:
-
-```bash
-PYTHONPATH=src python3 -m cipherscope.cli run \
-  --output cipherscope-results/my-run -- instrumented_program.py --model demo.json
-```
-
-Normal, nonzero `SystemExit`, uncaught covered-call failure, missing attachment,
-and `KeyboardInterrupt` paths all finalize a validated bundle. `view` validates
-the bundle and prints the self-contained HTML report path; it does not start a
-server or upload an artifact.
+In Python, CipherScope records calls made through `session.context` and, while
+a session is active, ciphertext operator overloads (`a + b`) on ciphertexts
+whose context the session owns: the binding's operators are rerouted through
+the proxy for the session's lifetime and restored at close, so `a + b` and
+`cc.EvalAdd(a, b)` produce the same single event. It does not see free
+functions, calls through the original context, unexecuted branches, work
+inside a native call, or other processes. Strict mode rejects methods it
+cannot classify. Permissive mode calls them and marks the trace incomplete.
+The C++ frontend sees every call the application makes to the `CryptoContext`
+API, operator overloads included, because the compiler inserts the
+observation; a call to a method outside the operation manifest is reported and
+denies `COMPLETE` coverage.
 
 ## Coverage classes
 
@@ -117,9 +133,9 @@ precision, recall, or impact tables.
 
 | Class | Meaning |
 |---|---|
-| `COMPLETE` | Strict mode, finished, at least one traced call, nothing forwarded untraced, no bypass pattern in the source. |
-| `PARTIAL-PERMISSIVE` | Finished, but some calls were forwarded untraced (permissive mode), the trace was truncated, or the target source calls the raw context, `GetCryptoContext()`, a module-level `Eval*` free function, or `_context`. |
-| `UNSUPPORTED` | The run failed or was interrupted, strict mode rejected a call the target needed, or no semantic call was traced. |
+| `COMPLETE` | Strict mode, finished, at least one traced call, nothing forwarded untraced, no bypass pattern in the source. C++: additionally every compiled translation unit instrumented, no executed call outside the manifest, and the binary that ran carries the marker. |
+| `PARTIAL-PERMISSIVE` | Finished, but some calls were forwarded untraced (permissive mode), the trace was truncated, the target source calls the raw context, `GetCryptoContext()`, a module-level `Eval*` free function, or `_context`; C++: an executed `CryptoContext` call outside the manifest (named in the report) or a partially instrumented build. |
+| `UNSUPPORTED` | The run failed or was interrupted, strict mode rejected a call the target needed, no semantic call was traced, or (C++) the binary carries no instrumentation marker. |
 
 `preflight` scans scripts before running them; it exits `1` when it finds a
 pattern that bypasses the tracer. `coverage` classifies finished bundles and
@@ -183,8 +199,11 @@ untraced baseline. [docs/ARTIFACT.md](docs/ARTIFACT.md) maps every claim to its 
 ## Repository map
 
 ```text
-schemas/                 Versioned public JSON Schemas
-src/cipherscope/         Session, proxy, recorder, graph, analyzers, CLI
+schemas/                 Versioned public JSON Schemas (one trace schema for both frontends)
+src/cipherscope/         Session, proxy, recorder, graph, analyzers, CLI; native_trace / build_discovery / native_profile for C++
+native/                  GCC plugin, runtime, OpenFHE adapter, operation manifest
+tests/cpp/               Plain OpenFHE C++ fixture project and archived spools
+tests/integration_cpp/   C++ frontend feasibility gate
 examples/                Dependency-free demonstration workload
 tests/fake_backend/      Proxy/session mechanics
 tests/golden/            Expected analyzer results
@@ -202,13 +221,28 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 
 ## Current limitations
 
+- The C++ frontend supports GCC (with plugin headers) and CMake projects only;
+  it is verified on GCC 15.2.0 (Rocky 8.10) and GCC 13.3.0 (Ubuntu 24.04) with
+  OpenFHE 1.5.1 by the 21-check gate, archived for both compilers under
+  `artifact/feasibility/cpp-gcc152-openfhe151/` and `cpp-gcc133-openfhe151/`. Annotations and
+  precision checkpoints are available through the opt-in header
+  `native/include/cipherscope/annotate.h` (inline no-ops outside a shadow
+  build); without it those rules report `not_applicable` on C++ traces.
+- The external Python corpus (`python-log-reg-examples`) traces strict-`COMPLETE`
+  on all four workloads with the current operation set. Manifest v3 covers the
+  vector composites (`EvalAddMany`, `EvalMultMany`, `EvalLinearWSum`,
+  `EvalMerge`), the Chebyshev series family, `EvalSin`/`EvalCos`/`EvalDivide`,
+  the `EvalAtIndex` aliases and BFV/BGV contexts (`MakePackedPlaintext`, scheme
+  and plaintext modulus from the declared parameters) in both frontends; the
+  level-adjusting `*Mutable` variants remain outside it.
 - Real OpenFHE behavior is verified on four lanes with different weight
   ([docs/evidence.md](docs/evidence.md)). The authoritative Python 3.11 source
-  build on Ubuntu 24.04 x86_64 passes all 38 checks and is archived under
+  build on Ubuntu 24.04 x86_64 passes all 40 checks and is archived under
   `artifact/feasibility/primary-source-py311/`; the native Rocky Linux / GCC
-  15.2 build passes the same 38; the macOS ARM64 developer build passes all
-  but the Linux-only `RES-02`; the provisional Python 3.12 wheel passes the 33
-  checks that existed when it was archived. The claim is about observing
+  15.2 build passes the same 40; the macOS ARM64 developer build passes all
+  but the Linux-only `RES-02` of the 38 checks that existed when it was
+  archived; the provisional Python 3.12 wheel passes the 33 checks that
+  existed when it was archived. The claim is about observing
   OpenFHE calls correctly on those builds; other distributions, compilers, or
   OpenFHE versions are untested.
 - Timing and memory figures are per machine. `evaluation/tables/scaling.csv`
@@ -218,11 +252,15 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 - The fake-backend contract covers the planned state/depth matrix and observed
   rotation-key inventory. Its real-binding tests remain gated on an actual pinned
   OpenFHE installation; fake results are not compatibility evidence.
-- `bootstrap.restored_levels_underused.v1` cannot fire on real traces: `GetLevel()`
-  is unchanged by `EvalBootstrap` on OpenFHE Python 1.5.1.0 under every scaling
-  technique that can bootstrap. `precision.checkpoint_drop.v1` ignores drops
-  below one absolute bit because CKKS decryption is noise-flooded (about half a
-  bit of jitter per decryption). Both are documented in
+- `bootstrap.restored_levels_underused.v1` only sees a restoration when the
+  bootstrapped ciphertext was deeper than the level OpenFHE returns every
+  bootstrap output at (`depth - levelsAvailableAfterBootstrap`); bootstrapping
+  a shallow ciphertext shows no restored levels and the rule stays clean. The
+  seeded corpus has one real positive (`bootstrap.positive.underused_deep`) and
+  one such shallow negative. `precision.checkpoint_drop.v1` ignores drops
+  below three absolute bits because CKKS decryption is noise-flooded (stdev
+  ~0.68 bits of jitter per decryption, measured; three bits is ~4.4 stdev
+  above that floor). Both are documented in
   [evaluation/seeded/README.md](evaluation/seeded/README.md).
 - The security level is not readable from a live context. The configuration
   rule only assesses runs that declare their parameters

@@ -1,0 +1,13 @@
+diff --git a/efficient_regression/inference_config.yml b/efficient_regression/inference_config.yml
+index a917025..27a02e2 100644
+--- a/efficient_regression/inference_config.yml
++++ b/efficient_regression/inference_config.yml
+@@ -8,7 +8,7 @@ crypto_params:
+   64_scaling_mod_size: 59
+   64_first_mod: 60
+   run_bootstrap: false
+-  mult_depth: 9  # Overwritten if we run_bootstrap
++  mult_depth: 8  # Overwritten if we run_bootstrap
+   num_slots: false
+   num_large_digits: 0
+   max_relin_sk_deg: 1

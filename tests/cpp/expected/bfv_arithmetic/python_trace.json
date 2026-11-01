@@ -1,0 +1,937 @@
+{
+  "ciphertexts": [
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0006",
+      "id": "ct_0001:v0",
+      "key_switch_technique": "BV",
+      "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+      "level": 0,
+      "noise_scale_degree": 1,
+      "origin": "derived",
+      "parent_ids": [],
+      "scale": 1.0,
+      "scaling_technique": "NORESCALE",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0007",
+      "id": "ct_0002:v0",
+      "key_switch_technique": "BV",
+      "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+      "level": 0,
+      "noise_scale_degree": 1,
+      "origin": "derived",
+      "parent_ids": [],
+      "scale": 1.0,
+      "scaling_technique": "NORESCALE",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0008",
+      "id": "ct_0003:v0",
+      "key_switch_technique": "BV",
+      "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+      "level": 0,
+      "noise_scale_degree": 1,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0",
+        "ct_0002:v0"
+      ],
+      "scale": 1.0,
+      "scaling_technique": "NORESCALE",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0009",
+      "id": "ct_0004:v0",
+      "key_switch_technique": "BV",
+      "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0",
+        "ct_0002:v0"
+      ],
+      "scale": 1.0,
+      "scaling_technique": "NORESCALE",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0010",
+      "id": "ct_0005:v0",
+      "key_switch_technique": "BV",
+      "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0004:v0"
+      ],
+      "scale": 1.0,
+      "scaling_technique": "NORESCALE",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0011",
+      "id": "ct_0006:v0",
+      "key_switch_technique": "BV",
+      "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+      "level": 0,
+      "noise_scale_degree": 1,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0003:v0",
+        "ct_0005:v0"
+      ],
+      "scale": 1.0,
+      "scaling_technique": "NORESCALE",
+      "slots": 0
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0012",
+      "id": "ct_0007:v0",
+      "key_switch_technique": "BV",
+      "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+      "level": 0,
+      "noise_scale_degree": 1,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0006:v0",
+        "ct_0001:v0"
+      ],
+      "scale": 1.0,
+      "scaling_technique": "NORESCALE",
+      "slots": 0
+    }
+  ],
+  "context": {
+    "available_slots": 8192,
+    "batch_size": 8192,
+    "configured_multiplicative_depth": 2,
+    "context_id": "context_0001",
+    "cyclotomic_order": 16384,
+    "declared_multiplicative_depth": 2,
+    "declared_ring_dimension": null,
+    "key_switch_technique": "BV",
+    "missing": [],
+    "parameters_missing": [],
+    "plaintext_modulus": 65537,
+    "ring_dimension": 8192,
+    "scaling_mod_size": 60,
+    "scaling_technique": "NORESCALE",
+    "scheme": "BFV",
+    "scheme_evidence": "declared_parameters",
+    "security_level": "HEStd_128_classic"
+  },
+  "events": [
+    {
+      "argument_representations": [],
+      "event_id": "event_0001",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "key_generation",
+      "missing": [],
+      "operand_kinds": [],
+      "operation": "KeyGen",
+      "output_ciphertexts": [],
+      "output_representation": "<openfhe.openfhe.KeyPair object at 0x148ea8c723f0>",
+      "output_states": [],
+      "overload": "none",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 1,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:12:<module>:KeyGen",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 12,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 3568271,
+        "start_ns": 3255559011252612,
+        "thread_cpu_duration_ns": 3562801,
+        "wall_duration_ns": 3569223
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PrivateKey object at 0x148ea8eb1070>"
+      ],
+      "event_id": "event_0002",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "key_generation",
+      "missing": [],
+      "operand_kinds": [
+        "key"
+      ],
+      "operation": "EvalMultKeyGen",
+      "output_ciphertexts": [],
+      "output_representation": "None",
+      "output_states": [],
+      "overload": "key",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 2,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:13:<module>:EvalMultKeyGen",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 13,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 8426450,
+        "start_ns": 3255559015300114,
+        "thread_cpu_duration_ns": 8426471,
+        "wall_duration_ns": 8426098
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PrivateKey object at 0x148ea8c46ab0>",
+        "[1]"
+      ],
+      "event_id": "event_0003",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "key_generation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "rotation_indices"
+      ],
+      "operation": "EvalRotateKeyGen",
+      "output_ciphertexts": [],
+      "output_representation": "None",
+      "output_states": [],
+      "overload": "key_indices",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {
+        "rotation_indices_requested": [
+          1
+        ]
+      },
+      "sequence": 3,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:14:<module>:EvalRotateKeyGen",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 14,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 8488658,
+        "start_ns": 3255559024254065,
+        "thread_cpu_duration_ns": 8488597,
+        "wall_duration_ns": 8488085
+      }
+    },
+    {
+      "argument_representations": [
+        "[1, 2, 3, 4, 5, 6, 7, 8]"
+      ],
+      "event_id": "event_0004",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "setup",
+      "missing": [],
+      "operand_kinds": [
+        "plaintext_values"
+      ],
+      "operation": "MakePackedPlaintext",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (1, 2, 3, 4, 5, 6, 7, 8, ... )>",
+      "output_states": [],
+      "overload": "values",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 4,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:18:<module>:MakePackedPlaintext",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 18,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 1626189,
+        "start_ns": 3255559033206253,
+        "thread_cpu_duration_ns": 1626068,
+        "wall_duration_ns": 1626018
+      }
+    },
+    {
+      "argument_representations": [
+        "[8, 7, 6, 5, 4, 3, 2, 1]"
+      ],
+      "event_id": "event_0005",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "setup",
+      "missing": [],
+      "operand_kinds": [
+        "plaintext_values"
+      ],
+      "operation": "MakePackedPlaintext",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (8, 7, 6, 5, 4, 3, 2, 1, ... )>",
+      "output_states": [],
+      "overload": "values",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 5,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:19:<module>:MakePackedPlaintext",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 19,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 586720,
+        "start_ns": 3255559035304400,
+        "thread_cpu_duration_ns": 586449,
+        "wall_duration_ns": 586703
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PublicKey object at 0x148ea8c46df0>",
+        "<Plaintext Object: (1, 2, 3, 4, 5, 6, 7, 8, ... )>"
+      ],
+      "event_id": "event_0006",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "plaintext"
+      ],
+      "operation": "Encrypt",
+      "output_ciphertexts": [
+        "ct_0001:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x148ea8c96f70>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "overload": "key_plaintext",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 6,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:20:<module>:Encrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 20,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 6175309,
+        "start_ns": 3255559036266609,
+        "thread_cpu_duration_ns": 6175409,
+        "wall_duration_ns": 6174874
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PublicKey object at 0x148ea8c97030>",
+        "<Plaintext Object: (8, 7, 6, 5, 4, 3, 2, 1, ... )>"
+      ],
+      "event_id": "event_0007",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "plaintext"
+      ],
+      "operation": "Encrypt",
+      "output_ciphertexts": [
+        "ct_0002:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x148ea8c6cf30>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "overload": "key_plaintext",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 7,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:21:<module>:Encrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 21,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 5773836,
+        "start_ns": 3255559043016564,
+        "thread_cpu_duration_ns": 5773606,
+        "wall_duration_ns": 5773589
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x148ea8c96f70>",
+        "<openfhe.openfhe.Ciphertext object at 0x148ea8c6cf30>"
+      ],
+      "event_id": "event_0008",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0",
+        "ct_0002:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "ciphertext"
+      ],
+      "operation": "EvalAdd",
+      "output_ciphertexts": [
+        "ct_0003:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x148ea8c7d1f0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "overload": "ct_ct",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 8,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:23:<module>:EvalAdd",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 23,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 94647,
+        "start_ns": 3255559049400240,
+        "thread_cpu_duration_ns": 94217,
+        "wall_duration_ns": 94678
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x148ea8c96f70>",
+        "<openfhe.openfhe.Ciphertext object at 0x148ea8c6cf30>"
+      ],
+      "event_id": "event_0009",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0",
+        "ct_0002:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "ciphertext"
+      ],
+      "operation": "EvalMult",
+      "output_ciphertexts": [
+        "ct_0004:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x148ea8c7f3b0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0004:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "overload": "ct_ct",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 9,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:24:<module>:EvalMult",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 24,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 14741713,
+        "start_ns": 3255559050050073,
+        "thread_cpu_duration_ns": 14741711,
+        "wall_duration_ns": 14741446
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x148ea8c7f3b0>",
+        "1"
+      ],
+      "event_id": "event_0010",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0004:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0004:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "integer"
+      ],
+      "operation": "EvalRotate",
+      "output_ciphertexts": [
+        "ct_0005:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x148ea8c7c570>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0005:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "overload": "ct_index",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {
+        "rotation_index_requested": 1
+      },
+      "sequence": 10,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:25:<module>:EvalRotate",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 25,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 3122615,
+        "start_ns": 3255559065340582,
+        "thread_cpu_duration_ns": 3122535,
+        "wall_duration_ns": 3122583
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x148ea8c7d1f0>",
+        "<openfhe.openfhe.Ciphertext object at 0x148ea8c7c570>"
+      ],
+      "event_id": "event_0011",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0003:v0",
+        "ct_0005:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0005:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "ciphertext"
+      ],
+      "operation": "EvalAdd",
+      "output_ciphertexts": [
+        "ct_0006:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x148ea8c37830>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0006:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "overload": "ct_ct",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 11,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:26:<module>:EvalAdd",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 26,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 64060,
+        "start_ns": 3255559069033928,
+        "thread_cpu_duration_ns": 63731,
+        "wall_duration_ns": 64231
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x148ea8c37830>",
+        "<openfhe.openfhe.Ciphertext object at 0x148ea8c96f70>"
+      ],
+      "event_id": "event_0012",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0006:v0",
+        "ct_0001:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0006:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "ciphertext"
+      ],
+      "operation": "EvalSub",
+      "output_ciphertexts": [
+        "ct_0007:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x148ea8c364f0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0007:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "overload": "ct_ct",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 12,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:27:<module>:EvalSub",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 27,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 231765,
+        "start_ns": 3255559069635509,
+        "thread_cpu_duration_ns": 231474,
+        "wall_duration_ns": 232007
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x148ea8c364f0>",
+        "<openfhe.openfhe.PrivateKey object at 0x148ea8c7e3f0>"
+      ],
+      "event_id": "event_0013",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0007:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0007:v0",
+          "key_switch_technique": "BV",
+          "key_tag": "5077bbb53f93e6644406c93bb2e959f3",
+          "level": 0,
+          "noise_scale_degree": 1,
+          "scale": 1.0,
+          "scaling_technique": "NORESCALE",
+          "slots": 0
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "key"
+      ],
+      "operation": "Decrypt",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (22, 25, 26, 25, 22, 17, 10, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, ... )>",
+      "output_states": [],
+      "overload": "ct_key",
+      "python_thread_id": 22603211138880,
+      "semantic_arguments": {},
+      "sequence": 13,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py:29:<module>:Decrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/bfv_arithmetic.py",
+        "function": "<module>",
+        "line": 29,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303825,
+      "timing": {
+        "process_cpu_duration_ns": 954821,
+        "start_ns": 3255559070362017,
+        "thread_cpu_duration_ns": 954680,
+        "wall_duration_ns": 954735
+      }
+    }
+  ],
+  "run": {
+    "clocks": {
+      "cpu": "time.process_time_ns",
+      "thread_cpu": "time.thread_time_ns",
+      "wall": "time.perf_counter_ns"
+    },
+    "coverage": {
+      "allowed_passthrough_calls": 3,
+      "failed_state_reads": 0,
+      "operator_overload_coverage": true,
+      "original_reference_bypass_observable": false,
+      "potentially_incomplete": false,
+      "rejected_unclassified_calls": 0,
+      "strict": true,
+      "traced_semantic_calls": 8,
+      "truncated": false,
+      "unclassified_proxy_passthrough_calls": 0,
+      "unsupported_operations": []
+    },
+    "name": "profile_unmodified",
+    "producer": {
+      "frontend": "python-openfhe",
+      "frontend_version": "0.1.0",
+      "instrumentation_manifest": null
+    },
+    "run_id": "run_58a4878dbbe4e7e5d814bd63",
+    "runtime": {
+      "architecture": "x86_64",
+      "backend": "CryptoContext",
+      "backend_representation": "<openfhe.openfhe.CryptoContext object at 0x148ea8c602f0>",
+      "cipherscope_commit": "ef859552de0f3fcc079279f49690c0dfc72a5d27",
+      "cipherscope_dirty": true,
+      "cipherscope_version": "0.1.0",
+      "framework": "openfhe",
+      "framework_version": null,
+      "lane": "developer",
+      "language": "python",
+      "language_version": "3.11.15",
+      "openfhe_compatibility_target": "OpenFHE Python wrapper v1.5.1.0",
+      "openfhe_distribution": null,
+      "openfhe_native_module_hashes": {
+        "openfhe.cpython-311-x86_64-linux-gnu.so": "429513c3add220b9ca493e3d626c7e20adb4b18609c836804d9bbe2a1e6e3a06"
+      },
+      "platform": "linux",
+      "python": "3.11.15"
+    },
+    "shadow_mode": false,
+    "status": "completed",
+    "testing_security_acknowledged": false,
+    "tool": {
+      "name": "cipherscope",
+      "version": "0.1.0"
+    },
+    "truncated": false
+  },
+  "schema_version": "1.0.0"
+}

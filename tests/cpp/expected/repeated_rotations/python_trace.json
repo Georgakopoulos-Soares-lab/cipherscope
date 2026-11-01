@@ -1,0 +1,759 @@
+{
+  "ciphertexts": [
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0004",
+      "id": "ct_0001:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "306cd66d348982245d845528e7be39e9",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [],
+      "scale": 6.271904250631633e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0005",
+      "id": "ct_0002:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "306cd66d348982245d845528e7be39e9",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0"
+      ],
+      "scale": 6.271904250631633e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0006",
+      "id": "ct_0003:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "306cd66d348982245d845528e7be39e9",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0"
+      ],
+      "scale": 6.271904250631633e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0007",
+      "id": "ct_0004:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "306cd66d348982245d845528e7be39e9",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0"
+      ],
+      "scale": 6.271904250631633e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0008",
+      "id": "ct_0005:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "306cd66d348982245d845528e7be39e9",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0002:v0",
+        "ct_0003:v0"
+      ],
+      "scale": 6.271904250631633e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0009",
+      "id": "ct_0006:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "306cd66d348982245d845528e7be39e9",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0005:v0",
+        "ct_0004:v0"
+      ],
+      "scale": 6.271904250631633e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    }
+  ],
+  "context": {
+    "available_slots": 8192,
+    "batch_size": 8,
+    "configured_multiplicative_depth": 1,
+    "context_id": "context_0001",
+    "cyclotomic_order": 32768,
+    "declared_multiplicative_depth": 1,
+    "declared_ring_dimension": null,
+    "key_switch_technique": "HYBRID",
+    "missing": [],
+    "parameters_missing": [],
+    "ring_dimension": 16384,
+    "scaling_mod_size": 50,
+    "scaling_technique": "FLEXIBLEAUTOEXT",
+    "scheme": "CKKS",
+    "scheme_evidence": "configured_ckks_contract",
+    "security_level": "HEStd_128_classic"
+  },
+  "events": [
+    {
+      "argument_representations": [],
+      "event_id": "event_0001",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "key_generation",
+      "missing": [],
+      "operand_kinds": [],
+      "operation": "KeyGen",
+      "output_ciphertexts": [],
+      "output_representation": "<openfhe.openfhe.KeyPair object at 0x14b574cf9bb0>",
+      "output_states": [],
+      "overload": "none",
+      "python_thread_id": 22769834694464,
+      "semantic_arguments": {},
+      "sequence": 1,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py:24:<module>:KeyGen",
+        "file": "/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py",
+        "function": "<module>",
+        "line": 24,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 1946742,
+      "timing": {
+        "process_cpu_duration_ns": 6951725,
+        "start_ns": 1931769719032705,
+        "thread_cpu_duration_ns": 6946014,
+        "wall_duration_ns": 6952622
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PrivateKey object at 0x14b5745117b0>",
+        "[1, 2, 3, 5]"
+      ],
+      "event_id": "event_0002",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "key_generation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "rotation_indices"
+      ],
+      "operation": "EvalRotateKeyGen",
+      "output_ciphertexts": [],
+      "output_representation": "None",
+      "output_states": [],
+      "overload": "key_indices",
+      "python_thread_id": 22769834694464,
+      "semantic_arguments": {
+        "rotation_indices_requested": [
+          1,
+          2,
+          3,
+          5
+        ]
+      },
+      "sequence": 2,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py:26:<module>:EvalRotateKeyGen",
+        "file": "/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py",
+        "function": "<module>",
+        "line": 26,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 1946742,
+      "timing": {
+        "process_cpu_duration_ns": 64091688,
+        "start_ns": 1931769726549067,
+        "thread_cpu_duration_ns": 64091738,
+        "wall_duration_ns": 64090823
+      }
+    },
+    {
+      "argument_representations": [
+        "[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]"
+      ],
+      "event_id": "event_0003",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "setup",
+      "missing": [],
+      "operand_kinds": [
+        "plaintext_values"
+      ],
+      "operation": "MakeCKKSPackedPlaintext",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (1, 2, 3, 4, 5, 6, 7, 8, ... ); Estimated precision: 50 bits\n>",
+      "output_states": [],
+      "overload": "values",
+      "python_thread_id": 22769834694464,
+      "semantic_arguments": {},
+      "sequence": 3,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py:29:<module>:MakeCKKSPackedPlaintext",
+        "file": "/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py",
+        "function": "<module>",
+        "line": 29,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 1946742,
+      "timing": {
+        "process_cpu_duration_ns": 968967,
+        "start_ns": 1931769791334196,
+        "thread_cpu_duration_ns": 968927,
+        "wall_duration_ns": 968730
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PublicKey object at 0x14b5744faf30>",
+        "<Plaintext Object: (1, 2, 3, 4, 5, 6, 7, 8, ... ); Estimated precision: 50 bits\n>"
+      ],
+      "event_id": "event_0004",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "plaintext"
+      ],
+      "operation": "Encrypt",
+      "output_ciphertexts": [
+        "ct_0001:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14b574513ab0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "key_plaintext",
+      "python_thread_id": 22769834694464,
+      "semantic_arguments": {},
+      "sequence": 4,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py:29:<module>:Encrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py",
+        "function": "<module>",
+        "line": 29,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 1946742,
+      "timing": {
+        "process_cpu_duration_ns": 6329318,
+        "start_ns": 1931769792784231,
+        "thread_cpu_duration_ns": 6328036,
+        "wall_duration_ns": 6329180
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14b574513ab0>",
+        "1"
+      ],
+      "event_id": "event_0005",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "integer"
+      ],
+      "operation": "EvalRotate",
+      "output_ciphertexts": [
+        "ct_0002:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14b5744f5c30>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_index",
+      "python_thread_id": 22769834694464,
+      "semantic_arguments": {
+        "rotation_index_requested": 1
+      },
+      "sequence": 5,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py:31:<module>:EvalRotate",
+        "file": "/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py",
+        "function": "<module>",
+        "line": 31,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 1946742,
+      "timing": {
+        "process_cpu_duration_ns": 9990734,
+        "start_ns": 1931769799914648,
+        "thread_cpu_duration_ns": 9990463,
+        "wall_duration_ns": 9990323
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14b574513ab0>",
+        "2"
+      ],
+      "event_id": "event_0006",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "integer"
+      ],
+      "operation": "EvalRotate",
+      "output_ciphertexts": [
+        "ct_0003:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14b574500930>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_index",
+      "python_thread_id": 22769834694464,
+      "semantic_arguments": {
+        "rotation_index_requested": 2
+      },
+      "sequence": 6,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py:32:<module>:EvalRotate",
+        "file": "/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py",
+        "function": "<module>",
+        "line": 32,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 1946742,
+      "timing": {
+        "process_cpu_duration_ns": 9032416,
+        "start_ns": 1931769810656655,
+        "thread_cpu_duration_ns": 9032317,
+        "wall_duration_ns": 9032062
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14b574513ab0>",
+        "3"
+      ],
+      "event_id": "event_0007",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "integer"
+      ],
+      "operation": "EvalRotate",
+      "output_ciphertexts": [
+        "ct_0004:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14b5744ff270>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0004:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_index",
+      "python_thread_id": 22769834694464,
+      "semantic_arguments": {
+        "rotation_index_requested": 3
+      },
+      "sequence": 7,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py:33:<module>:EvalRotate",
+        "file": "/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py",
+        "function": "<module>",
+        "line": 33,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 1946742,
+      "timing": {
+        "process_cpu_duration_ns": 9040302,
+        "start_ns": 1931769820229193,
+        "thread_cpu_duration_ns": 9040292,
+        "wall_duration_ns": 9040127
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14b5744f5c30>",
+        "<openfhe.openfhe.Ciphertext object at 0x14b574500930>"
+      ],
+      "event_id": "event_0008",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0002:v0",
+        "ct_0003:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "ciphertext"
+      ],
+      "operation": "EvalAdd",
+      "output_ciphertexts": [
+        "ct_0005:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14b5744fef30>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0005:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_ct",
+      "python_thread_id": 22769834694464,
+      "semantic_arguments": {},
+      "sequence": 8,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py:34:<module>:EvalAdd",
+        "file": "/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py",
+        "function": "<module>",
+        "line": 34,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 1946742,
+      "timing": {
+        "process_cpu_duration_ns": 164719,
+        "start_ns": 1931769829911948,
+        "thread_cpu_duration_ns": 164439,
+        "wall_duration_ns": 164740
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14b5744fef30>",
+        "<openfhe.openfhe.Ciphertext object at 0x14b5744ff270>"
+      ],
+      "event_id": "event_0009",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0005:v0",
+        "ct_0004:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0005:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0004:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "ciphertext"
+      ],
+      "operation": "EvalAdd",
+      "output_ciphertexts": [
+        "ct_0006:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x14b5744eb430>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0006:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_ct",
+      "python_thread_id": 22769834694464,
+      "semantic_arguments": {},
+      "sequence": 9,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py:34:<module>:EvalAdd",
+        "file": "/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py",
+        "function": "<module>",
+        "line": 34,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 1946742,
+      "timing": {
+        "process_cpu_duration_ns": 126187,
+        "start_ns": 1931769830728513,
+        "thread_cpu_duration_ns": 125916,
+        "wall_duration_ns": 126338
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x14b5744eb430>",
+        "<openfhe.openfhe.PrivateKey object at 0x14b5744fd130>"
+      ],
+      "event_id": "event_0010",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0006:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0006:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "306cd66d348982245d845528e7be39e9",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 6.271904250631633e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "key"
+      ],
+      "operation": "Decrypt",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (9, 12, 15, 18, 21, 16, 11, 6, ... ); Estimated precision: 43 bits\n>",
+      "output_states": [],
+      "overload": "ct_key",
+      "python_thread_id": 22769834694464,
+      "semantic_arguments": {},
+      "sequence": 10,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py:36:<module>:Decrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/examples/synthetic/repeated_rotations.py",
+        "function": "<module>",
+        "line": 36,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 1946742,
+      "timing": {
+        "process_cpu_duration_ns": 7046092,
+        "start_ns": 1931769831343871,
+        "thread_cpu_duration_ns": 7045983,
+        "wall_duration_ns": 7045776
+      }
+    }
+  ],
+  "run": {
+    "coverage": {
+      "allowed_passthrough_calls": 3,
+      "failed_state_reads": 0,
+      "operator_overload_coverage": false,
+      "original_reference_bypass_observable": false,
+      "potentially_incomplete": false,
+      "rejected_unclassified_calls": 0,
+      "strict": true,
+      "traced_semantic_calls": 7,
+      "truncated": false,
+      "unclassified_proxy_passthrough_calls": 0,
+      "unsupported_operations": []
+    },
+    "name": "profile_unmodified",
+    "run_id": "run_c40e65ce419cd314f60487df",
+    "runtime": {
+      "architecture": "x86_64",
+      "backend": "CryptoContext",
+      "backend_representation": "<openfhe.openfhe.CryptoContext object at 0x14b57450f7f0>",
+      "cipherscope_commit": "61355899b6a390826754a0389139f53f045c0417",
+      "cipherscope_dirty": true,
+      "cipherscope_version": "0.1.0",
+      "lane": "ls6-native-py311",
+      "openfhe_compatibility_target": "OpenFHE Python wrapper v1.5.1.0",
+      "openfhe_distribution": null,
+      "openfhe_native_module_hashes": {
+        "openfhe.cpython-311-x86_64-linux-gnu.so": "429513c3add220b9ca493e3d626c7e20adb4b18609c836804d9bbe2a1e6e3a06"
+      },
+      "platform": "linux",
+      "python": "3.11.15"
+    },
+    "shadow_mode": false,
+    "status": "completed",
+    "testing_security_acknowledged": false,
+    "tool": {
+      "name": "cipherscope",
+      "version": "0.1.0"
+    },
+    "truncated": false
+  },
+  "schema_version": "1.0.0"
+}

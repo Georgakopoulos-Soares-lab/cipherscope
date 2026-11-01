@@ -48,6 +48,16 @@ def _longest_chain(mults: list[Mapping[str, Any]]) -> list[str]:
     return longest
 
 
+def _leaf_terms(mults: list[Mapping[str, Any]]) -> int:
+    produced = {
+        str(output_id) for event in mults for output_id in event.get("output_ciphertexts", [])
+    }
+    consumed = {
+        str(input_id) for event in mults for input_id in event.get("input_ciphertexts", [])
+    }
+    return len(consumed - produced)
+
+
 def analyze_serial_reductions(trace: Mapping[str, Any]) -> dict[str, Any]:
     """Flag long serial products only inside an associative multiply region.
 
@@ -103,6 +113,13 @@ def analyze_serial_reductions(trace: Mapping[str, Any]) -> dict[str, Any]:
         chain = _longest_chain(mults)
         if len(chain) < _MIN_SERIAL_MULTS:
             continue
+        # The region's real term count is its leaves: ciphertexts consumed by a
+        # region multiplication but produced by none. A balanced tree over
+        # `terms` needs ceil(log2(terms)) levels; a chain no longer than that is
+        # already optimal and must not be reported as a serial fold.
+        terms = max(_leaf_terms(mults), len(chain) + 1)
+        if len(chain) <= ceil(log2(terms)):
+            continue
         chain_events = [event for event in mults if str(event["event_id"]) in chain]
         source_sites = sorted(
             {
@@ -113,7 +130,6 @@ def analyze_serial_reductions(trace: Mapping[str, Any]) -> dict[str, Any]:
                 and event["source"]["call_site_id"]
             }
         )
-        terms = len(chain) + 1
         findings.append(
             {
                 "finding_id": f"finding_serial_{len(findings) + 1:04d}",

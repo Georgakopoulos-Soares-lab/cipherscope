@@ -1,0 +1,6 @@
+rule_id,findings,pending,adjudicated_without_evidence,TP-ACTIONABLE,TP-NONACTIONABLE,FALSE-POSITIVE,UNCERTAIN,NOT-IN-SCOPE,precision_numerator,precision_denominator,precision
+configuration.testing_only_security.v1,3,0,0,3,0,0,0,0,3,3,1.0000
+depth.critical_path.v1,4,0,0,0,0,0,0,4,0,0,
+keys.unused_in_observed_run.v1,1,0,0,1,0,0,0,0,1,1,1.0000
+parameters.depth_headroom_observed.v1,4,0,0,2,0,2,0,0,2,4,0.5000
+ALL,12,0,0,6,0,2,0,4,6,8,0.7500

@@ -126,12 +126,19 @@ class ExporterTests(unittest.TestCase):
         self.assertNotIn(",=HYPERLINK(unsafe)", csv_text)
 
     def test_html_escapes_untrusted_source_and_finding_text(self) -> None:
+        # Untrusted trace/finding text is embedded as a JSON literal inside a
+        # <script> tag, not as HTML markup: `<`, `>` and `&` are escaped to
+        # \uXXXX so a value can never end the tag early (in particular
+        # `</script>`), and the page's own `esc()` HTML-escapes it again at
+        # render time before it reaches the DOM.
         trace, graph, recommendations = sample_artifacts()
         html = render_summary_html(build_manifest(trace), trace, graph, recommendations)
 
         self.assertNotIn("<script>alert", html)
         self.assertNotIn("<script>bad", html)
-        self.assertIn("&lt;script&gt;alert", html)
+        self.assertNotIn("</script>alert", html)
+        self.assertIn("\\u003cscript\\u003ealert", html)
+        self.assertIn("\\u003cscript\\u003ebad", html)
 
     def test_complete_bundle_is_parseable_and_collision_safe(self) -> None:
         trace, graph, recommendations = sample_artifacts()

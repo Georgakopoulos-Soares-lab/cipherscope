@@ -1,0 +1,1230 @@
+{
+  "ciphertexts": [
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0005",
+      "id": "ct_0001:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [],
+      "scale": 8.854448423656802e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0007",
+      "id": "ct_0002:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [],
+      "scale": 8.854448423656802e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0009",
+      "id": "ct_0003:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [],
+      "scale": 8.854448423656802e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0010",
+      "id": "ct_0004:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0",
+        "ct_0002:v0",
+        "ct_0003:v0"
+      ],
+      "scale": 8.854448423656802e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0011",
+      "id": "ct_0005:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+      "level": 2,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0",
+        "ct_0002:v0",
+        "ct_0003:v0"
+      ],
+      "scale": 1.2676506028845628e+30,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0012",
+      "id": "ct_0006:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+      "level": 1,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0",
+        "ct_0002:v0",
+        "ct_0003:v0"
+      ],
+      "scale": 1.2676506028845628e+30,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0013",
+      "id": "ct_0007:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+      "level": 4,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0001:v0"
+      ],
+      "scale": 1.267650605540894e+30,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0014",
+      "id": "ct_0008:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+      "level": 0,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0004:v0"
+      ],
+      "scale": 8.854448423656802e+20,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    },
+    {
+      "context_id": "context_0001",
+      "created_by_event": "event_0015",
+      "id": "ct_0009:v0",
+      "key_switch_technique": "HYBRID",
+      "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+      "level": 2,
+      "noise_scale_degree": 2,
+      "origin": "derived",
+      "parent_ids": [
+        "ct_0008:v0",
+        "ct_0005:v0"
+      ],
+      "scale": 1.2676506028845628e+30,
+      "scaling_technique": "FLEXIBLEAUTOEXT",
+      "slots": 8
+    }
+  ],
+  "context": {
+    "available_slots": 16384,
+    "batch_size": 8,
+    "configured_multiplicative_depth": 6,
+    "context_id": "context_0001",
+    "cyclotomic_order": 65536,
+    "declared_multiplicative_depth": 6,
+    "declared_ring_dimension": null,
+    "key_switch_technique": "HYBRID",
+    "missing": [],
+    "parameters_missing": [],
+    "plaintext_modulus": null,
+    "ring_dimension": 32768,
+    "scaling_mod_size": 50,
+    "scaling_technique": "FLEXIBLEAUTOEXT",
+    "scheme": "CKKS",
+    "scheme_evidence": "declared_parameters",
+    "security_level": "HEStd_128_classic"
+  },
+  "events": [
+    {
+      "argument_representations": [],
+      "event_id": "event_0001",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "key_generation",
+      "missing": [],
+      "operand_kinds": [],
+      "operation": "KeyGen",
+      "output_ciphertexts": [],
+      "output_representation": "<openfhe.openfhe.KeyPair object at 0x145cb2c60870>",
+      "output_states": [],
+      "overload": "none",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 1,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:20:<module>:KeyGen",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 20,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 35552484,
+        "start_ns": 3255557790743375,
+        "thread_cpu_duration_ns": 35546322,
+        "wall_duration_ns": 35553930
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PrivateKey object at 0x145cb2e47470>"
+      ],
+      "event_id": "event_0002",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "key_generation",
+      "missing": [],
+      "operand_kinds": [
+        "key"
+      ],
+      "operation": "EvalMultKeyGen",
+      "output_ciphertexts": [],
+      "output_representation": "None",
+      "output_states": [],
+      "overload": "key",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 2,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:21:<module>:EvalMultKeyGen",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 21,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 110751670,
+        "start_ns": 3255557827012850,
+        "thread_cpu_duration_ns": 110754585,
+        "wall_duration_ns": 110781080
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PrivateKey object at 0x145cb2e47470>",
+        "[1]"
+      ],
+      "event_id": "event_0003",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "key_generation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "rotation_indices"
+      ],
+      "operation": "EvalRotateKeyGen",
+      "output_ciphertexts": [],
+      "output_representation": "None",
+      "output_states": [],
+      "overload": "key_indices",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {
+        "rotation_indices_requested": [
+          1
+        ]
+      },
+      "sequence": 3,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:22:<module>:EvalRotateKeyGen",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 22,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 107689519,
+        "start_ns": 3255557938561453,
+        "thread_cpu_duration_ns": 107691583,
+        "wall_duration_ns": 107700586
+      }
+    },
+    {
+      "argument_representations": [
+        "[1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]"
+      ],
+      "event_id": "event_0004",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "setup",
+      "missing": [],
+      "operand_kinds": [
+        "plaintext_values"
+      ],
+      "operation": "MakeCKKSPackedPlaintext",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (1, 2, 3, 4, 5, 6, 7, 8, ... ); Estimated precision: 50 bits\n>",
+      "output_states": [],
+      "overload": "values",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 4,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:27:<module>:MakeCKKSPackedPlaintext",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 27,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 5246748,
+        "start_ns": 3255558046977364,
+        "thread_cpu_duration_ns": 5246918,
+        "wall_duration_ns": 5246358
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PublicKey object at 0x145cb2c246b0>",
+        "<Plaintext Object: (1, 2, 3, 4, 5, 6, 7, 8, ... ); Estimated precision: 50 bits\n>"
+      ],
+      "event_id": "event_0005",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "plaintext"
+      ],
+      "operation": "Encrypt",
+      "output_ciphertexts": [
+        "ct_0001:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x145cb2c240f0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "key_plaintext",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 5,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:27:<module>:Encrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 27,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 29460391,
+        "start_ns": 3255558052916434,
+        "thread_cpu_duration_ns": 29458689,
+        "wall_duration_ns": 29461873
+      }
+    },
+    {
+      "argument_representations": [
+        "[8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0]"
+      ],
+      "event_id": "event_0006",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "setup",
+      "missing": [],
+      "operand_kinds": [
+        "plaintext_values"
+      ],
+      "operation": "MakeCKKSPackedPlaintext",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (8, 7, 6, 5, 4, 3, 2, 1, ... ); Estimated precision: 50 bits\n>",
+      "output_states": [],
+      "overload": "values",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 6,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:28:<module>:MakeCKKSPackedPlaintext",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 28,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 5114901,
+        "start_ns": 3255558083141873,
+        "thread_cpu_duration_ns": 5111956,
+        "wall_duration_ns": 5115793
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PublicKey object at 0x145cb2c19430>",
+        "<Plaintext Object: (8, 7, 6, 5, 4, 3, 2, 1, ... ); Estimated precision: 50 bits\n>"
+      ],
+      "event_id": "event_0007",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "plaintext"
+      ],
+      "operation": "Encrypt",
+      "output_ciphertexts": [
+        "ct_0002:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x145cb2bd45f0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "key_plaintext",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 7,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:28:<module>:Encrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 28,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 28077989,
+        "start_ns": 3255558088826285,
+        "thread_cpu_duration_ns": 28077959,
+        "wall_duration_ns": 28077018
+      }
+    },
+    {
+      "argument_representations": [
+        "[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]"
+      ],
+      "event_id": "event_0008",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "setup",
+      "missing": [],
+      "operand_kinds": [
+        "plaintext_values"
+      ],
+      "operation": "MakeCKKSPackedPlaintext",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (1, 1, 1, 1, 1, 1, 1, 1, ... ); Estimated precision: 50 bits\n>",
+      "output_states": [],
+      "overload": "values",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 8,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:29:<module>:MakeCKKSPackedPlaintext",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 29,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 5134758,
+        "start_ns": 3255558117683770,
+        "thread_cpu_duration_ns": 5135059,
+        "wall_duration_ns": 5134477
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.PublicKey object at 0x145cb2c19430>",
+        "<Plaintext Object: (1, 1, 1, 1, 1, 1, 1, 1, ... ); Estimated precision: 50 bits\n>"
+      ],
+      "event_id": "event_0009",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [],
+      "input_states": [],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "key",
+        "plaintext"
+      ],
+      "operation": "Encrypt",
+      "output_ciphertexts": [
+        "ct_0003:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x145cb2bd7430>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "key_plaintext",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 9,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:29:<module>:Encrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 29,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 31743513,
+        "start_ns": 3255558123359476,
+        "thread_cpu_duration_ns": 31741699,
+        "wall_duration_ns": 31744605
+      }
+    },
+    {
+      "argument_representations": [
+        "[<openfhe.openfhe.Ciphertext object at 0x145cb2c240f0>, <openfhe.openfhe.Ciphertext object at 0x145cb2bd45f0>, <openfhe.openfhe.Ciphertext object at 0x145cb2bd7430>]"
+      ],
+      "event_id": "event_0010",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0",
+        "ct_0002:v0",
+        "ct_0003:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "collection"
+      ],
+      "operation": "EvalAddMany",
+      "output_ciphertexts": [
+        "ct_0004:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x145cb2bffcb0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0004:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_list",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {
+        "operand_count": 3
+      },
+      "sequence": 10,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:32:<module>:EvalAddMany",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 32,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 4439204,
+        "start_ns": 3255558156022429,
+        "thread_cpu_duration_ns": 4439374,
+        "wall_duration_ns": 4438166
+      }
+    },
+    {
+      "argument_representations": [
+        "[<openfhe.openfhe.Ciphertext object at 0x145cb2c240f0>, <openfhe.openfhe.Ciphertext object at 0x145cb2bd45f0>, <openfhe.openfhe.Ciphertext object at 0x145cb2bd7430>]"
+      ],
+      "event_id": "event_0011",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0",
+        "ct_0002:v0",
+        "ct_0003:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "collection"
+      ],
+      "operation": "EvalMultMany",
+      "output_ciphertexts": [
+        "ct_0005:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x145cb2c2c330>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0005:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 2,
+          "noise_scale_degree": 2,
+          "scale": 1.2676506028845628e+30,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_list",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {
+        "operand_count": 3
+      },
+      "sequence": 11,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:33:<module>:EvalMultMany",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 33,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 157776037,
+        "start_ns": 3255558161216127,
+        "thread_cpu_duration_ns": 157790313,
+        "wall_duration_ns": 157772211
+      }
+    },
+    {
+      "argument_representations": [
+        "[<openfhe.openfhe.Ciphertext object at 0x145cb2c240f0>, <openfhe.openfhe.Ciphertext object at 0x145cb2bd45f0>, <openfhe.openfhe.Ciphertext object at 0x145cb2bd7430>]",
+        "[0.5, 0.25, 0.25]"
+      ],
+      "event_id": "event_0012",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0",
+        "ct_0002:v0",
+        "ct_0003:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0002:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0003:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "collection",
+        "collection"
+      ],
+      "operation": "EvalLinearWSum",
+      "output_ciphertexts": [
+        "ct_0006:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x145cb2c2edf0>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0006:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 1,
+          "noise_scale_degree": 2,
+          "scale": 1.2676506028845628e+30,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_list_constants",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {
+        "operand_count": 3
+      },
+      "sequence": 12,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:34:<module>:EvalLinearWSum",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 34,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 36729311,
+        "start_ns": 3255558319960636,
+        "thread_cpu_duration_ns": 36729833,
+        "wall_duration_ns": 36728710
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x145cb2c240f0>",
+        "[0.5, 0.25, 0.125, 0.0625]",
+        "-8.0",
+        "8.0"
+      ],
+      "event_id": "event_0013",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0001:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0001:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "collection",
+        "scalar",
+        "scalar"
+      ],
+      "operation": "EvalChebyshevSeries",
+      "output_ciphertexts": [
+        "ct_0007:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x145cb2c2fc70>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0007:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 4,
+          "noise_scale_degree": 2,
+          "scale": 1.267650605540894e+30,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_coefficients_bounds",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {
+        "lower_bound": -8.0,
+        "polynomial_degree": 3,
+        "upper_bound": 8.0
+      },
+      "sequence": 13,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:35:<module>:EvalChebyshevSeries",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 35,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 190440365,
+        "start_ns": 3255558357418448,
+        "thread_cpu_duration_ns": 190443141,
+        "wall_duration_ns": 190443560
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x145cb2bffcb0>",
+        "1"
+      ],
+      "event_id": "event_0014",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0004:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0004:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "integer"
+      ],
+      "operation": "EvalRotate",
+      "output_ciphertexts": [
+        "ct_0008:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x145cb2c2db30>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0008:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_index",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {
+        "rotation_index_requested": 1
+      },
+      "sequence": 14,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:36:<module>:EvalRotate",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 36,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 63431942,
+        "start_ns": 3255558548709351,
+        "thread_cpu_duration_ns": 63434836,
+        "wall_duration_ns": 63428819
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x145cb2c2db30>",
+        "<openfhe.openfhe.Ciphertext object at 0x145cb2c2c330>"
+      ],
+      "event_id": "event_0015",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0008:v0",
+        "ct_0005:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0008:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 0,
+          "noise_scale_degree": 2,
+          "scale": 8.854448423656802e+20,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        },
+        {
+          "context_id": "context_0001",
+          "id": "ct_0005:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 2,
+          "noise_scale_degree": 2,
+          "scale": 1.2676506028845628e+30,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "ciphertext"
+      ],
+      "operation": "EvalAdd",
+      "output_ciphertexts": [
+        "ct_0009:v0"
+      ],
+      "output_representation": "<openfhe.openfhe.Ciphertext object at 0x145cb2c39930>",
+      "output_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0009:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 2,
+          "noise_scale_degree": 2,
+          "scale": 1.2676506028845628e+30,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "overload": "ct_ct",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 15,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:37:<module>:EvalAdd",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 37,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 13714215,
+        "start_ns": 3255558612876218,
+        "thread_cpu_duration_ns": 13714045,
+        "wall_duration_ns": 13714013
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x145cb2c39930>",
+        "<openfhe.openfhe.PrivateKey object at 0x145cb2c2f070>"
+      ],
+      "event_id": "event_0016",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0009:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0009:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 2,
+          "noise_scale_degree": 2,
+          "scale": 1.2676506028845628e+30,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "key"
+      ],
+      "operation": "Decrypt",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (18, 24, 28, 30, 30, 28, 24, 18, ... ); Estimated precision: 38 bits\n>",
+      "output_states": [],
+      "overload": "ct_key",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 16,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:39:<module>:Decrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 39,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 28924185,
+        "start_ns": 3255558627286059,
+        "thread_cpu_duration_ns": 28922001,
+        "wall_duration_ns": 28925785
+      }
+    },
+    {
+      "argument_representations": [
+        "<openfhe.openfhe.Ciphertext object at 0x145cb2c2edf0>",
+        "<openfhe.openfhe.PrivateKey object at 0x145cb2be1470>"
+      ],
+      "event_id": "event_0017",
+      "granularity": "openfhe_api_inclusive",
+      "input_ciphertexts": [
+        "ct_0006:v0"
+      ],
+      "input_states": [
+        {
+          "context_id": "context_0001",
+          "id": "ct_0006:v0",
+          "key_switch_technique": "HYBRID",
+          "key_tag": "db700c6674dd6cad01ca49a11b79c00d",
+          "level": 1,
+          "noise_scale_degree": 2,
+          "scale": 1.2676506028845628e+30,
+          "scaling_technique": "FLEXIBLEAUTOEXT",
+          "slots": 8
+        }
+      ],
+      "keyword_argument_representations": {},
+      "kind": "crypto_operation",
+      "missing": [],
+      "operand_kinds": [
+        "ciphertext",
+        "key"
+      ],
+      "operation": "Decrypt",
+      "output_ciphertexts": [],
+      "output_representation": "<Plaintext Object: (2.75, 3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, ... ); Estimated precision: 43 bits\n>",
+      "output_states": [],
+      "overload": "ct_key",
+      "python_thread_id": 22388630083392,
+      "semantic_arguments": {},
+      "sequence": 17,
+      "source": {
+        "call_site_id": "site:/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py:42:<module>:Decrypt",
+        "file": "/scratch/10899/kimopro/cipherscope/tests/cpp/twins/many_and_series.py",
+        "function": "<module>",
+        "line": 42,
+        "qualified_function": "<module>"
+      },
+      "status": "ok",
+      "thread_id": 2303814,
+      "timing": {
+        "process_cpu_duration_ns": 34147991,
+        "start_ns": 3255558656784271,
+        "thread_cpu_duration_ns": 34149073,
+        "wall_duration_ns": 34147115
+      }
+    }
+  ],
+  "run": {
+    "clocks": {
+      "cpu": "time.process_time_ns",
+      "thread_cpu": "time.thread_time_ns",
+      "wall": "time.perf_counter_ns"
+    },
+    "coverage": {
+      "allowed_passthrough_calls": 4,
+      "failed_state_reads": 0,
+      "operator_overload_coverage": true,
+      "original_reference_bypass_observable": false,
+      "potentially_incomplete": false,
+      "rejected_unclassified_calls": 0,
+      "strict": true,
+      "traced_semantic_calls": 11,
+      "truncated": false,
+      "unclassified_proxy_passthrough_calls": 0,
+      "unsupported_operations": []
+    },
+    "name": "profile_unmodified",
+    "producer": {
+      "frontend": "python-openfhe",
+      "frontend_version": "0.1.0",
+      "instrumentation_manifest": null
+    },
+    "run_id": "run_58e4e26079ce785ef6321290",
+    "runtime": {
+      "architecture": "x86_64",
+      "backend": "CryptoContext",
+      "backend_representation": "<openfhe.openfhe.CryptoContext object at 0x145cb2bf49b0>",
+      "cipherscope_commit": "ef859552de0f3fcc079279f49690c0dfc72a5d27",
+      "cipherscope_dirty": true,
+      "cipherscope_version": "0.1.0",
+      "framework": "openfhe",
+      "framework_version": null,
+      "lane": "developer",
+      "language": "python",
+      "language_version": "3.11.15",
+      "openfhe_compatibility_target": "OpenFHE Python wrapper v1.5.1.0",
+      "openfhe_distribution": null,
+      "openfhe_native_module_hashes": {
+        "openfhe.cpython-311-x86_64-linux-gnu.so": "429513c3add220b9ca493e3d626c7e20adb4b18609c836804d9bbe2a1e6e3a06"
+      },
+      "platform": "linux",
+      "python": "3.11.15"
+    },
+    "shadow_mode": false,
+    "status": "completed",
+    "testing_security_acknowledged": false,
+    "tool": {
+      "name": "cipherscope",
+      "version": "0.1.0"
+    },
+    "truncated": false
+  },
+  "schema_version": "1.0.0"
+}

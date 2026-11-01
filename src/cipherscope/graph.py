@@ -19,6 +19,13 @@ _ZERO_WEIGHT_OPERATIONS = {
     "EvalFastRotation",
     "EvalFastRotationPrecompute",
     "EvalSum",
+    "EvalSumRows",
+    "EvalSumCols",
+    "EvalAddMany",
+    "EvalAddManyInPlace",
+    "EvalLinearWSum",
+    "EvalLinearWSumMutable",
+    "EvalMerge",
     "EvalSub",
     "EvalSubInPlace",
     "ModReduce",
@@ -28,7 +35,13 @@ _ZERO_WEIGHT_OPERATIONS = {
     "Rescale",
     "RescaleInPlace",
 }
-_OPAQUE_OPERATIONS = {"EvalPoly", "EvalChebyshevFunction", "EvalInnerProduct"}
+_OPAQUE_OPERATIONS = {
+    "EvalPoly", "EvalChebyshevFunction", "EvalInnerProduct", "EvalLogistic",
+    "EvalChebyshevSeries", "EvalChebyshevSeriesLinear", "EvalChebyshevSeriesPS",
+    "EvalSin", "EvalCos", "EvalDivide",
+    # A binary multiplication tree: its depth is ceil(log2(operands)), not 1.
+    "EvalMultMany",
+}
 
 
 def _event_sort_key(event: Mapping[str, Any]) -> tuple[int, str]:
@@ -52,7 +65,7 @@ def _nonlinear_weight(event: Mapping[str, Any]) -> int | None:
     operation = event.get("operation")
     if operation in {"EvalSquare", "EvalSquareInPlace"}:
         return 1
-    if operation in {"EvalMult", "EvalMultNoRelin"}:
+    if operation in {"EvalMult", "EvalMultNoRelin", "EvalMultAndRelinearize"}:
         overload = event.get("overload")
         if overload in {"ct_ct", "ciphertext_ciphertext"}:
             return 1
@@ -283,7 +296,7 @@ def _compute_depth_metrics(
                         and not isinstance(state_level, bool)
                         else None
                     )
-                candidates: list[tuple[int, str, int, list[str]]] = []
+                parents: list[tuple[int, int, str]] = []
                 unresolved = output_level is None
                 for input_ciphertext_id in input_ciphertext_ids:
                     input_level = _snapshot_level(
@@ -307,28 +320,36 @@ def _compute_depth_metrics(
                     ):
                         unresolved = True
                         continue
-                    delta = output_level - input_level
-                    if delta < 0:
-                        unresolved = True
-                        continue
-                    path = list(level_paths.get(input_ciphertext_id, []))
-                    if delta:
-                        path.append(event_id)
-                    candidates.append(
-                        (parent_use + delta, input_ciphertext_id, delta, path)
-                    )
-                if unresolved or not candidates:
+                    parents.append((input_level, parent_use, input_ciphertext_id))
+                if unresolved or not parents:
                     next_level_use = None
                     next_level_path = []
                     level_unknown = True
                     epoch_level_unknown = True
                 else:
-                    # On ties, avoid charging level alignment to a shallower branch.
-                    best = min(
-                        candidates, key=lambda item: (-item[0], item[2], item[1])
-                    )
-                    next_level_use = best[0]
-                    next_level_path = best[3]
+                    # An operation consumes levels relative to its deepest
+                    # input; shallower inputs are only aligned to it (a free
+                    # modulus drop, not budget). Charging alignment as
+                    # consumption would let a fresh level-0 operand inherit
+                    # the whole depth of the chain it joins, which after a
+                    # bootstrap reset over-counts the refreshed epoch by the
+                    # absolute level instead of the levels actually used.
+                    deepest_level = max(level for level, _, _ in parents)
+                    consumed = output_level - deepest_level
+                    if consumed < 0:
+                        next_level_use = None
+                        next_level_path = []
+                        level_unknown = True
+                        epoch_level_unknown = True
+                    else:
+                        deepest = [p for p in parents if p[0] == deepest_level]
+                        _, best_use, best_id = max(
+                            deepest, key=lambda item: (item[1], item[2])
+                        )
+                        next_level_use = best_use + consumed
+                        next_level_path = list(level_paths.get(best_id, []))
+                        if consumed:
+                            next_level_path.append(event_id)
             level_use[output_ciphertext_id] = next_level_use
             level_paths[output_ciphertext_id] = list(next_level_path)
             if next_level_use is not None and next_level_use > maximum_levels:

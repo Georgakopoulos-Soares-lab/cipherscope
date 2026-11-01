@@ -46,6 +46,34 @@ class BootstrapAnalyzerTests(unittest.TestCase):
         self.assertEqual(result["inventory"][0]["restored_levels"], 3)
         self.assertEqual(result["inventory"][0]["suffix_levels_consumed"], 3)
 
+    def test_fresh_operands_after_a_bootstrap_do_not_inflate_suffix_use(self) -> None:
+        # Real OpenFHE returns a bootstrapped ciphertext at a fixed non-zero
+        # level, and a chain typically keeps multiplying by *fresh* level-0
+        # operands. Aligning a fresh operand down to the chain's level is a
+        # free modulus drop, not consumed budget: after the bootstrap the tail
+        # below uses exactly two levels, so restored (12 - 8 = 4) > 2 fires.
+        class RealisticBootstrapContext(FakeCryptoContext):
+            def EvalBootstrap(self, ciphertext):
+                self._called("EvalBootstrap")
+                return self._fresh(ciphertext, level=8, noise=1)
+
+        backend = RealisticBootstrapContext()
+        with cipherscope.trace(backend) as session:
+            cc = session.context
+            acc = cc.Encrypt(object(), object())
+            for _ in range(12):
+                acc = cc.EvalMult(acc, cc.Encrypt(object(), object()))
+            acc = cc.EvalBootstrap(acc)
+            for _ in range(2):
+                acc = cc.EvalMult(acc, cc.Encrypt(object(), object()))
+        result = analyze_bootstrap(session.to_trace())
+
+        self.assertEqual(result["analysis_status"], "positive")
+        record = result["inventory"][0]
+        self.assertEqual((record["level_before"], record["level_after"]), (12, 8))
+        self.assertEqual(record["restored_levels"], 4)
+        self.assertEqual(record["suffix_levels_consumed"], 2)
+
     def test_missing_bootstrap_is_not_applicable(self) -> None:
         result = analyze_bootstrap(_trace(2, 0, bootstrap=False))
         self.assertEqual(result["analysis_status"], "not_applicable")

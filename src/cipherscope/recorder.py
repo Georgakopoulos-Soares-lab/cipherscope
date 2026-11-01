@@ -113,6 +113,9 @@ class EventRecorder:
         self._unsupported_operations: set[str] = set()
         self._backend_names: list[str] = []
         self._backend_representations: list[str] = []
+        # Set by the session when the binding's ciphertext operators were
+        # rerouted through the proxy for this run (see operators.py).
+        self.operator_overload_coverage = False
         self._lock = threading.RLock()
 
     def next_identity(self) -> tuple[int, str]:
@@ -261,7 +264,7 @@ class EventRecorder:
                 "failed_state_reads": sum(
                     len(event.get("missing", ())) for event in events
                 ),
-                "operator_overload_coverage": False,
+                "operator_overload_coverage": self.operator_overload_coverage,
                 "original_reference_bypass_observable": False,
             }
             if truncated:
@@ -276,13 +279,30 @@ class EventRecorder:
                     "bytes_written": self._bytes_written,
                     "calls_dropped": self._calls_dropped,
                 }
+            python_version = (
+                f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+            )
+            fingerprint = copy_mapping(build_fingerprint())
             run: dict[str, Any] = {
                 "run_id": self.run_id,
                 "tool": {"name": TOOL_NAME, "version": TOOL_VERSION},
                 "status": status,
                 "truncated": truncated,
+                # The trace is producer-neutral: `producer` says which frontend
+                # observed the process and `runtime.language` which language it
+                # ran in. Analyzers never read either; the C++ frontend fills the
+                # same keys with its own values (see native_trace.py).
+                "producer": {
+                    "frontend": "python-openfhe",
+                    "frontend_version": TOOL_VERSION,
+                    "instrumentation_manifest": None,
+                },
                 "runtime": {
-                    "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+                    "language": "python",
+                    "language_version": python_version,
+                    "python": python_version,
+                    "framework": "openfhe",
+                    "framework_version": fingerprint.get("openfhe_distribution"),
                     "backend": backend,
                     "backend_representation": backend_representation,
                     "platform": platform.system().lower(),
@@ -290,7 +310,12 @@ class EventRecorder:
                     "openfhe_compatibility_target": (
                         self.compatibility.compatibility_target
                     ),
-                    **copy_mapping(build_fingerprint()),
+                    **fingerprint,
+                },
+                "clocks": {
+                    "wall": "time.perf_counter_ns",
+                    "cpu": "time.process_time_ns",
+                    "thread_cpu": "time.thread_time_ns",
                 },
                 "coverage": coverage,
                 "shadow_mode": self.shadow_mode,

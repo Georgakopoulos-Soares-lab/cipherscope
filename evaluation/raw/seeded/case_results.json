@@ -573,7 +573,7 @@
       "coverage_class": "COMPLETE",
       "exit_code": 0,
       "expected_source_lines": {},
-      "hard_negative_reason": "the refresh is underused, but GetLevel() is unchanged by EvalBootstrap on OpenFHE Python 1.5.1.0, so the rule has no level delta and must not fabricate one",
+      "hard_negative_reason": "the refresh is underused, but the input was bootstrapped at a shallow level: OpenFHE returns every bootstrapped ciphertext at depth - levelsAvailableAfterBootstrap, so a shallow input ends deeper than it started and there are no restored levels to report",
       "invalid_reason": null,
       "kind": "hard_negative",
       "mutation_id": "",
@@ -614,8 +614,7 @@
         }
       ],
       "unexpected_positives": [
-        "depth.critical_path.v1",
-        "parameters.depth_headroom_observed.v1"
+        "depth.critical_path.v1"
       ]
     },
     {
@@ -640,8 +639,7 @@
         }
       ],
       "unexpected_positives": [
-        "depth.critical_path.v1",
-        "parameters.depth_headroom_observed.v1"
+        "depth.critical_path.v1"
       ]
     },
     {
@@ -666,8 +664,7 @@
         }
       ],
       "unexpected_positives": [
-        "depth.critical_path.v1",
-        "parameters.depth_headroom_observed.v1"
+        "depth.critical_path.v1"
       ]
     },
     {
@@ -749,20 +746,61 @@
         "parameters.depth_headroom_observed.v1",
         "precision.checkpoint_drop.v1"
       ]
+    },
+    {
+      "bundle": "bundles/bootstrap.positive.underused_deep",
+      "case_id": "bootstrap.positive.underused_deep",
+      "clean_kernel": null,
+      "coverage_class": "COMPLETE",
+      "exit_code": 0,
+      "expected_source_lines": {},
+      "hard_negative_reason": "",
+      "invalid_reason": null,
+      "kind": "positive",
+      "mutation_id": "bootstrap_then_decrypt",
+      "numerical_validity_expected": true,
+      "rules": [
+        {
+          "detail": "",
+          "expected": "positive",
+          "observed": "positive",
+          "outcome": "hit",
+          "rule_id": "bootstrap.restored_levels_underused.v1"
+        }
+      ],
+      "unexpected_positives": [
+        "configuration.testing_only_security.v1",
+        "depth.critical_path.v1",
+        "parameters.depth_headroom_observed.v1"
+      ]
     }
   ],
+  "environment": {
+    "cipherscope_commit": "88496edaee1a4947c16b5163d06f6af92cd6ed83",
+    "cipherscope_dirty": true,
+    "cipherscope_version": "0.1.0",
+    "lane": "developer",
+    "machine": "x86_64",
+    "omp_num_threads": "1",
+    "openfhe_distribution": null,
+    "openfhe_native_module_hashes": {
+      "openfhe.cpython-311-x86_64-linux-gnu.so": "429513c3add220b9ca493e3d626c7e20adb4b18609c836804d9bbe2a1e6e3a06"
+    },
+    "platform": "Linux",
+    "python": "3.11.15"
+  },
   "table": [
     {
-      "detected": 0,
+      "detected": 1,
       "false_positives": 0,
       "fp_rate": 0.0,
       "invalid_runs": 0,
       "mismatches": 0,
       "not_applicable_cases": 0,
-      "recall": null,
+      "recall": 1.0,
       "rule_id": "bootstrap.restored_levels_underused.v1",
       "seeded_negatives": 1,
-      "seeded_positives": 0
+      "seeded_positives": 1
     },
     {
       "detected": 1,
@@ -897,7 +935,7 @@
       "seeded_positives": 1
     },
     {
-      "detected": 13,
+      "detected": 14,
       "false_positives": 0,
       "fp_rate": 0.0,
       "invalid_runs": 0,
@@ -906,7 +944,7 @@
       "recall": 1.0,
       "rule_id": "ALL",
       "seeded_negatives": 18,
-      "seeded_positives": 13
+      "seeded_positives": 14
     }
   ]
 }

@@ -28,9 +28,25 @@
       },
       "additionalProperties": true
     },
+    "producer": {
+      "type": "object",
+      "required": ["frontend", "frontend_version"],
+      "properties": {
+        "frontend": {"type": "string", "minLength": 1},
+        "frontend_version": {"type": "string", "minLength": 1},
+        "instrumentation_manifest": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
     "runtime": {
       "type": "object",
       "properties": {
+        "language": {"enum": ["python", "c++", null]},
+        "language_version": {"type": ["string", "null"]},
+        "compiler": {"type": ["string", "null"]},
+        "compiler_version": {"type": ["string", "null"]},
+        "framework": {"type": ["string", "null"]},
+        "framework_version": {"type": ["string", "null"]},
         "python": {"type": ["string", "null"]},
         "openfhe_python": {"type": ["string", "null"]},
         "openfhe_native": {"type": ["string", "null"]},
@@ -76,7 +92,7 @@
       "type": "object",
       "required": ["scheme", "ring_dimension", "configured_multiplicative_depth"],
       "properties": {
-        "scheme": {"enum": ["CKKS", null]},
+        "scheme": {"enum": ["CKKS", "BFV", "BGV", null]},
         "ring_dimension": {"type": ["integer", "null"], "minimum": 1},
         "configured_multiplicative_depth": {"type": ["integer", "null"], "minimum": 0},
         "scaling_technique": {"type": ["string", "null"]},
