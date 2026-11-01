@@ -6,7 +6,11 @@
   "inputs": {
     "ablation": {
       "path": "raw/semantic_ablation.csv",
-      "sha256": "05f3dc8c6b894089d7e2d2a069b9ccb14de73183a0892c7b471cef7dbc51c73c"
+      "sha256": "2b62dc6944878d6b7518e814d650db665b747a3350c3729f8e9d0b67e6d7bece"
+    },
+    "bug_hunt": {
+      "path": "raw/bug_hunt.csv",
+      "sha256": "ea77f141083095dac58398c4cb2c46556a76b487da40fbc685467f2e5b614407"
     },
     "coverage": {
       "path": "raw/coverage_report.csv",
@@ -14,7 +18,7 @@
     },
     "findings": {
       "path": "adjudication/findings.csv",
-      "sha256": "f63bb1c264ea59cbc1ca730136c3861363a7e32eac77cc63d599aef4566927b2"
+      "sha256": "e3ba03acf47179a71ee53832dbbf14b0b4e5600ca6dd4ac8196fa5b7ef8e5963"
     },
     "scaling": {
       "path": "raw/scaling.csv",
@@ -22,20 +26,25 @@
     },
     "seeded": {
       "path": "raw/seeded/case_results.json",
-      "sha256": "65fba98b7e5679f2f1c3b2d9f45f0411635d9cc1f070b79851293bb2f35944b8"
+      "sha256": "66d383d1f6aade0bb1155301b1364e8541a349818b357fe7a56e821c4e55662e"
+    },
+    "workload_runs": {
+      "path": "raw/workload_runs.csv",
+      "sha256": "22ce7987b37483f57dff5e4aeef3838ed73bc2bd0f93436b2125928d5455ce67"
     }
   },
   "schema": "schema/results.schema.json",
-  "skipped_inputs": {
-    "workload_runs": "raw/workload_runs.csv"
-  },
+  "skipped_inputs": {},
   "tables": {
+    "before_after.csv": "dfc0f3f1597ce024ca6a89a15e49936982d044e81dfe33b7119c40474dc8b4cd",
     "coverage.csv": "3ea55c27307f2cc23308b7ff063cdcc662e3c10d2806300982b2084bbe1bc358",
-    "generic_profiler_comparison.csv": "cb85aa96ba629f706d1fedf26476cce3285a24d5040ca3f080981b2b4a8729ce",
-    "precision.csv": "e6aad514104b12880afcfbe2a21be926246c29fc79ae9121f52c17ba29187c0f",
+    "generic_profiler_comparison.csv": "cb3a2641d9c7c19be81da29eeb59b101fa2dbb963d995530496f6f61884a8393",
+    "overhead.csv": "e6c859c314c0a9d3c64aa1dc3fed091e045ef983c4221ea7e21938fd82727832",
+    "precision.csv": "b3d5db4e920bcbd26672398e01426d6e7006d94ad9d6eef20088f37318294fc2",
     "recall.csv": "fbe789419fd626fc947620e4185d9eba5d93a8dc6524d54171072f1b577ba34b",
     "scaling.csv": "735207a2039b3ea280f692492b61311950914c736021c4b84727175bb47f4563",
+    "security_cases.csv": "9d1983716809cf828442ffde7392a66cf2795e6b7c45f9cdbe7a998c158fc511",
     "seeded_cases.csv": "be22b8e12df71f25a2ba7cd56f71858ca212ae7927867ac218c5fdaf617e2826",
-    "semantic_ablation.csv": "d4f0ab3c2b0ceacf6ea2934531409bfc68da263e125840a9255cd22dc277bfe9"
+    "semantic_ablation.csv": "4f73adef3d0f08b1db8500a08c5c4c678413c7c2189369f5fd2397c884229de3"
   }
 }

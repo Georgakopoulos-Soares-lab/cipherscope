@@ -6,7 +6,7 @@ encoding.repeated_public_constant.v1,1,false,STATE
 keys.unused_in_observed_run.v1,1,false,STATE
 multiplication.serial_reduction_review.v1,1,false,FULL
 packing.low_utilization_annotated.v1,1,false,FULL
-parameters.depth_headroom_observed.v1,27,false,FULL
+parameters.depth_headroom_observed.v1,24,false,FULL
 precision.checkpoint_drop.v1,3,false,STATE
 precision.tolerance_violated.v1,1,false,STATE
 provenance.public_value_ciphertext_mult.v1,1,false,FULL

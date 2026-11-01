@@ -1,0 +1,13 @@
+diff --git a/efficient_regression/config.yml b/efficient_regression/config.yml
+index 675a14e..add8543 100644
+--- a/efficient_regression/config.yml
++++ b/efficient_regression/config.yml
+@@ -22,7 +22,7 @@ crypto_params:
+ crypto_bootstrap_params:
+   level_budget: [ 2, 2 ]
+   levels_before_bootstrap_128bit: 15
+-  levels_before_bootstrap_64bit: 16
++  levels_before_bootstrap_64bit: 14
+   approx_bootstrap_depth: 8
+   secret_key_dist: "UNIFORM_TERNARY"
+   bsgs_dim: [0, 0]

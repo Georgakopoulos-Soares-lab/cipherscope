@@ -1,0 +1,13 @@
+diff --git a/naive_regression/config.yml b/naive_regression/config.yml
+index b90fa68..aa8b4ff 100644
+--- a/naive_regression/config.yml
++++ b/naive_regression/config.yml
+@@ -6,7 +6,7 @@ crypto_params:
+   64_first_mod: 60
+   64_rescale_method: "FLEXIBLEAUTO"
+   run_bootstrap: false
+-  mult_depth: 12  # Overwritten if we run_bootstrap
++  mult_depth: 7  # Overwritten if we run_bootstrap
+   num_slots: false
+ 
+ crypto_bootstrap_params:

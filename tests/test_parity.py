@@ -62,6 +62,18 @@ class CompareLanesTests(unittest.TestCase):
         report = compare_lanes.build_report([_lane("a", "Linux", "skip"), _lane("b")], GOLDEN, None)
         self.assertTrue(any("RES-02" in d for d in report.disagreements))
 
+    def test_a_check_newer_than_one_archive_is_allowed_only_on_request_and_only_if_the_others_agree(self) -> None:
+        old, new, newer = _lane("old"), _lane("new"), _lane("newer")
+        new.feasibility["checks"].append({"id": "API-09", "status": "pass"})
+        newer.feasibility["checks"].append({"id": "API-09", "status": "pass"})
+        self.assertTrue(any("API-09" in d for d in compare_lanes.build_report([old, new, newer], GOLDEN, None).disagreements))
+        report = compare_lanes.build_report([old, new, newer], GOLDEN, None, allow_missing_cases=True)
+        self.assertEqual(report.disagreements, [])
+        self.assertTrue(any("API-09: not run on old" in a for a in report.allowed))
+        newer.feasibility["checks"][-1]["status"] = "fail"
+        report = compare_lanes.build_report([old, new, newer], GOLDEN, None, allow_missing_cases=True)
+        self.assertTrue(any("API-09" in d for d in report.disagreements))
+
     def test_pin_and_seeded_and_numeric_disagreements_are_reported(self) -> None:
         other = _lane("b", seeded=_seeded(observed="clean"))
         other.feasibility["pins"]["native_commit"] = "different"

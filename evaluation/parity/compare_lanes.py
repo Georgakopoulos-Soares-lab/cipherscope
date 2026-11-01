@@ -148,7 +148,7 @@ def compare_pins(lanes: Sequence[Lane], report: Report) -> None:
     report.section("Pins", _table(["pin", *(lane.name for lane in lanes)], rows))
 
 
-def compare_checks(lanes: Sequence[Lane], report: Report) -> None:
+def compare_checks(lanes: Sequence[Lane], report: Report, *, allow_missing_cases: bool = False) -> None:
     statuses = {lane.name: {check["id"]: check["status"] for check in lane.feasibility["checks"]} for lane in lanes}
     ids = sorted({check_id for lane_status in statuses.values() for check_id in lane_status})
     rows = []
@@ -157,7 +157,14 @@ def compare_checks(lanes: Sequence[Lane], report: Report) -> None:
         note = ""
         if len(set(values)) != 1:
             allowed = ALLOWED_CHECK_DIFFERENCES.get(check_id)
-            if allowed and all(statuses[lane.name].get(check_id) == allowed.get(lane.platform) for lane in lanes):
+            ran = {value for value in values if value != "absent"}
+            missing_from = [lane.name for lane in lanes if check_id not in statuses[lane.name]]
+            if allow_missing_cases and missing_from and len(ran) == 1:
+                # A lane whose archived gate predates the check; every lane
+                # that ran it agrees. Listed, never silently ignored.
+                note = "allowed (archive predates the check)"
+                report.allowed.append(f"check {check_id}: not run on {', '.join(missing_from)} (archive predates the check)")
+            elif allowed and all(statuses[lane.name].get(check_id) == allowed.get(lane.platform) for lane in lanes):
                 note = "allowed (platform-specific check)"
                 report.allowed.append(f"{check_id}: " + ", ".join(f"{lane.name}={statuses[lane.name].get(check_id)}" for lane in lanes))
             else:
@@ -339,7 +346,7 @@ def build_report(lanes: Sequence[Lane], golden: Mapping[str, Any], archived_scal
     )
     report.section("Lanes", header)
     compare_pins(lanes, report)
-    compare_checks(lanes, report)
+    compare_checks(lanes, report, allow_missing_cases=allow_missing_cases)
     compare_numerics(lanes, golden, report)
     compare_seeded(lanes, report, allow_missing_cases=allow_missing_cases)
     compare_ablation(lanes, report)
@@ -386,7 +393,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--golden", type=Path, default=Path("tests/integration_openfhe/golden_core.json"))
     parser.add_argument("--archived-scaling", type=Path, default=Path("evaluation/raw/scaling.csv"))
     parser.add_argument("--allow-missing-cases", action="store_true",
-                        help="a seeded case absent from some lanes (their result predates it) is listed as allowed, not a disagreement")
+                        help="a seeded case or gate check absent from some lanes (their archive predates it) is listed as allowed, not a disagreement, when every lane that ran it agrees")
     parser.add_argument("--output", type=Path, help="write the Markdown report here (default: stdout)")
     args = parser.parse_args(argv)
 

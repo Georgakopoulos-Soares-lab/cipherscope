@@ -309,6 +309,10 @@
             "validated_improvement",
             "no_improvement",
             "regression",
+            "refused",
+            "validated_fix",
+            "fix_changes_result",
+            "fix_not_confirmed",
             "not_attempted",
             null
           ]
@@ -754,6 +758,75 @@
           "minimum": 0
         },
         "signature": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "bug_hunt_result": {
+      "description": "One security/correctness rule's status on one real program, re-analyzed by evaluation/bug_hunt/run_bug_hunt.py (F-02). Positives carry an adjudication.",
+      "type": "object",
+      "required": [
+        "subject",
+        "frontend",
+        "program_source",
+        "coverage_class",
+        "rule_id",
+        "status",
+        "finding_summary",
+        "adjudication",
+        "adjudication_evidence"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "frontend": {
+          "enum": [
+            "python-openfhe",
+            "gcc-openfhe"
+          ]
+        },
+        "program_source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "coverage_class": {
+          "$ref": "#/$defs/coverage_class"
+        },
+        "rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "positive",
+            "clean",
+            "not_applicable",
+            "missing"
+          ]
+        },
+        "finding_summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "adjudication": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/adjudication"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "adjudication_evidence": {
           "type": [
             "string",
             "null"
