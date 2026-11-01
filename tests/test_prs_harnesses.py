@@ -12,9 +12,11 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-import memory_profile_prs
-
 ROOT = Path(__file__).resolve().parents[1]
+TACC = ROOT / "tacc"
+
+sys.path.insert(0, str(TACC))
+import memory_profile_prs  # noqa: E402
 
 
 def _constant(path: Path, name: str) -> int:
@@ -35,7 +37,7 @@ def _constant(path: Path, name: str) -> int:
 
 class PrsScriptTests(unittest.TestCase):
     def test_default_cohort_triggers_repeated_encoding_analysis(self) -> None:
-        script = ROOT / "prs_dot_product.py"
+        script = TACC / "prs_dot_product.py"
         block_size = _constant(script, "BLOCK_SIZE")
         num_blocks = _constant(script, "NUM_BLOCKS")
         num_patients = _constant(script, "NUM_PATIENTS")
@@ -44,28 +46,43 @@ class PrsScriptTests(unittest.TestCase):
         self.assertEqual(block_size * num_blocks, 999_424)
 
     def test_analysis_launcher_removes_previous_bundle_first(self) -> None:
-        script = (ROOT / "run_analysis.slurm").read_text(encoding="utf-8")
+        script = (TACC / "run_analysis.sh").read_text(encoding="utf-8")
 
         remove_at = script.index("rm -rf prs_run/")
         run_command = (
             "python3.11 -m cipherscope.cli run --output prs_run/ "
-            "prs_dot_product_analysis.py"
+            "tacc/prs_dot_product_analysis.py"
         )
         run_at = script.index(run_command)
 
         self.assertLess(remove_at, run_at)
 
-    def test_solution_launchers_use_work_directory(self) -> None:
+    def test_external_suite_launcher_uses_work_directory(self) -> None:
+        # One parameterized script now covers both the full-suite run and any
+        # single program (it replaced three near-duplicate run_sol_*.slurm
+        # launchers that were each this same loop body pinned to one program).
+        script = (TACC / "run_external_suite.sh").read_text(encoding="utf-8")
+        self.assertIn('REPO="${LOG_REG_EXAMPLES:-$WORK/python-log-reg-examples}"', script)
+        self.assertIn('cd "$REPO"', script)
+        self.assertNotIn("/work/11681/", script)
+
+    def test_launchers_do_not_submit_to_a_scheduler(self) -> None:
+        # Project policy (docs/ls6_parity_plan.md): everything runs directly in
+        # the allocated shell -- no sbatch, srun, idev, or #SBATCH directives.
         for name in (
-            "run_sol_encrypted_inference.slurm",
-            "run_sol_log_reg.slurm",
-            "run_sol_nag_log_reg.slurm",
+            "run_build.sh",
+            "run_analysis.sh",
+            "run_external_suite.sh",
+            "run_memory.sh",
+            "run_profile.sh",
         ):
             with self.subTest(script=name):
-                script = (ROOT / name).read_text(encoding="utf-8")
-                self.assertIn('REPO="${LOG_REG_EXAMPLES:-$WORK/python-log-reg-examples}"', script)
-                self.assertIn('cd "$REPO"', script)
-                self.assertNotIn("/work/11681/", script)
+                script = (TACC / name).read_text(encoding="utf-8")
+                code_lines = "\n".join(
+                    line for line in script.splitlines() if not line.lstrip().startswith("#")
+                )
+                self.assertNotIn("#SBATCH", script)
+                self.assertNotRegex(code_lines, r"\b(sbatch|srun|idev)\b")
 
     def test_build_and_runtime_scripts_use_the_same_gcc_module(self) -> None:
         """Runtime scripts must load the module the extension was compiled with.
@@ -90,23 +107,19 @@ class PrsScriptTests(unittest.TestCase):
         self.assertNotIn("/home1/apps/gcc", build)
 
         for name in (
-            "run_build.slurm",
-            "run_analysis.slurm",
-            "run_external_suite.slurm",
-            "run_memory.slurm",
-            "run_profile.slurm",
-            "run_sol_encrypted_inference.slurm",
-            "run_sol_log_reg.slurm",
-            "run_sol_nag_log_reg.slurm",
+            "run_build.sh",
+            "run_analysis.sh",
+            "run_external_suite.sh",
+            "run_memory.sh",
+            "run_profile.sh",
         ):
             with self.subTest(script=name):
-                script = (ROOT / name).read_text(encoding="utf-8")
+                script = (TACC / name).read_text(encoding="utf-8")
                 self.assertIn('source "$CIPHERSCOPE_DIR/ls6_env.sh"', script)
                 self.assertNotIn("module load gcc", script)
                 self.assertNotIn("/home1/apps/gcc", script)
                 # LS6 partitions only; gh-dev is a Vista (aarch64) queue.
                 self.assertNotIn("gh-dev", script)
-                self.assertRegex(script, r"#SBATCH -p (vm-small|development|normal)")
 
     def test_gitignore_has_no_duplicate_patterns(self) -> None:
         patterns = [

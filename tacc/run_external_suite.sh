@@ -8,7 +8,7 @@
 # (a program's base name, e.g. sol_lin_reg), runs just that one program --
 # this replaces the three near-duplicate run_sol_*.slurm launchers, which
 # were each just this same loop body pinned to a single program.
-set -uo pipefail
+set -o pipefail
 CIPHERSCOPE_DIR="${CIPHERSCOPE_DIR:-$WORK/cipherscope}"
 # shellcheck disable=SC1091
 source "$CIPHERSCOPE_DIR/ls6_env.sh"

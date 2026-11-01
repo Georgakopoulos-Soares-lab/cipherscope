@@ -1,7 +1,7 @@
 #!/bin/bash
 # Direct-execution launcher (no sbatch/srun/idev -- run in an already-allocated
 # LS6 x86_64 shell; see docs/ls6_parity_plan.md's "no scheduler" policy).
-set -euo pipefail
+set -eo pipefail
 CIPHERSCOPE_DIR="${CIPHERSCOPE_DIR:-$WORK/cipherscope}"
 # shellcheck disable=SC1091
 source "$CIPHERSCOPE_DIR/ls6_env.sh"
