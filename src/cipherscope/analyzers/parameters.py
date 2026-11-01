@@ -27,6 +27,26 @@ def _has_level_metadata(trace: Mapping[str, Any]) -> bool:
     return False
 
 
+def _deferred_rescale_levels(trace: Mapping[str, Any]) -> int:
+    """1 if a ciphertext at the deepest observed level still awaits a rescale, else 0."""
+
+    deepest = None
+    pending = False
+    for state in trace.get("ciphertexts", ()):
+        if not isinstance(state, Mapping):
+            continue
+        level = state.get("level")
+        if not isinstance(level, int) or isinstance(level, bool):
+            continue
+        degree = state.get("noise_scale_degree")
+        has_pending = isinstance(degree, int) and not isinstance(degree, bool) and degree >= 2
+        if deepest is None or level > deepest:
+            deepest, pending = level, has_pending
+        elif level == deepest and has_pending:
+            pending = True
+    return 1 if pending else 0
+
+
 def analyze_parameters(
     trace: Mapping[str, Any], graph: Mapping[str, Any] | None = None
 ) -> dict[str, Any]:
@@ -89,10 +109,17 @@ def analyze_parameters(
             "findings": [],
         }
 
-    headroom = configured - consumed
+    # A ciphertext still carrying a deferred rescale (noise scale degree >= 2
+    # at the deepest observed level, as FLEXIBLEAUTO leaves the last product)
+    # has committed one more level than its level field shows: OpenFHE
+    # refuses a depth equal to the observed level count in that state.
+    deferred = _deferred_rescale_levels(trace)
+    consumed_effective = consumed + deferred
+    headroom = configured - consumed_effective
     inventory = {
         "configured_multiplicative_depth": configured,
         "observed_max_levels_consumed_in_epoch": consumed,
+        "deferred_rescale_levels": deferred,
         "observed_depth_headroom": headroom,
     }
     if headroom <= 0:
@@ -132,6 +159,7 @@ def analyze_parameters(
         "limitations": [
             "Headroom reflects this run's inputs and branches only, not all inputs.",
             "Reducing depth may alter security parameters and require re-tuning.",
+            "Levels a library call consumes internally without a visible ciphertext level change (inside EvalLogistic, or below the input level of a multi-iteration EvalBootstrap) are not observed; the smallest depth that actually runs can be one or two above the observed use, so the reported headroom is an upper bound.",
             "Bootstrapping segments are measured per epoch, not summed across the run.",
         ],
     }

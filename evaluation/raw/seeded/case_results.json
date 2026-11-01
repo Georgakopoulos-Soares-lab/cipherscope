@@ -614,8 +614,7 @@
         }
       ],
       "unexpected_positives": [
-        "depth.critical_path.v1",
-        "parameters.depth_headroom_observed.v1"
+        "depth.critical_path.v1"
       ]
     },
     {
@@ -640,8 +639,7 @@
         }
       ],
       "unexpected_positives": [
-        "depth.critical_path.v1",
-        "parameters.depth_headroom_observed.v1"
+        "depth.critical_path.v1"
       ]
     },
     {
@@ -666,8 +664,7 @@
         }
       ],
       "unexpected_positives": [
-        "depth.critical_path.v1",
-        "parameters.depth_headroom_observed.v1"
+        "depth.critical_path.v1"
       ]
     },
     {
@@ -779,10 +776,10 @@
     }
   ],
   "environment": {
-    "cipherscope_commit": "62176313f565e1b08bc235f2e2adc9ed0f489d12",
+    "cipherscope_commit": "88496edaee1a4947c16b5163d06f6af92cd6ed83",
     "cipherscope_dirty": true,
     "cipherscope_version": "0.1.0",
-    "lane": "ls6-native-py311",
+    "lane": "developer",
     "machine": "x86_64",
     "omp_num_threads": "1",
     "openfhe_distribution": null,

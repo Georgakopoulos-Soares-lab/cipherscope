@@ -472,8 +472,9 @@ def main(argv: list[str] | None = None) -> int:
     def analyzers() -> dict[str, Any]:
         statuses = build_analysis_bundle(traces["repeated_rotations"])["recommendations"]["analyzer_status"]
         positives = {k for k, v in statuses.items() if v == "positive"}
-        assert positives == {"depth.critical_path.v1", "keys.unused_in_observed_run.v1", "rotation.hoist_same_input.v1",
-                             "parameters.depth_headroom_observed.v1"}, positives
+        assert positives == {"depth.critical_path.v1", "keys.unused_in_observed_run.v1", "rotation.hoist_same_input.v1"}, positives
+        # Depth 1 with the last product's rescale still pending is exactly enough.
+        assert statuses["parameters.depth_headroom_observed.v1"] == "clean"
         assert statuses["precision.checkpoint_drop.v1"] == "not_applicable"
         return {"positives": sorted(positives)}
 

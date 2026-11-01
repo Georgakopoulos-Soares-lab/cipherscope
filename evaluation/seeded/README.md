@@ -96,10 +96,12 @@ with the operations since the previous one.
 parameters (`trace(..., parameters=params)`); `configuration.negative.undeclared`
 pins that it declines rather than inferring `HEStd_NotSet` from a 64-slot ring.
 
-**`EvalFastRotationPrecompute` is not in the compatibility registry**, so the
-"precompute already present" negative for the rotation rule cannot run
-strictly on the real binding; `tests/golden/test_graph_validation.py` covers it
-on the fake model.
+**`EvalFastRotationPrecompute` / `EvalFastRotation` are in the compatibility
+registry since manifest v2** (an earlier version of this note said otherwise).
+The "precompute already present" shape runs strictly on the real binding:
+`evaluation/impact/cases/rotation_hoist.py`'s `after` variant is exactly that
+program and the rotation rule reports it `not_applicable`;
+`tests/golden/test_graph_validation.py` still covers it on the fake model.
 
 ## Adding a case
 

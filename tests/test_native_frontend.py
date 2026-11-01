@@ -75,7 +75,9 @@ class NormalizerTests(unittest.TestCase):
         report = compare_traces(python, cpp, left_name="python", right_name="c++")
         self.assertTrue(report.equivalent, report.differences)
         positives = {k for k, v in build_analysis_bundle(cpp)["recommendations"]["analyzer_status"].items() if v == "positive"}
-        self.assertEqual(positives, {"depth.critical_path.v1", "keys.unused_in_observed_run.v1", "rotation.hoist_same_input.v1", "parameters.depth_headroom_observed.v1"})
+        self.assertEqual(positives, {"depth.critical_path.v1", "keys.unused_in_observed_run.v1", "rotation.hoist_same_input.v1"})
+        # Depth 1 with one pending FLEXIBLEAUTO rescale is exactly enough: no headroom finding.
+        self.assertEqual(build_analysis_bundle(cpp)["recommendations"]["analyzer_status"]["parameters.depth_headroom_observed.v1"], "clean")
 
     def test_every_archived_twin_pair_is_equivalent(self) -> None:
         for name in ("repeated_rotations", "operators_inplace", "aliasing", "exception",

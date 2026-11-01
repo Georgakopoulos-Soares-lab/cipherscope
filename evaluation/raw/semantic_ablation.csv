@@ -18,7 +18,7 @@ bootstrap.limitation.underused_real,bootstrap_underused_real,STATE,encoding.repe
 bootstrap.limitation.underused_real,bootstrap_underused_real,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 bootstrap.limitation.underused_real,bootstrap_underused_real,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 bootstrap.limitation.underused_real,bootstrap_underused_real,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-bootstrap.limitation.underused_real,bootstrap_underused_real,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=25
+bootstrap.limitation.underused_real,bootstrap_underused_real,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=24
 bootstrap.limitation.underused_real,bootstrap_underused_real,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 bootstrap.limitation.underused_real,bootstrap_underused_real,STATE,precision.tolerance_violated.v1,not_applicable,0,
 bootstrap.limitation.underused_real,bootstrap_underused_real,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -30,7 +30,7 @@ bootstrap.limitation.underused_real,bootstrap_underused_real,FULL,encoding.repea
 bootstrap.limitation.underused_real,bootstrap_underused_real,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 bootstrap.limitation.underused_real,bootstrap_underused_real,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 bootstrap.limitation.underused_real,bootstrap_underused_real,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-bootstrap.limitation.underused_real,bootstrap_underused_real,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=21
+bootstrap.limitation.underused_real,bootstrap_underused_real,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=20
 bootstrap.limitation.underused_real,bootstrap_underused_real,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 bootstrap.limitation.underused_real,bootstrap_underused_real,FULL,precision.tolerance_violated.v1,not_applicable,0,
 bootstrap.limitation.underused_real,bootstrap_underused_real,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -90,7 +90,7 @@ configuration.kernel.default,security_default,STATE,encoding.repeated_public_con
 configuration.kernel.default,security_default,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 configuration.kernel.default,security_default,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 configuration.kernel.default,security_default,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-configuration.kernel.default,security_default,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=1
+configuration.kernel.default,security_default,STATE,parameters.depth_headroom_observed.v1,clean,0,
 configuration.kernel.default,security_default,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 configuration.kernel.default,security_default,STATE,precision.tolerance_violated.v1,not_applicable,0,
 configuration.kernel.default,security_default,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -102,7 +102,7 @@ configuration.kernel.default,security_default,FULL,encoding.repeated_public_cons
 configuration.kernel.default,security_default,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 configuration.kernel.default,security_default,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 configuration.kernel.default,security_default,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-configuration.kernel.default,security_default,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
+configuration.kernel.default,security_default,FULL,parameters.depth_headroom_observed.v1,clean,0,
 configuration.kernel.default,security_default,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 configuration.kernel.default,security_default,FULL,precision.tolerance_violated.v1,not_applicable,0,
 configuration.kernel.default,security_default,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -126,7 +126,7 @@ configuration.negative.undeclared,security_undeclared,STATE,encoding.repeated_pu
 configuration.negative.undeclared,security_undeclared,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 configuration.negative.undeclared,security_undeclared,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 configuration.negative.undeclared,security_undeclared,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-configuration.negative.undeclared,security_undeclared,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=1
+configuration.negative.undeclared,security_undeclared,STATE,parameters.depth_headroom_observed.v1,clean,0,
 configuration.negative.undeclared,security_undeclared,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 configuration.negative.undeclared,security_undeclared,STATE,precision.tolerance_violated.v1,not_applicable,0,
 configuration.negative.undeclared,security_undeclared,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -138,7 +138,7 @@ configuration.negative.undeclared,security_undeclared,FULL,encoding.repeated_pub
 configuration.negative.undeclared,security_undeclared,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 configuration.negative.undeclared,security_undeclared,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 configuration.negative.undeclared,security_undeclared,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-configuration.negative.undeclared,security_undeclared,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
+configuration.negative.undeclared,security_undeclared,FULL,parameters.depth_headroom_observed.v1,clean,0,
 configuration.negative.undeclared,security_undeclared,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 configuration.negative.undeclared,security_undeclared,FULL,precision.tolerance_violated.v1,not_applicable,0,
 configuration.negative.undeclared,security_undeclared,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -162,7 +162,7 @@ configuration.positive.not_set,security_not_set,STATE,encoding.repeated_public_c
 configuration.positive.not_set,security_not_set,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 configuration.positive.not_set,security_not_set,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 configuration.positive.not_set,security_not_set,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-configuration.positive.not_set,security_not_set,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=1
+configuration.positive.not_set,security_not_set,STATE,parameters.depth_headroom_observed.v1,clean,0,
 configuration.positive.not_set,security_not_set,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 configuration.positive.not_set,security_not_set,STATE,precision.tolerance_violated.v1,not_applicable,0,
 configuration.positive.not_set,security_not_set,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -174,7 +174,7 @@ configuration.positive.not_set,security_not_set,FULL,encoding.repeated_public_co
 configuration.positive.not_set,security_not_set,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 configuration.positive.not_set,security_not_set,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 configuration.positive.not_set,security_not_set,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-configuration.positive.not_set,security_not_set,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
+configuration.positive.not_set,security_not_set,FULL,parameters.depth_headroom_observed.v1,clean,0,
 configuration.positive.not_set,security_not_set,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 configuration.positive.not_set,security_not_set,FULL,precision.tolerance_violated.v1,not_applicable,0,
 configuration.positive.not_set,security_not_set,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -234,7 +234,7 @@ depth.positive.horner,depth_horner,STATE,encoding.repeated_public_constant.v1,no
 depth.positive.horner,depth_horner,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 depth.positive.horner,depth_horner,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 depth.positive.horner,depth_horner,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-depth.positive.horner,depth_horner,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+depth.positive.horner,depth_horner,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=3
 depth.positive.horner,depth_horner,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 depth.positive.horner,depth_horner,STATE,precision.tolerance_violated.v1,not_applicable,0,
 depth.positive.horner,depth_horner,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -246,7 +246,7 @@ depth.positive.horner,depth_horner,FULL,encoding.repeated_public_constant.v1,not
 depth.positive.horner,depth_horner,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 depth.positive.horner,depth_horner,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 depth.positive.horner,depth_horner,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-depth.positive.horner,depth_horner,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+depth.positive.horner,depth_horner,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 depth.positive.horner,depth_horner,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 depth.positive.horner,depth_horner,FULL,precision.tolerance_violated.v1,not_applicable,0,
 depth.positive.horner,depth_horner,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -270,7 +270,7 @@ depth.positive.opaque_inner_product,depth_inner_product,STATE,encoding.repeated_
 depth.positive.opaque_inner_product,depth_inner_product,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 depth.positive.opaque_inner_product,depth_inner_product,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 depth.positive.opaque_inner_product,depth_inner_product,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-depth.positive.opaque_inner_product,depth_inner_product,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=3
+depth.positive.opaque_inner_product,depth_inner_product,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
 depth.positive.opaque_inner_product,depth_inner_product,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 depth.positive.opaque_inner_product,depth_inner_product,STATE,precision.tolerance_violated.v1,not_applicable,0,
 depth.positive.opaque_inner_product,depth_inner_product,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -282,7 +282,7 @@ depth.positive.opaque_inner_product,depth_inner_product,FULL,encoding.repeated_p
 depth.positive.opaque_inner_product,depth_inner_product,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 depth.positive.opaque_inner_product,depth_inner_product,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 depth.positive.opaque_inner_product,depth_inner_product,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-depth.positive.opaque_inner_product,depth_inner_product,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=3
+depth.positive.opaque_inner_product,depth_inner_product,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
 depth.positive.opaque_inner_product,depth_inner_product,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 depth.positive.opaque_inner_product,depth_inner_product,FULL,precision.tolerance_violated.v1,not_applicable,0,
 depth.positive.opaque_inner_product,depth_inner_product,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -306,7 +306,7 @@ encoding.negative.distinct_constants,encoding_distinct_constants,STATE,encoding.
 encoding.negative.distinct_constants,encoding_distinct_constants,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 encoding.negative.distinct_constants,encoding_distinct_constants,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 encoding.negative.distinct_constants,encoding_distinct_constants,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-encoding.negative.distinct_constants,encoding_distinct_constants,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+encoding.negative.distinct_constants,encoding_distinct_constants,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 encoding.negative.distinct_constants,encoding_distinct_constants,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 encoding.negative.distinct_constants,encoding_distinct_constants,STATE,precision.tolerance_violated.v1,not_applicable,0,
 encoding.negative.distinct_constants,encoding_distinct_constants,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -318,7 +318,7 @@ encoding.negative.distinct_constants,encoding_distinct_constants,FULL,encoding.r
 encoding.negative.distinct_constants,encoding_distinct_constants,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 encoding.negative.distinct_constants,encoding_distinct_constants,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 encoding.negative.distinct_constants,encoding_distinct_constants,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-encoding.negative.distinct_constants,encoding_distinct_constants,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+encoding.negative.distinct_constants,encoding_distinct_constants,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 encoding.negative.distinct_constants,encoding_distinct_constants,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 encoding.negative.distinct_constants,encoding_distinct_constants,FULL,precision.tolerance_violated.v1,not_applicable,0,
 encoding.negative.distinct_constants,encoding_distinct_constants,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -342,7 +342,7 @@ encoding.positive.repeated_constant,encoding_repeated_constant,STATE,encoding.re
 encoding.positive.repeated_constant,encoding_repeated_constant,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 encoding.positive.repeated_constant,encoding_repeated_constant,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 encoding.positive.repeated_constant,encoding_repeated_constant,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-encoding.positive.repeated_constant,encoding_repeated_constant,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+encoding.positive.repeated_constant,encoding_repeated_constant,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 encoding.positive.repeated_constant,encoding_repeated_constant,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 encoding.positive.repeated_constant,encoding_repeated_constant,STATE,precision.tolerance_violated.v1,not_applicable,0,
 encoding.positive.repeated_constant,encoding_repeated_constant,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -354,7 +354,7 @@ encoding.positive.repeated_constant,encoding_repeated_constant,FULL,encoding.rep
 encoding.positive.repeated_constant,encoding_repeated_constant,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 encoding.positive.repeated_constant,encoding_repeated_constant,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 encoding.positive.repeated_constant,encoding_repeated_constant,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-encoding.positive.repeated_constant,encoding_repeated_constant,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+encoding.positive.repeated_constant,encoding_repeated_constant,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 encoding.positive.repeated_constant,encoding_repeated_constant,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 encoding.positive.repeated_constant,encoding_repeated_constant,FULL,precision.tolerance_violated.v1,not_applicable,0,
 encoding.positive.repeated_constant,encoding_repeated_constant,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -450,7 +450,7 @@ parameters.kernel.full_use,parameters_full_use,STATE,encoding.repeated_public_co
 parameters.kernel.full_use,parameters_full_use,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 parameters.kernel.full_use,parameters_full_use,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 parameters.kernel.full_use,parameters_full_use,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-parameters.kernel.full_use,parameters_full_use,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=1
+parameters.kernel.full_use,parameters_full_use,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
 parameters.kernel.full_use,parameters_full_use,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 parameters.kernel.full_use,parameters_full_use,STATE,precision.tolerance_violated.v1,not_applicable,0,
 parameters.kernel.full_use,parameters_full_use,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -522,7 +522,7 @@ precision.negative.recovered,precision_no_drop,STATE,encoding.repeated_public_co
 precision.negative.recovered,precision_no_drop,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 precision.negative.recovered,precision_no_drop,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 precision.negative.recovered,precision_no_drop,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-precision.negative.recovered,precision_no_drop,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=3
+precision.negative.recovered,precision_no_drop,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
 precision.negative.recovered,precision_no_drop,STATE,precision.checkpoint_drop.v1,clean,0,
 precision.negative.recovered,precision_no_drop,STATE,precision.tolerance_violated.v1,not_applicable,0,
 precision.negative.recovered,precision_no_drop,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -534,7 +534,7 @@ precision.negative.recovered,precision_no_drop,FULL,encoding.repeated_public_con
 precision.negative.recovered,precision_no_drop,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 precision.negative.recovered,precision_no_drop,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 precision.negative.recovered,precision_no_drop,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-precision.negative.recovered,precision_no_drop,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+precision.negative.recovered,precision_no_drop,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 precision.negative.recovered,precision_no_drop,FULL,precision.checkpoint_drop.v1,clean,0,
 precision.negative.recovered,precision_no_drop,FULL,precision.tolerance_violated.v1,not_applicable,0,
 precision.negative.recovered,precision_no_drop,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -594,7 +594,7 @@ precision.negative.tolerance_within,precision_tolerance_within,STATE,encoding.re
 precision.negative.tolerance_within,precision_tolerance_within,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 precision.negative.tolerance_within,precision_tolerance_within,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 precision.negative.tolerance_within,precision_tolerance_within,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-precision.negative.tolerance_within,precision_tolerance_within,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=3
+precision.negative.tolerance_within,precision_tolerance_within,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
 precision.negative.tolerance_within,precision_tolerance_within,STATE,precision.checkpoint_drop.v1,positive,1,
 precision.negative.tolerance_within,precision_tolerance_within,STATE,precision.tolerance_violated.v1,clean,0,
 precision.negative.tolerance_within,precision_tolerance_within,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -606,7 +606,7 @@ precision.negative.tolerance_within,precision_tolerance_within,FULL,encoding.rep
 precision.negative.tolerance_within,precision_tolerance_within,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 precision.negative.tolerance_within,precision_tolerance_within,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 precision.negative.tolerance_within,precision_tolerance_within,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-precision.negative.tolerance_within,precision_tolerance_within,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+precision.negative.tolerance_within,precision_tolerance_within,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 precision.negative.tolerance_within,precision_tolerance_within,FULL,precision.checkpoint_drop.v1,positive,1,
 precision.negative.tolerance_within,precision_tolerance_within,FULL,precision.tolerance_violated.v1,clean,0,
 precision.negative.tolerance_within,precision_tolerance_within,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -630,7 +630,7 @@ precision.positive.drop,precision_drop,STATE,encoding.repeated_public_constant.v
 precision.positive.drop,precision_drop,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 precision.positive.drop,precision_drop,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 precision.positive.drop,precision_drop,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-precision.positive.drop,precision_drop,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=3
+precision.positive.drop,precision_drop,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
 precision.positive.drop,precision_drop,STATE,precision.checkpoint_drop.v1,positive,1,
 precision.positive.drop,precision_drop,STATE,precision.tolerance_violated.v1,not_applicable,0,
 precision.positive.drop,precision_drop,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -642,7 +642,7 @@ precision.positive.drop,precision_drop,FULL,encoding.repeated_public_constant.v1
 precision.positive.drop,precision_drop,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 precision.positive.drop,precision_drop,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 precision.positive.drop,precision_drop,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-precision.positive.drop,precision_drop,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+precision.positive.drop,precision_drop,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 precision.positive.drop,precision_drop,FULL,precision.checkpoint_drop.v1,positive,1,
 precision.positive.drop,precision_drop,FULL,precision.tolerance_violated.v1,not_applicable,0,
 precision.positive.drop,precision_drop,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -666,7 +666,7 @@ precision.positive.tolerance_violated,precision_tolerance_violated,STATE,encodin
 precision.positive.tolerance_violated,precision_tolerance_violated,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 precision.positive.tolerance_violated,precision_tolerance_violated,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 precision.positive.tolerance_violated,precision_tolerance_violated,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-precision.positive.tolerance_violated,precision_tolerance_violated,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=3
+precision.positive.tolerance_violated,precision_tolerance_violated,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
 precision.positive.tolerance_violated,precision_tolerance_violated,STATE,precision.checkpoint_drop.v1,positive,1,
 precision.positive.tolerance_violated,precision_tolerance_violated,STATE,precision.tolerance_violated.v1,positive,1,
 precision.positive.tolerance_violated,precision_tolerance_violated,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -678,7 +678,7 @@ precision.positive.tolerance_violated,precision_tolerance_violated,FULL,encoding
 precision.positive.tolerance_violated,precision_tolerance_violated,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 precision.positive.tolerance_violated,precision_tolerance_violated,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 precision.positive.tolerance_violated,precision_tolerance_violated,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-precision.positive.tolerance_violated,precision_tolerance_violated,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+precision.positive.tolerance_violated,precision_tolerance_violated,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 precision.positive.tolerance_violated,precision_tolerance_violated,FULL,precision.checkpoint_drop.v1,positive,1,
 precision.positive.tolerance_violated,precision_tolerance_violated,FULL,precision.tolerance_violated.v1,positive,1,
 precision.positive.tolerance_violated,precision_tolerance_violated,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -702,7 +702,7 @@ provenance.negative.public_pt_only,provenance_public_pt_only,STATE,encoding.repe
 provenance.negative.public_pt_only,provenance_public_pt_only,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 provenance.negative.public_pt_only,provenance_public_pt_only,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 provenance.negative.public_pt_only,provenance_public_pt_only,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-provenance.negative.public_pt_only,provenance_public_pt_only,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+provenance.negative.public_pt_only,provenance_public_pt_only,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 provenance.negative.public_pt_only,provenance_public_pt_only,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 provenance.negative.public_pt_only,provenance_public_pt_only,STATE,precision.tolerance_violated.v1,not_applicable,0,
 provenance.negative.public_pt_only,provenance_public_pt_only,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -714,7 +714,7 @@ provenance.negative.public_pt_only,provenance_public_pt_only,FULL,encoding.repea
 provenance.negative.public_pt_only,provenance_public_pt_only,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 provenance.negative.public_pt_only,provenance_public_pt_only,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 provenance.negative.public_pt_only,provenance_public_pt_only,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-provenance.negative.public_pt_only,provenance_public_pt_only,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+provenance.negative.public_pt_only,provenance_public_pt_only,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 provenance.negative.public_pt_only,provenance_public_pt_only,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 provenance.negative.public_pt_only,provenance_public_pt_only,FULL,precision.tolerance_violated.v1,not_applicable,0,
 provenance.negative.public_pt_only,provenance_public_pt_only,FULL,provenance.public_value_ciphertext_mult.v1,clean,0,
@@ -738,7 +738,7 @@ provenance.positive.public_ct_mult,provenance_public_ct_mult,STATE,encoding.repe
 provenance.positive.public_ct_mult,provenance_public_ct_mult,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 provenance.positive.public_ct_mult,provenance_public_ct_mult,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 provenance.positive.public_ct_mult,provenance_public_ct_mult,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-provenance.positive.public_ct_mult,provenance_public_ct_mult,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+provenance.positive.public_ct_mult,provenance_public_ct_mult,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 provenance.positive.public_ct_mult,provenance_public_ct_mult,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 provenance.positive.public_ct_mult,provenance_public_ct_mult,STATE,precision.tolerance_violated.v1,not_applicable,0,
 provenance.positive.public_ct_mult,provenance_public_ct_mult,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -750,7 +750,7 @@ provenance.positive.public_ct_mult,provenance_public_ct_mult,FULL,encoding.repea
 provenance.positive.public_ct_mult,provenance_public_ct_mult,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 provenance.positive.public_ct_mult,provenance_public_ct_mult,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 provenance.positive.public_ct_mult,provenance_public_ct_mult,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-provenance.positive.public_ct_mult,provenance_public_ct_mult,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+provenance.positive.public_ct_mult,provenance_public_ct_mult,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 provenance.positive.public_ct_mult,provenance_public_ct_mult,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 provenance.positive.public_ct_mult,provenance_public_ct_mult,FULL,precision.tolerance_violated.v1,not_applicable,0,
 provenance.positive.public_ct_mult,provenance_public_ct_mult,FULL,provenance.public_value_ciphertext_mult.v1,positive,1,
@@ -918,7 +918,7 @@ serial.negative.non_associative,serial_non_associative,STATE,encoding.repeated_p
 serial.negative.non_associative,serial_non_associative,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 serial.negative.non_associative,serial_non_associative,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 serial.negative.non_associative,serial_non_associative,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-serial.negative.non_associative,serial_non_associative,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+serial.negative.non_associative,serial_non_associative,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=3
 serial.negative.non_associative,serial_non_associative,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 serial.negative.non_associative,serial_non_associative,STATE,precision.tolerance_violated.v1,not_applicable,0,
 serial.negative.non_associative,serial_non_associative,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -930,7 +930,7 @@ serial.negative.non_associative,serial_non_associative,FULL,encoding.repeated_pu
 serial.negative.non_associative,serial_non_associative,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 serial.negative.non_associative,serial_non_associative,FULL,multiplication.serial_reduction_review.v1,not_applicable,0,
 serial.negative.non_associative,serial_non_associative,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-serial.negative.non_associative,serial_non_associative,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+serial.negative.non_associative,serial_non_associative,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 serial.negative.non_associative,serial_non_associative,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 serial.negative.non_associative,serial_non_associative,FULL,precision.tolerance_violated.v1,not_applicable,0,
 serial.negative.non_associative,serial_non_associative,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -954,7 +954,7 @@ serial.negative.short_chain,serial_short_chain,STATE,encoding.repeated_public_co
 serial.negative.short_chain,serial_short_chain,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 serial.negative.short_chain,serial_short_chain,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 serial.negative.short_chain,serial_short_chain,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-serial.negative.short_chain,serial_short_chain,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+serial.negative.short_chain,serial_short_chain,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 serial.negative.short_chain,serial_short_chain,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 serial.negative.short_chain,serial_short_chain,STATE,precision.tolerance_violated.v1,not_applicable,0,
 serial.negative.short_chain,serial_short_chain,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -966,7 +966,7 @@ serial.negative.short_chain,serial_short_chain,FULL,encoding.repeated_public_con
 serial.negative.short_chain,serial_short_chain,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 serial.negative.short_chain,serial_short_chain,FULL,multiplication.serial_reduction_review.v1,clean,0,
 serial.negative.short_chain,serial_short_chain,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-serial.negative.short_chain,serial_short_chain,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+serial.negative.short_chain,serial_short_chain,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 serial.negative.short_chain,serial_short_chain,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 serial.negative.short_chain,serial_short_chain,FULL,precision.tolerance_violated.v1,not_applicable,0,
 serial.negative.short_chain,serial_short_chain,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -990,7 +990,7 @@ serial.positive.long_chain,serial_long_chain,STATE,encoding.repeated_public_cons
 serial.positive.long_chain,serial_long_chain,STATE,keys.unused_in_observed_run.v1,not_applicable,0,
 serial.positive.long_chain,serial_long_chain,STATE,multiplication.serial_reduction_review.v1,not_applicable,0,
 serial.positive.long_chain,serial_long_chain,STATE,packing.low_utilization_annotated.v1,not_applicable,0,
-serial.positive.long_chain,serial_long_chain,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+serial.positive.long_chain,serial_long_chain,STATE,parameters.depth_headroom_observed.v1,positive,1,headroom=3
 serial.positive.long_chain,serial_long_chain,STATE,precision.checkpoint_drop.v1,not_applicable,0,
 serial.positive.long_chain,serial_long_chain,STATE,precision.tolerance_violated.v1,not_applicable,0,
 serial.positive.long_chain,serial_long_chain,STATE,provenance.public_value_ciphertext_mult.v1,not_applicable,0,
@@ -1002,7 +1002,7 @@ serial.positive.long_chain,serial_long_chain,FULL,encoding.repeated_public_const
 serial.positive.long_chain,serial_long_chain,FULL,keys.unused_in_observed_run.v1,not_applicable,0,
 serial.positive.long_chain,serial_long_chain,FULL,multiplication.serial_reduction_review.v1,positive,1,
 serial.positive.long_chain,serial_long_chain,FULL,packing.low_utilization_annotated.v1,not_applicable,0,
-serial.positive.long_chain,serial_long_chain,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=2
+serial.positive.long_chain,serial_long_chain,FULL,parameters.depth_headroom_observed.v1,positive,1,headroom=1
 serial.positive.long_chain,serial_long_chain,FULL,precision.checkpoint_drop.v1,not_applicable,0,
 serial.positive.long_chain,serial_long_chain,FULL,precision.tolerance_violated.v1,not_applicable,0,
 serial.positive.long_chain,serial_long_chain,FULL,provenance.public_value_ciphertext_mult.v1,not_applicable,0,

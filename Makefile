@@ -3,7 +3,7 @@
 PYTHON ?= python3
 export PYTHONPATH := src
 
-.PHONY: test artifact-smoke reproduce-small tables checksums verify-checksums seeded gate cpp-gate
+.PHONY: test artifact-smoke reproduce-small tables impact checksums verify-checksums seeded gate cpp-gate
 
 test:
 	$(PYTHON) -m unittest discover -s tests -p 'test_*.py'
@@ -33,9 +33,22 @@ seeded:
 	rm -rf cipherscope-results/seeded
 	$(PYTHON) -m cipherscope seeded evaluation/seeded/ground_truth.json --output cipherscope-results/seeded
 
+## The second script is deliberately separate from generate_paper_tables.py's
+## schema-validated pipeline: RQ4's before/after impact suite
+## (evaluation/impact) is a set of designed demonstration programs whose
+## correctness is checked in-script against plaintext references, not
+## adjudicated findings from the external corpus, and must not be confused
+## with them. Regenerate its raw record with evaluation/impact/run_impact.py.
 tables:
 	rm -rf evaluation/tables
 	$(PYTHON) evaluation/generate_paper_tables.py
+	$(PYTHON) evaluation/impact/summarize.py
+
+## RQ4 impact suite: every actionable rule's before/after programs, traced to
+## prove the rule fires/clears, then timed in fresh processes (needs the binding).
+impact:
+	OMP_NUM_THREADS=1 $(PYTHON) evaluation/impact/run_impact.py --repeat 7
+	$(PYTHON) evaluation/impact/summarize.py
 
 ## Developer-lane real-binding gate; set CIPHERSCOPE_OPENFHE_WRAPPER_COMMIT/NATIVE_COMMIT per docs/evidence.md.
 gate:

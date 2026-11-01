@@ -14,8 +14,6 @@ RAW = ROOT / "evaluation" / "raw"
 BACKTICK_PATH = re.compile(r"`([A-Za-z0-9_./-]+\.(?:md|json|csv|py|yaml))`")
 # Files the mapping table may name before they exist (future tables / LS6 inputs).
 ALLOWED_MISSING = {
-    "evaluation/tables/before_after.csv",
-    "evaluation/tables/security_cases.csv",
     "evaluation/tables/coverage.csv",
     "evaluation/tables/precision.csv",
     "evaluation/adjudication/findings.csv",
