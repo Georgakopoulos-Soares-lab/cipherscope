@@ -1,11 +1,11 @@
 # CipherScope
 
-CipherScope traces CKKS programs written with OpenFHE — in Python through a
-proxy around the live context, or in C++ through a GCC plugin that
-instruments an unmodified program's OpenFHE calls at compile time — and
-suggests possible optimizations. Both frontends emit the same canonical
-trace; validation, the ciphertext graph, every analyzer, and every exporter
-are shared. It currently:
+CipherScope traces CKKS, BFV and BGV programs written with OpenFHE — in
+Python through a proxy around the live context, or in C++ through a GCC
+plugin that instruments an unmodified program's OpenFHE calls at compile
+time — and suggests possible optimizations. Both frontends emit the same
+canonical trace; validation, the ciphertext graph, every analyzer, and every
+exporter are shared. It currently:
 
 - proxy encryption/decryption, core evaluation, state/depth, declared in-place,
   rotation-key generation, rotation, and bootstrap calls;
@@ -221,6 +221,21 @@ research repository tracks verified status in `CIPHERSCOPE_PROGRESS.md`.
 
 ## Current limitations
 
+- Scheme support differs by rule, because the schemes expose different state.
+  CKKS and BGV carry a level ladder, so depth is read from ciphertext levels.
+  BFV does not: OpenFHE 1.5.1.0 reports level 0 for every BFV ciphertext, and
+  the noise scale degree is not a substitute because it is not cumulative — it
+  rises along a multiplication chain but an `EvalAdd` against a shallower
+  operand resets it. BFV depth is therefore counted from the recorded
+  multiplications along the deepest lineage, which each finding states in its
+  `depth_evidence` field (`ciphertext_levels` or `recorded_multiplications`);
+  that count is exact unless an opaque call (`EvalPoly`, `EvalChebyshevSeries`)
+  hides part of the path, in which case the rule declines. The two precision
+  rules and the bootstrap rule report `not_applicable` on BFV and BGV: those
+  schemes are exact, so there is no approximation error to measure, and the
+  restored-level analysis is defined for CKKS bootstrapping. A wrong result on
+  an exact scheme is a correctness fault, not precision loss, and CipherScope
+  does not currently diagnose it.
 - The C++ frontend supports GCC (with plugin headers) and CMake projects only;
   it is verified on GCC 15.2.0 (Rocky 8.10) and GCC 13.3.0 (Ubuntu 24.04) with
   OpenFHE 1.5.1 by the 21-check gate, archived for both compilers under

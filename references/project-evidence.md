@@ -1,0 +1,103 @@
+# CipherScope evidence ledger and claim boundaries
+
+**Read before writing any results or contribution claim.** This is an audit of the **uploaded repository snapshot**, not a claim about a newer working tree. The archive `cipherscope-main (3).zip` identifies root commit `2c1d02710e1300a3193258ac70b4ce6f11b44c34` and its included file entries are dated 2026-09-18. The audit was written 2026-11-01. Nothing below establishes progress after the archive was made.
+
+Use repository-relative paths below. If Fable is operating in a new checkout, repeat the audit instead of treating these notes as fresher than the files on disk.
+
+## 1. Source-of-truth order (specific to the claim)
+
+No single file wins on every question:
+
+1. **What the executable does:** `src/cipherscope/` and real-binding/integration tests, interpreted together. `README.md` is explanatory, not an implementation oracle.
+2. **What was actually run:** raw case records under `evaluation/raw/`, archived `artifact/feasibility/*/feasibility.json`, their manifests and hashes, and version/host fingerprints. Generated CSVs and `docs/ARTIFACT.md` can summarize these but cannot replace their inputs.
+3. **What a reported result means:** `evaluation/schema/results.schema.json`, `evaluation/README.md`, `evaluation/seeded/README.md`, `evaluation/adjudication/GUIDE.md`, the scripts in `src/cipherscope/tables.py` and the exact regeneration command. Denominators and exclusion rules belong here.
+4. **What the authors intend to claim:** `paper/claims.md` and `paper/rq_matrix.csv`. These are a *frozen intended scope*, not proof the result exists. When stale, open a documented discrepancy rather than privileging a favorable number.
+5. **How to describe the system:** `docs/architecture.md`, `docs/evidence.md`, `README.md`, and source examples. Check the implementation when their general descriptions are broader than the code.
+6. **What previous work did:** primary papers, not checkboxes in `paper/prior_art_matrix.csv`. Several rows in that matrix explicitly say `verify`.
+
+**Working rule:** every numerical sentence needs `[population, environment, source path, status, date]`. Any unresolved item becomes `[VERIFY: ...]` in the draft. Never silently resolve conflicts in favor of a larger number.
+
+## 2. What the uploaded project implements
+
+**Accurate short description:** CipherScope is pre-alpha, source-attributed **runtime semantic observability and diagnosis for CKKS programs using OpenFHE's Python binding**. It wraps a context that the program elects to use, records covered calls, reconstructs ciphertext versions and a dependency graph, then runs offline analyses that return source-located findings. It is not an FHE compiler, generic profiler for all libraries, rewrite engine, or security proof.
+
+Evidence: `README.md` “Instrumentation API”; `docs/architecture.md`; `src/cipherscope/context.py`, `recorder.py`, `registry.py`, `graph.py`, `pipeline.py`; `paper/claims.md`.
+
+| Capability actually present | Strongest defensible wording | What would overstate it |
+|---|---|---|
+| Explicit OpenFHE context proxy | “Traces covered calls made through `session.context` and records whole-call wall/process-CPU time, source site, event metadata, success/failure.” | “Profiles arbitrary native OpenFHE code” or “observes all FHE operations.” |
+| Object/version registry | “Assigns IDs such as `ct_0001:v0` and new versions for covered in-place changes; tracks first-seen ciphertext roots and executed lineage.” | “Reconstructs all data dependencies in an unmodified program.” |
+| CKKS metadata and graph | “Reconstructs available level, scale, rotation/key-use metadata, version relationships and graph-based depth reports from covered calls.” | “Proves numerical correctness, available security level, or program-wide multiplicative depth in unexecuted paths.” |
+| Offline rule analyses | “Reports conservative candidate diagnoses under recorded preconditions, including compatible repeated rotations, observed-run unused rotation keys, depth headroom, public-value provenance and explicit tolerance checks.” | “Automatically fixes inefficiency or guarantees a speedup.” |
+| Declared parameters / annotations | “Can use developer-supplied context settings, packing annotations, source provenance, and precision tolerances.” | “Discovers the true security level, semantic origin of every operand, or the user's intended numerical tolerance.” |
+| Runner and artifacts | “Produces a versioned trace/graph/findings bundle with coverage classification, fingerprints, and exporters.” | “Yields a complete, safe-to-publish trace of every application.” |
+
+**Important instrumentation detail:** “already-written Python program” is not “zero-change, transparent tracing.” The program must attach or call `trace()` and route relevant calls through the wrapper. The included `cipherscope run` orchestrates a target that uses that integration; it does not magically intercept all original OpenFHE calls. `src/cipherscope/context.py` lists the supported explicit methods, including encryption, decryption, arithmetic, in-place forms, rotation key generation, rotation and bootstrapping. `__getattr__` either rejects an unsupported method in strict mode or forwards it without semantic recording in permissive mode.
+
+**Semantic boundary:** a first-seen ciphertext can be a preexisting root; the tool does not infer how it was constructed before tracing. `GetCryptoContext()`, calls through the raw context, free functions, operator overloads, native internal work, and unexecuted branches can bypass or fall outside observation. The AST preflight scan detects some patterns but does **not** prove no bypass. A `COMPLETE` label is an operational classification, not a formal completeness proof. See `src/cipherscope/coverage.py` and `docs/architecture.md`.
+
+## 3. Current observed evidence, with denominators
+
+| Question | Snapshot evidence | Safe interpretation | Status / forbidden extrapolation |
+|---|---|---|---|
+| **RQ1: binding fidelity** | `docs/evidence.md` and `artifact/feasibility/primary-source-py311/feasibility.json`: authoritative Ubuntu 24.04 x86_64 / Python 3.11.15 / source-built OpenFHE wrapper 1.5.1.0 + native 1.5.1, **38 pass / 0 skip / 38 checks**; native Rocky Linux LS6 38/38; macOS 37/38 with one Linux-only skip; provisional Python 3.12 wheel 33/33 on older gate. | “The pinned primary build passed all 38 checks in the archived real-binding gate, including source/state/numerical checks.” | A test suite pass does not prove all CKKS workloads, all OpenFHE releases, soundness, or security. Wheel/developer/LS6 lanes are **supporting**, not primary. |
+| **Cross-platform parity** | `evaluation/parity/parity_report.md` and `docs/ARTIFACT.md`: platform-independent seeded/ablation and 16-example diagnoses matched in the archived parity comparison (58/58 expectations; 972/972 ablation rows; 16/16 example diagnoses). | “These specific reported outputs were identical in the compared lanes.” | Do not conflate parity with external coverage, runtime equivalence, or cryptographic security. |
+| **RQ2: coverage** | `docs/ARTIFACT.md`: 16/16 bundled examples were classified `COMPLETE` on both LS6 lanes. `evaluation/raw/coverage_report.csv` and `evaluation/tables/coverage.csv` are **absent** from this archive. | “All 16 included example programs met the tool's completeness criteria on the tested lanes.” | **No measured real/external-corpus coverage fraction** from the archive. Do not write “100% coverage on real programs.” |
+| **RQ3: seeded tests** | `evaluation/seeded/ground_truth.json`, `evaluation/raw/seeded/case_results.json`, `evaluation/tables/recall.csv`: **27 controlled programs**, all `COMPLETE`; **13/13 positive rule/case expectations** matched; **0 false positives among 18 negative expectations**, including **2 not-applicable** outcomes; **12 rule IDs**, but bootstrap lacks a real-positive case. The 27 programs contain 11 positive *programs*, four clean kernels and 12 hard-negative programs; a program may exercise multiple rules. | “On the controlled seeded suite, all 13 expected-positive rule/case judgments matched, and none of the 18 negative judgments fired unexpectedly.” | NOT “13 real-world vulnerabilities,” “12 rules with perfect recall,” “100% real-world recall,” or “0% false-positive rate in production.” Two negative expectations are abstentions; rule coverage is uneven. |
+| **RQ3: precision on independent programs** | Human verdict workflow in `evaluation/adjudication/GUIDE.md`; `evaluation/adjudication/findings.csv` and `evaluation/tables/precision.csv` are **absent**. | “The project defines a rubric and export path for future precision evaluation.” | Do not report precision or actionable true-positive count on real workloads. |
+| **Semantic ablation** | `evaluation/raw/semantic_ablation.csv` and `evaluation/tables/semantic_ablation.csv`, with `TIMING_ONLY`, `STATE`, `FULL` re-analysis of the same collected traces. 972 raw rows. | “A semantic ablation shows which diagnoses require recorded state and lineage within the controlled suite.” | Not a head-to-head run of `cProfile`, Scalene, or Coz. `evaluation/tables/generic_profiler_comparison.csv` is a conceptual timing-only projection, not measured competitor performance. |
+| **RQ4: effect of a code change** | `paper/claims.md` labels impact contribution “pending D-03/D-04”; `evaluation/tables/before_after.csv` absent. | “Findings suggest transformations worth testing; impact evaluation remains pending.” | No measured real-program speedup, resource reduction, or validated rotation-hoisting effect can be claimed from this archive. |
+| **RQ5: synthetic scaling** | `evaluation/raw/scaling.csv`, `evaluation/tables/scaling.csv`: event-count sweep at sizes 10²–10⁵, baseline/buffered/streaming arms as available, machine-specific rows. `docs/ARTIFACT.md` reports about 2.2 kB of trace per event and peak RSS around 3.2 GB at 10⁵ events. | “The archived synthetic sweep characterizes trace size, memory, and run cost per machine and recording mode.” | **Not** a production-overhead estimate. The archived CSV has a single row (`repetition=0`) per arm/size/machine, so no empirical run-to-run confidence intervals may be inferred from these rows alone. Do not pool arm64, Ubuntu x86_64, and Rocky x86_64 times. |
+| **RQ5: real-workload overhead** | `evaluation/raw/workload_runs.csv` and `evaluation/tables/overhead.csv` are **absent**. | “The planned matched-workload overhead analysis is not in this snapshot.” | No median/IQR or CI for a real-workload population can be reported. |
+| **RQ6: security / correctness scenarios** | `src/cipherscope/analyzers/configuration.py`, `precision.py` and seeded cases cover the `HEStd_NotSet` *declaration* and developer-provided numerical tolerances. `evaluation/raw/bug_hunt.csv` and `evaluation/tables/security_cases.csv` absent. | “The tool can flag specified declared testing-only configurations and tolerance violations in traced cases.” | No discovery of genuine field security vulnerabilities, proof of secure parameters, bit-security estimate, or external bug-hunt yield is supported. |
+
+**Adjudication math:** per `evaluation/adjudication/GUIDE.md`, real-workload precision is `(TP-ACTIONABLE + TP-NONACTIONABLE) / (TP-ACTIONABLE + TP-NONACTIONABLE + FALSE-POSITIVE + UNCERTAIN)`; `NOT-IN-SCOPE` is excluded. The rubric requires evidence and only eligible `COMPLETE` real-binding runs. Recall on uncontrolled real programs is *undefined* without an independent ground truth.
+
+## 4. Known stale statements and inconsistent snapshots — resolve before submission
+
+1. **11/11 vs 13/13.** `paper/rq_matrix.csv` still says “seeded done (11/11 recall; 0 FP on 14 negatives)”; current generated `evaluation/tables/recall.csv` says **13/13, 0/18**. The latter agrees with `evaluation/raw/seeded/case_results.json` and `docs/ARTIFACT.md` **in this archive**, but refresh all three in a later checkout. These are rule/case *expectations*, not raw number of programs.
+2. **“Ten rules” vs twelve rule IDs.** `paper/claims.md`'s frozen contribution list says **ten rules**, while `evaluation/seeded/README.md` and `evaluation/tables/recall.csv` enumerate **twelve** (including the no-real-positive bootstrap rule). Clarify whether the paper intends to count only ten diagnostic families or all twelve rule IDs; do not invent the mapping. `paper/claims.md` is not a current inventory.
+3. **Precision-drop minimum threshold changed.** `paper/claims.md` says this rule “has no minimum threshold and can fire on decryption noise”; that is stale relative to `src/cipherscope/analyzers/precision.py`, which defines `MIN_BITS_LOST = 1.0`, and `evaluation/seeded/README.md`, which explains the 1-bit guard. Still distinguish noisy measurement and developer-declared tolerance from guaranteed numerical accuracy.
+4. **Primary gate artifact status stale.** `paper/rq_matrix.csv` says the primary artifact is “not yet archived in repo,” but `artifact/feasibility/primary-source-py311/feasibility.json`, `build-manifest.json`, and `docs/evidence.md` are present and report a passed **38/38** gate. Cite the artifact, not the old plan-status cell.
+5. **The meaning of `COMPLETE` is bounded.** `README.md` labels 16 bundled examples complete, but no external-corpus coverage CSV is shipped. Moreover the `coverage.py` scan is heuristic, so operational completeness is not a global theorem.
+6. **Bootstrap is an explicit abstention, not a validated detection.** `evaluation/seeded/README.md` reports no real-binding positive for `bootstrap.restored_levels_underused.v1`: `GetLevel()` did not expose restored level changes following `EvalBootstrap` in OpenFHE Python 1.5.1.0. The fake-backend positive is useful for unit logic, not real-binding recall.
+7. **Rotation precompute hard negative is limited.** `EvalFastRotationPrecompute` is not in the real-binding compatibility registry; the “precompute already present” negative was handled in a fake model test rather than a strict real-binding negative. See `evaluation/seeded/README.md`; do not imply full real-OpenFHE negative-case coverage.
+8. **Security level is declared, not read.** The security-level analyzer only assesses `HEStd_NotSet` when parameters were supplied to `trace(..., parameters=params)`; it does not inspect an inaccessible live security setting or calculate bits of security. See `src/cipherscope/analyzers/configuration.py`.
+9. **Synthetic scaling is not a stable performance result.** Some x86 ratios are below the untraced baseline, others above; the arm64 rows differ. A single run per condition does not support claims that instrumentation speeds up execution or that overhead is consistently negligible.
+10. **The “unmodified program” shorthand overclaims.** `paper/prior_art_matrix.csv` has `unmodified_openfhe_python_program=yes`, but the quick start requires wrapping the context and using `session.context`. A clear description is “an existing Python OpenFHE workload adapted to route calls through CipherScope's proxy”; it requires no new compiler, but does require a tracing integration.
+
+## 5. Security, correctness, and data-handling limitations that belong in prose
+
+- **Cryptographic assurance:** a configured `HEStd_NotSet` is an observed/developer-declared setting; CipherScope does not check the effective bit-security of a parameter set. The trace does not certify CKKS security. (`paper/claims.md`, configuration rule.)
+- **Precision:** CKKS produces approximate results. The one-bit precision-drop threshold filters small noise effects in a particular rule; a separate tolerance rule checks declared numerical contracts. Neither supplies a mathematically proven error bound across arbitrary unseen inputs. (`src/cipherscope/analyzers/precision.py`, `evaluation/seeded/README.md`.)
+- **Trace privacy:** event records include representations of arguments/results, exception messages, and source paths; shadow checks can include plaintext comparison values. The repo warns **not** to publish raw traces. The fact that ciphertext coefficients and secret keys are not intentionally recorded is **not** a leakage guarantee. (`paper/claims.md`.)
+- **Observation only:** key-unused means unused *during the observed execution*, not unneeded for every input, and a depth-headroom report is about observed execution, not necessarily allowable global parameter reduction.
+- **Resource scaling:** a buffered/streaming recorder does not mean wholly streaming finalization. `to_trace()` and offline analysis materialize the full trace; the archived 10⁵-event run used gigabytes of peak memory. (`docs/ARTIFACT.md`.)
+- **Generalization:** seeded inputs and the bundled examples are under project control. The user-supplied archive does not contain the completed external workload adjudication, before/after outcomes, or overhead corpus that would justify claims about developer impact.
+
+## 6. Claim-approval matrix for a draft
+
+| Claim in draft | Decision on *this archive* | Required attachment to sentence or table |
+|---|---|---|
+| “CipherScope records source-attributed events and ciphertext versions for covered OpenFHE Python calls.” | **Allowed, scoped.** | `context.py`, `registry.py`, `graph.py`, `docs/architecture.md`. |
+| “The primary pinned environment passed 38/38 integration checks.” | **Allowed.** | Primary `feasibility.json`, `docs/evidence.md`; identify platform/build. |
+| “All 27 controlled programs passed and all 13 expected positives matched.” | **Allowed, with exact counting unit.** | `case_results.json`, `recall.csv`; mention 18 negative expectations and bootstrap gap if discussing broad coverage. |
+| “CipherScope diagnoses problems that cProfile cannot.” | **Needs qualification.** | Explain tested `TIMING_ONLY/STATE/FULL` internal ablation; no instrumented cProfile head-to-head in archive. |
+| “Works on all real OpenFHE applications.” | **Unsupported.** | Need external workload sampling, coverage classes and genuine bypass accounting. |
+| “Detected real FHE bugs / attained X% precision.” | **Unsupported.** | Need COMPLETE real-workload bundles and signed/adjudicated `findings.csv`. |
+| “Improved performance by X% with rotation hoisting.” | **Unsupported.** | Need completed D-03/D-04 code diffs, independent before/after repetitions and numerical agreement. |
+| “Has low/negligible overhead.” | **Unsupported as a general claim.** | Need per-workload matched runs, distributional uncertainty, and clear boundaries on finalize/analyze costs. |
+| “Finds unsafe FHE parameter sets.” | **Unsupported.** | It can flag a *declared* testing-only security configuration, not prove security. |
+| “Bootstrap-underuse rule validated on real OpenFHE.” | **False for this snapshot.** | Real positive pending alternative state getter. |
+
+## 7. Procedure when Fable drafts from a newer checkout
+
+1. Record the checkout's **commit, dirty state, file timestamps, Python version, OpenFHE wrapper/native commits, lane**, and exact command producing the results; distinguish these from the archived baseline above.
+2. Read `paper/claims.md`, `paper/rq_matrix.csv`, `docs/ARTIFACT.md`, `docs/evidence.md`, `evaluation/seeded/README.md`; inspect the implementations of any rule to be discussed.
+3. Inspect `evaluation/tables/MANIFEST.json`. It currently lists `skipped_inputs` for coverage, adjudication, and workload-run overhead; check for new raw files before writing those results. Verify raw checksums and regeneration (`make verify-checksums`; `python evaluation/generate_paper_tables.py` per repository instructions). Do not overwrite archived results casually.
+4. Validate each count by its *unit*: cases, rule/case expectations, findings, runs, source lines, or workloads. Include not-applicable and unsupported cases. Do not infer confidence intervals from a single repetition.
+5. Reconcile **all ten snapshot hazards in §4**. If results changed, give the new source path and timestamp; don't copy older numbers into a refreshed draft.
+6. Produce a short claim ledger: `claim | RQ | implemented? | evidence path | environment | population | denominator | caveat | status`. Mark `MEASURED`, `SUPPORTED ONLY IN CONTROLLED CASES`, `PENDING`, or `INVALID`.
+7. Draft the abstract last. Exclude a benefit from the abstract until it is actually demonstrated. Never fill missing plots, validation counts, or citations with plausible-looking values.
+
+**Default paper thesis supported by this audit:** “A runtime record of covered OpenFHE calls can connect source sites to ciphertext versions and exposed CKKS state, enabling diagnoses that a timing-only view cannot express.” **Not yet supported:** “Those diagnoses generally improve real-world FHE programs.”
