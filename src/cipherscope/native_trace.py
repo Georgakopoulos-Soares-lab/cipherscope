@@ -380,7 +380,14 @@ def _context_block(contexts: Sequence[Mapping[str, Any]], declared: Mapping[str,
         scheme = normalize_scheme(declared.get("scheme"))
         scheme_evidence = "declared_parameters"
     elif isinstance(ring, int) and first.get("batch_size") == ring:
-        scheme, scheme_evidence = None, "batch_size_equals_ring_dimension_not_ckks"
+        # Not CKKS: it packs at most ring_dimension / 2. The normalizer cannot
+        # probe a live context the way the Python frontend does, but the
+        # adapter spools the same deciding signal -- only BFV runs without
+        # rescaling.
+        if str(first.get("scaling_technique") or "").upper() == "NORESCALE":
+            scheme, scheme_evidence = "BFV", "no_ckks_batch_and_norescale"
+        else:
+            scheme, scheme_evidence = "BGV", "no_ckks_batch_and_rescaling"
     else:
         scheme, scheme_evidence = "CKKS", "configured_ckks_contract"
     block: dict[str, Any] = {

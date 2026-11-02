@@ -105,9 +105,10 @@ class APISurfaceTests(unittest.TestCase):
         self.assertEqual(snapshot.scaling_technique, expected_scaling)
         self.assertEqual(snapshot.key_switch_technique, expected_key_switch)
         self.assertEqual(context_snapshot["scheme"], "CKKS")
-        self.assertEqual(
-            context_snapshot["scheme_evidence"], "configured_ckks_contract"
-        )
+        # Direct evidence: GetModulusCKKS() answers only for a CKKS context.
+        # The older "configured_ckks_contract" string was the fallback taken
+        # when nothing could be probed, which this binding no longer needs.
+        self.assertEqual(context_snapshot["scheme_evidence"], "ckks_modulus_getter")
         support.record(
             "API-03",
             ciphertext_snapshot=snapshot.to_dict(),

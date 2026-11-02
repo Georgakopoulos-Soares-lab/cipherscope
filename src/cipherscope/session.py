@@ -31,23 +31,42 @@ ContextT = TypeVar("ContextT")
 
 
 def _real_values(values: Any) -> list[float]:
-    """Convert decoded CKKS values to JSON numbers."""
+    """Convert decoded values to JSON numbers."""
 
     return [
         float(value.real if isinstance(value, complex) else value) for value in values
     ]
 
 
+# CKKS decodes through the real/complex getters; BFV and BGV decode integers
+# through GetPackedValue. A plaintext carries every getter regardless of its
+# scheme and raises from the wrong one, so each is tried in turn and only a
+# plaintext that answers none of them is an error.
+_PACKED_VALUE_GETTERS = (
+    "GetRealPackedValue",
+    "GetCKKSPackedValue",
+    "GetPackedValue",
+)
+
+
 def _decode_real(plaintext: Any, length: int) -> list[float]:
-    """Read real packed values from an OpenFHE plaintext."""
+    """Read packed values from an OpenFHE plaintext, whatever its scheme encodes."""
 
     set_length = getattr(plaintext, "SetLength", None)
     if callable(set_length):
         set_length(length)
-    for getter_name in ("GetRealPackedValue", "GetCKKSPackedValue"):
+    attempted = False
+    for getter_name in _PACKED_VALUE_GETTERS:
         getter = getattr(plaintext, getter_name, None)
-        if callable(getter):
+        if not callable(getter):
+            continue
+        attempted = True
+        try:
             return _real_values(list(getter())[:length])
+        except Exception:  # noqa: BLE001 - wrong encoding for this scheme; try the next
+            continue
+    if attempted:
+        raise TypeError("no packed-value getter matched this plaintext's encoding")
     raise TypeError("the plaintext exposes no supported packed-value getter")
 
 

@@ -5,7 +5,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from ._shared import event_order, finalize, resolve_graph
+from ._shared import (
+    EXACT_SCHEMES,
+    event_order,
+    finalize,
+    resolve_graph,
+    trace_scheme,
+)
 
 RULE_ID = "bootstrap.restored_levels_underused.v1"
 
@@ -50,6 +56,21 @@ def analyze_bootstrap(
         "schema_version": trace["schema_version"],
         "run_id": trace["run"]["run_id"],
     }
+    scheme = trace_scheme(trace)
+    if scheme in EXACT_SCHEMES:
+        # Not a judgement call: OpenFHE 1.5.1.0 has no bootstrapping for the
+        # integer schemes at all. EvalBootstrapSetup raises "Not supported"
+        # from base-fhe.h for both BFV and BGV, so no run on this build can
+        # produce the EvalBootstrap event this rule reads.
+        return {
+            **base,
+            "analysis_status": "not_applicable",
+            "not_applicable_reasons": [
+                f"OpenFHE 1.5.1.0 does not support bootstrapping for {scheme}; "
+                "EvalBootstrapSetup reports it as unsupported."
+            ],
+            "findings": [],
+        }
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
         key=event_order,

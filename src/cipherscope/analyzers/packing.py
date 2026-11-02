@@ -48,7 +48,7 @@ def analyze_packing(trace: Mapping[str, Any]) -> dict[str, Any]:
             **base,
             "analysis_status": "not_applicable",
             "not_applicable_reasons": [
-                "The trace has no known CKKS slot capacity to compare against."
+                "The trace has no known slot capacity to compare against."
             ],
             "findings": [],
         }
@@ -103,7 +103,7 @@ def analyze_packing(trace: Mapping[str, Any]) -> dict[str, Any]:
                     "evidence": record,
                     "applicability": [
                         "an explicit validated meaningful-slot annotation",
-                        "meaningful slots within the known CKKS slot capacity",
+                        "meaningful slots within the known slot capacity",
                         "declared packing whose shape validator accepts the annotation",
                     ],
                     "estimated_impact": {

@@ -124,6 +124,62 @@ class RotationTests(unittest.TestCase):
         self.assertEqual(result["inventory"]["unused_generated_indices"], [-2])
         support.record("ROT-03", inventory=result["inventory"])
 
+    def test_rot_04_fast_rotation_matches_regular_under_bv(self) -> None:
+        """ROT-04: a shared precompute reproduces regular rotations under BV key switching."""
+
+        # The hoisting rule only evaluates a ciphertext whose key-switch
+        # technique has this evidence. CKKS and BGV default to HYBRID
+        # (ROT-02); BFV defaults to BV, so without this check the rule would
+        # have no basis to assess any default BFV program.
+        fhe = support.require_openfhe()
+        parameters = fhe.CCParamsBFVRNS()
+        parameters.SetPlaintextModulus(65537)
+        parameters.SetMultiplicativeDepth(2)
+        parameters.SetBatchSize(8)
+        cc = fhe.GenCryptoContext(parameters)
+        for feature in (
+            fhe.PKESchemeFeature.PKE,
+            fhe.PKESchemeFeature.KEYSWITCH,
+            fhe.PKESchemeFeature.LEVELEDSHE,
+            fhe.PKESchemeFeature.ADVANCEDSHE,
+        ):
+            cc.Enable(feature)
+        self.assertEqual(str(cc.GetKeySwitchTechnique()).rsplit(".", 1)[-1], "BV")
+        keys = cc.KeyGen()
+        cc.EvalMultKeyGen(keys.secretKey)
+        cc.EvalRotateKeyGen(keys.secretKey, [1, 2, 3])
+
+        values = [1, 2, 3, 4, 5, 6, 7, 8]
+        source = cc.Encrypt(keys.publicKey, cc.MakePackedPlaintext(values))
+        precompute = cc.EvalFastRotationPrecompute(source)
+        cyclotomic_order = cc.GetCyclotomicOrder()
+        observed: dict[str, list[int]] = {}
+        for index in (1, 2, 3):
+            regular = cc.EvalRotate(source, index)
+            fast = cc.EvalFastRotation(source, index, cyclotomic_order, precompute)
+            decoded = []
+            for ciphertext in (regular, fast):
+                plaintext = cc.Decrypt(ciphertext, keys.secretKey)
+                plaintext.SetLength(len(values))
+                decoded.append(list(plaintext.GetPackedValue())[: len(values)])
+            # BFV is exact, so the two must agree bit for bit, not within a
+            # tolerance, and both must equal the shift-with-zero-fill that
+            # EvalRotate performs on a packed integer vector.
+            self.assertEqual(decoded[0], decoded[1])
+            expected = [
+                values[i + index] if i + index < len(values) else 0
+                for i in range(len(values))
+            ]
+            self.assertEqual(decoded[0], expected)
+            observed[str(index)] = decoded[0]
+        support.record(
+            "ROT-04",
+            key_switch_technique="BV",
+            scheme="BFV",
+            cyclotomic_order=cyclotomic_order,
+            rotations=observed,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

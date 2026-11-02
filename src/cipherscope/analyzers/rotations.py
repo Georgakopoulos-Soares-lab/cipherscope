@@ -8,6 +8,12 @@ from typing import Any
 from ._shared import event_order, finalize, require_valid_trace
 
 RULE_ID = "rotation.hoist_same_input.v1"
+# Hoisting shares one digit decomposition across rotations of the same
+# ciphertext version. The gate proves the shared precompute reproduces a
+# regular rotation exactly for each technique below (ROT-02 for HYBRID, which
+# CKKS and BGV default to, and ROT-04 for BV, which is the BFV default).
+# A technique without that evidence leaves the group unevaluated.
+_VALIDATED_KEY_SWITCH_TECHNIQUES = ("BV", "HYBRID")
 _REQUIRED_STATE_FIELDS = (
     "context_id",
     "key_tag",
@@ -159,9 +165,10 @@ def analyze_rotations(trace: Mapping[str, Any]) -> dict[str, Any]:
                 f"Ciphertext {ciphertext_id} lacks required metadata: {', '.join(missing)}."
             )
             continue
-        if state.get("key_switch_technique") != "HYBRID":
+        if state.get("key_switch_technique") not in _VALIDATED_KEY_SWITCH_TECHNIQUES:
             unavailable_reasons.add(
-                f"Ciphertext {ciphertext_id} does not use the validated HYBRID key-switch technique."
+                f"Ciphertext {ciphertext_id} does not use a validated key-switch "
+                f"technique ({', '.join(_VALIDATED_KEY_SWITCH_TECHNIQUES)})."
             )
             continue
         if not all(_event_is_compatible(event, state) for event in rotations):
@@ -235,7 +242,7 @@ def analyze_rotations(trace: Mapping[str, Any]) -> dict[str, Any]:
                     "same recorded ciphertext version",
                     "at least two distinct requested rotation indices",
                     "matching context and key tag",
-                    "matching scaling state and HYBRID key-switch technique",
+                    "matching scaling state and a validated key-switch technique",
                     "no compatible fast-rotation precompute precedes the group",
                 ],
                 "estimated_impact": {

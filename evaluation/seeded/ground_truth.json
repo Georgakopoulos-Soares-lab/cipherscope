@@ -417,6 +417,378 @@
       "hard_negative_reason": "",
       "numerical_validity_expected": true,
       "notes": "encrypted at the last level, bootstrapped (+10 levels), decrypted without using them; same shape as OpenFHE's simple-ckks-bootstrapping example"
+    },
+    {
+      "case_id": "bfv.kernel.clean",
+      "path": "cases/bfv_kernel_clean.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "rotation.hoist_same_input.v1": "clean",
+        "keys.unused_in_observed_run.v1": "clean",
+        "parameters.depth_headroom_observed.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.positive.rotation_same_version",
+      "path": "cases/bfv_rotation_same_version.py",
+      "clean_kernel": "cases/bfv_kernel_clean.py",
+      "kind": "positive",
+      "mutation_id": "three-indices-one-version-plus-unused-key",
+      "expected": {
+        "rotation.hoist_same_input.v1": "positive",
+        "keys.unused_in_observed_run.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.negative.rotation_different_versions",
+      "path": "cases/bfv_rotation_different_versions.py",
+      "clean_kernel": "cases/bfv_kernel_clean.py",
+      "kind": "hard_negative",
+      "mutation_id": "three-indices-three-versions",
+      "expected": {
+        "rotation.hoist_same_input.v1": "clean",
+        "keys.unused_in_observed_run.v1": "clean"
+      },
+      "hard_negative_reason": "each BFV rotation reads a different ciphertext version, so no shared precompute exists; every generated key is used",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.positive.depth_headroom",
+      "path": "cases/bfv_depth_headroom.py",
+      "clean_kernel": "cases/bfv_depth_full_use.py",
+      "kind": "positive",
+      "mutation_id": "depth-4-context-one-multiplication",
+      "expected": {
+        "parameters.depth_headroom_observed.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.negative.depth_full_use",
+      "path": "cases/bfv_depth_full_use.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "parameters.depth_headroom_observed.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.negative.precision_exact",
+      "path": "cases/bfv_precision_exact.py",
+      "kind": "hard_negative",
+      "mutation_id": "tolerance-declared-on-exact-scheme",
+      "expected": {
+        "precision.checkpoint_drop.v1": "not_applicable",
+        "precision.tolerance_violated.v1": "not_applicable"
+      },
+      "hard_negative_reason": "BFV is exact, so a checkpoint carries no approximation error; both precision rules must decline rather than report a measurement",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.kernel.clean",
+      "path": "cases/bgv_kernel_clean.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "rotation.hoist_same_input.v1": "clean",
+        "keys.unused_in_observed_run.v1": "clean",
+        "parameters.depth_headroom_observed.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.positive.rotation_same_version",
+      "path": "cases/bgv_rotation_same_version.py",
+      "clean_kernel": "cases/bgv_kernel_clean.py",
+      "kind": "positive",
+      "mutation_id": "three-indices-one-version-plus-unused-key",
+      "expected": {
+        "rotation.hoist_same_input.v1": "positive",
+        "keys.unused_in_observed_run.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.negative.rotation_different_versions",
+      "path": "cases/bgv_rotation_different_versions.py",
+      "clean_kernel": "cases/bgv_kernel_clean.py",
+      "kind": "hard_negative",
+      "mutation_id": "three-indices-three-versions",
+      "expected": {
+        "rotation.hoist_same_input.v1": "clean",
+        "keys.unused_in_observed_run.v1": "clean"
+      },
+      "hard_negative_reason": "each BGV rotation reads a different ciphertext version, so no shared precompute exists; every generated key is used",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.positive.depth_headroom",
+      "path": "cases/bgv_depth_headroom.py",
+      "clean_kernel": "cases/bgv_depth_full_use.py",
+      "kind": "positive",
+      "mutation_id": "depth-4-context-one-multiplication",
+      "expected": {
+        "parameters.depth_headroom_observed.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.negative.depth_full_use",
+      "path": "cases/bgv_depth_full_use.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "parameters.depth_headroom_observed.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.negative.precision_exact",
+      "path": "cases/bgv_precision_exact.py",
+      "kind": "hard_negative",
+      "mutation_id": "tolerance-declared-on-exact-scheme",
+      "expected": {
+        "precision.checkpoint_drop.v1": "not_applicable",
+        "precision.tolerance_violated.v1": "not_applicable"
+      },
+      "hard_negative_reason": "BGV is exact, so a checkpoint carries no approximation error; both precision rules must decline rather than report a measurement",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.positive.mixed_add_depth",
+      "path": "cases/bfv_mixed_add_depth.py",
+      "clean_kernel": "cases/bfv_depth_full_use.py",
+      "kind": "positive",
+      "mutation_id": "add-against-shallower-operand-lowers-noise-degree",
+      "expected": {
+        "parameters.depth_headroom_observed.v1": "positive"
+      },
+      "expected_evidence": {
+        "parameters.depth_headroom_observed.v1": {
+          "observed_max_levels_consumed_in_epoch": 1,
+          "observed_depth_headroom": 3,
+          "depth_evidence": "recorded_multiplications"
+        }
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.negative.encoding_distinct_constants",
+      "path": "cases/bfv_encoding_distinct_constants.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "encoding.repeated_public_constant.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.positive.encoding_repeated_constant",
+      "path": "cases/bfv_encoding_repeated_constant.py",
+      "clean_kernel": "cases/bfv_encoding_distinct_constants.py",
+      "kind": "positive",
+      "mutation_id": "same-constant-id-encoded-twice",
+      "expected": {
+        "encoding.repeated_public_constant.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.negative.provenance_public_pt_only",
+      "path": "cases/bfv_provenance_public_pt_only.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "provenance.public_value_ciphertext_mult.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.positive.provenance_public_ct_mult",
+      "path": "cases/bfv_provenance_public_ct_mult.py",
+      "clean_kernel": "cases/bfv_provenance_public_pt_only.py",
+      "kind": "positive",
+      "mutation_id": "public-constant-encrypted-then-ct-ct-mult",
+      "expected": {
+        "provenance.public_value_ciphertext_mult.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.negative.serial_short_chain",
+      "path": "cases/bfv_serial_short_chain.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "multiplication.serial_reduction_review.v1": "clean"
+      },
+      "hard_negative_reason": "a two-step fold is already as shallow as a balanced tree",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.positive.serial_long_chain",
+      "path": "cases/bfv_serial_long_chain.py",
+      "clean_kernel": "cases/bfv_serial_short_chain.py",
+      "kind": "positive",
+      "mutation_id": "five-factors-serial-fold",
+      "expected": {
+        "multiplication.serial_reduction_review.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.negative.packing_full_utilization",
+      "path": "cases/bfv_packing_full_utilization.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "packing.low_utilization_annotated.v1": "clean"
+      },
+      "hard_negative_reason": "the annotation claims all N slots, the full BFV capacity, so utilization is 1.0",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.positive.packing_low_utilization",
+      "path": "cases/bfv_packing_low_utilization.py",
+      "clean_kernel": "cases/bfv_packing_full_utilization.py",
+      "kind": "positive",
+      "mutation_id": "eight-meaningful-slots-of-N",
+      "expected": {
+        "packing.low_utilization_annotated.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.negative.security_default",
+      "path": "cases/bfv_security_default.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "configuration.testing_only_security.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bfv.positive.security_not_set",
+      "path": "cases/bfv_security_not_set.py",
+      "clean_kernel": "cases/bfv_security_default.py",
+      "kind": "positive",
+      "mutation_id": "hestd-notset-and-64-slot-ring",
+      "expected": {
+        "configuration.testing_only_security.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.negative.encoding_distinct_constants",
+      "path": "cases/bgv_encoding_distinct_constants.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "encoding.repeated_public_constant.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.positive.encoding_repeated_constant",
+      "path": "cases/bgv_encoding_repeated_constant.py",
+      "clean_kernel": "cases/bgv_encoding_distinct_constants.py",
+      "kind": "positive",
+      "mutation_id": "same-constant-id-encoded-twice",
+      "expected": {
+        "encoding.repeated_public_constant.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.negative.provenance_public_pt_only",
+      "path": "cases/bgv_provenance_public_pt_only.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "provenance.public_value_ciphertext_mult.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.positive.provenance_public_ct_mult",
+      "path": "cases/bgv_provenance_public_ct_mult.py",
+      "clean_kernel": "cases/bgv_provenance_public_pt_only.py",
+      "kind": "positive",
+      "mutation_id": "public-constant-encrypted-then-ct-ct-mult",
+      "expected": {
+        "provenance.public_value_ciphertext_mult.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.negative.serial_short_chain",
+      "path": "cases/bgv_serial_short_chain.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "multiplication.serial_reduction_review.v1": "clean"
+      },
+      "hard_negative_reason": "a two-step fold is already as shallow as a balanced tree",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.positive.serial_long_chain",
+      "path": "cases/bgv_serial_long_chain.py",
+      "clean_kernel": "cases/bgv_serial_short_chain.py",
+      "kind": "positive",
+      "mutation_id": "five-factors-serial-fold",
+      "expected": {
+        "multiplication.serial_reduction_review.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.negative.packing_full_utilization",
+      "path": "cases/bgv_packing_full_utilization.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "packing.low_utilization_annotated.v1": "clean"
+      },
+      "hard_negative_reason": "the annotation claims all N slots, the full BGV capacity, so utilization is 1.0",
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.positive.packing_low_utilization",
+      "path": "cases/bgv_packing_low_utilization.py",
+      "clean_kernel": "cases/bgv_packing_full_utilization.py",
+      "kind": "positive",
+      "mutation_id": "eight-meaningful-slots-of-N",
+      "expected": {
+        "packing.low_utilization_annotated.v1": "positive"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.negative.security_default",
+      "path": "cases/bgv_security_default.py",
+      "kind": "clean_kernel",
+      "mutation_id": "",
+      "expected": {
+        "configuration.testing_only_security.v1": "clean"
+      },
+      "numerical_validity_expected": true
+    },
+    {
+      "case_id": "bgv.positive.security_not_set",
+      "path": "cases/bgv_security_not_set.py",
+      "clean_kernel": "cases/bgv_security_default.py",
+      "kind": "positive",
+      "mutation_id": "hestd-notset-and-64-slot-ring",
+      "expected": {
+        "configuration.testing_only_security.v1": "positive"
+      },
+      "numerical_validity_expected": true
     }
   ]
 }

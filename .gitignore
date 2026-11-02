@@ -30,3 +30,16 @@ feasibility-*.json
 native/build*/
 .cipherscope/
 tests/cpp/fixtures/build/
+
+# macOS metadata
+.DS_Store
+
+# LaTeX build intermediates; paper/manuscript.pdf is committed deliberately
+# so the compiled paper travels with the source.
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/figures/*.aux
+paper/figures/*.log

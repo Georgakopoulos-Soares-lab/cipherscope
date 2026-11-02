@@ -33,6 +33,18 @@ GOLDEN = json.loads((HERE / "golden_core.json").read_text(encoding="utf-8"))
 LANE = os.environ.get("CIPHERSCOPE_OPENFHE_LANE", "developer")
 BOOTSTRAP_ENABLED = os.environ.get("CIPHERSCOPE_OPENFHE_BOOTSTRAP") == "1"
 
+#: Lanes built from the pinned OpenFHE commits rather than a published wheel.
+#: Their provenance is the commit pair plus a build manifest, not pip metadata.
+SOURCE_BUILT_LANES = frozenset(
+    {"primary-source-py311", "ls6-native-py311", "emulated-docker-py311"}
+)
+#: Lanes that run inside the pinned Ubuntu 24.04 image, so the distribution is
+#: asserted rather than merely recorded. `ls6-native-py311` is deliberately
+#: absent: it is a bare Rocky host and records its distribution instead.
+UBUNTU_IMAGE_LANES = frozenset(
+    {"primary-source-py311", "provisional-wheel-py312", "emulated-docker-py311"}
+)
+
 _EVIDENCE: dict[str, dict[str, Any]] = {}
 _EVIDENCE_LOCK = threading.Lock()
 

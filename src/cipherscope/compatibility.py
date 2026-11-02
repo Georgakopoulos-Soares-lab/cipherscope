@@ -237,12 +237,21 @@ class CompatibilityRegistry:
         *,
         ciphertext_type: type[Any] | tuple[type[Any], ...] | None = None,
         ciphertext_predicate: Callable[[Any], bool] | None = None,
+        # Read-only context getters that report configuration and touch no
+        # ciphertext. Every one of these is already read by snapshot_context,
+        # so refusing a program that calls it itself was an omission rather
+        # than a judgement: `GetPlaintextModulus` is how an integer-scheme
+        # program recovers its own modulus to reduce results, and rejecting it
+        # failed three of the five upstream BFV/BGV examples outright.
         allowed_nonsemantic_calls: Iterable[str] = (
             "Enable",
             "GetBatchSize",
             "GetCyclotomicOrder",
+            "GetDigitSize",
             "GetKeySwitchTechnique",
+            "GetModulus",
             "GetMultiplicativeDepth",
+            "GetPlaintextModulus",
             "GetRingDimension",
             "GetScalingTechnique",
         ),
@@ -459,6 +468,33 @@ class CompatibilityRegistry:
                 return scheme
         return None
 
+    def _detect_live_scheme(self, context: Any) -> tuple[str | None, str | None]:
+        """Name the scheme of a live context that was never given its CCParams.
+
+        OpenFHE 1.5.1.0 exposes no scheme getter, so two observable behaviors
+        stand in for one. ``GetModulusCKKS()`` answers for a CKKS context and
+        raises for every other scheme, which separates CKKS from the integer
+        schemes. Among those, only BFV runs without rescaling, so the scaling
+        technique separates BFV from BGV. Measured on the pinned build for
+        CKKS/BFV/BGV under FIXEDMANUAL, FLEXIBLEAUTO and FLEXIBLEAUTOEXT.
+        """
+
+        probe = getattr(context, "GetModulusCKKS", None)
+        if not callable(probe):
+            return None, None
+        try:
+            probe()
+        except Exception:  # noqa: BLE001 - raising *is* the non-CKKS signal
+            pass
+        else:
+            return "CKKS", "ckks_modulus_getter"
+        technique = self._read(context, "scaling_technique", ("GetScalingTechnique",), (), [])
+        if not isinstance(technique, str):
+            return None, None
+        if technique.upper() == "NORESCALE":
+            return "BFV", "no_ckks_modulus_and_norescale"
+        return "BGV", "no_ckks_modulus_and_rescaling"
+
     def snapshot_context(self, context: Any) -> dict[str, Any]:
         """Read the supported context metadata fields."""
 
@@ -514,7 +550,11 @@ class CompatibilityRegistry:
         if plaintext_modulus == 0:
             plaintext_modulus = None
         if scheme is None:
-            # The supported wrapper has no scheme getter. A CKKS batch size is
+            scheme, detected_evidence = self._detect_live_scheme(context)
+            if scheme is not None:
+                scheme_evidence = detected_evidence or "live_context_probe"
+        if scheme is None:
+            # No scheme getter and no usable probe. A CKKS batch size is
             # at most N/2; a batch size equal to N is a BGV/BFV context. In
             # that case the scheme is left unknown until parameters are
             # declared, rather than labelled CKKS wrongly.

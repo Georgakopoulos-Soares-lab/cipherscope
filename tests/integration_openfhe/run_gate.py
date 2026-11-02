@@ -61,6 +61,8 @@ EXPECTED_CHECKS = (
     "SEED-01",
     "API-07",
     "API-08",
+    "API-09",
+    "ROT-04",
 )
 CHECK_PATTERN = re.compile(r"^([A-Z]+-[0-9]{2}):")
 
@@ -219,6 +221,12 @@ def run(*, output: Path, stream: TextIO, verbosity: int) -> tuple[int, dict[str,
         exit_code = 0
     elif support.LANE == "provisional-wheel-py312":
         status = "provisional_pass"
+        exit_code = 0
+    elif support.LANE == "emulated-docker-py311":
+        # The pinned Ubuntu image and commits, but built and run under x86_64
+        # emulation on an arm64 host. Same recipe, different substrate, so it
+        # is never authoritative and never stands in for a native lane.
+        status = "emulated_pass"
         exit_code = 0
     elif support.LANE == "ls6-native-py311":
         # Same pins and Python as the primary lane, but the host distribution

@@ -20,7 +20,7 @@ class EnvironmentTests(unittest.TestCase):
         """ENV-01: the declared Linux lane has its exact OS and architecture."""
 
         snapshot = support.environment_snapshot()
-        if support.LANE in {"primary-source-py311", "provisional-wheel-py312"}:
+        if support.LANE in support.UBUNTU_IMAGE_LANES:
             self.assertEqual(snapshot["platform"], "Linux")
             self.assertEqual(snapshot["machine"], "x86_64")
             self.assertEqual(snapshot["os_release"].get("ID"), "ubuntu")
@@ -40,6 +40,7 @@ class EnvironmentTests(unittest.TestCase):
         expected_minor = {
             "primary-source-py311": (3, 11),
             "ls6-native-py311": (3, 11),
+            "emulated-docker-py311": (3, 11),
             "provisional-wheel-py312": (3, 12),
         }.get(support.LANE)
         self.assertEqual(platform.python_implementation(), "CPython")
@@ -59,7 +60,7 @@ class EnvironmentTests(unittest.TestCase):
         wrapper_commit = os.environ.get("CIPHERSCOPE_OPENFHE_WRAPPER_COMMIT")
         if support.LANE == "provisional-wheel-py312":
             self.assertEqual(installed, support.GOLDEN["provisional_distribution"])
-        elif support.LANE in {"primary-source-py311", "ls6-native-py311"}:
+        elif support.LANE in support.SOURCE_BUILT_LANES:
             self.assertEqual(wrapper_commit, support.GOLDEN["wrapper_commit"])
         elif installed is None:
             # A source-built developer wrapper has no pip metadata; the pinned
@@ -85,7 +86,7 @@ class EnvironmentTests(unittest.TestCase):
                 "wheel_sha256": support.GOLDEN["provisional_wheel_sha256"],
                 "native_module_hashes": support.native_module_hashes(),
             }
-        elif support.LANE in {"primary-source-py311", "ls6-native-py311"}:
+        elif support.LANE in support.SOURCE_BUILT_LANES:
             expected = {
                 "wrapper_commit": support.GOLDEN["wrapper_commit"],
                 "native_commit": support.GOLDEN["native_commit"],

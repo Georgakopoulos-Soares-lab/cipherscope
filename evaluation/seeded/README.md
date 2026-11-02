@@ -55,12 +55,50 @@ Ratios are blank when their denominator is zero. Quote counts with ratios.
 - `depth.critical_path.v1` always fires when there is lineage, so its cases are
   value checks: Horner (depth 3), a linear-only kernel (depth 0), and an opaque
   `EvalInnerProduct` where the correct answer is `confidence == "unknown"`.
-- The corpus covers all twelve rules with 28 cases; every rule has at least one
-  real-binding positive and one hard negative (the bootstrap rule's positive
-  was added after the C++ frontend showed the rule firing on OpenFHE's own
-  bootstrapping example; see below).
+- The corpus covers all twelve rules with 61 cases across CKKS, BFV and BGV;
+  every rule has at least one real-binding positive and one hard negative (the
+  bootstrap rule's positive was added after the C++ frontend showed the rule
+  firing on OpenFHE's own bootstrapping example; see below).
+- The thirty-three integer-scheme cases (`bfv.*`, `bgv.*`) carry the scheme
+  parity evidence. They assert equality rather than a tolerance, because BFV
+  and BGV are exact; `check_exact` fails the case on any difference at all.
+  Two of them (`bfv.negative.precision_exact`, `bgv.negative.precision_exact`)
+  are `not_applicable` expectations rather than positives or negatives: a
+  declared tolerance on an exact scheme must make both precision rules
+  decline, and the corpus asserts that rather than assuming it.
+- `bfv.positive.mixed_add_depth` is a regression guard for the BFV depth
+  model, not a new pathology. It pins `depth_evidence` to
+  `recorded_multiplications` and the headroom to 3, so a model that went back
+  to reading the noise scale degree would fail here: that program's final
+  `EvalAdd` lowers the degree below the multiplication it depends on.
 
 ## Known limits found while building this
+
+**The bootstrap cases need about 7 GB of RAM.** CKKS bootstrapping at the depth
+`bootstrap.limitation.underused_real` uses peaks at 6.98 GB resident, measured
+on the developer lane. Below roughly an 8 GB cgroup limit the case is SIGKILLed
+(`returncode -9`) and leaves no bundle, which the runner reports as
+`unreadable bundle: ... trace.json`. That message is a memory failure, not a
+tracing failure. It was found on the emulated Docker lane, whose VM has 7.7 GB:
+the case passes when run alone and dies once the rest of the suite has taken
+its share. The same suite passes with every real-binding test executing on a
+machine with room (312 tests, 1 skip). If you see that error, raise the memory
+limit before looking for a bug in the recorder.
+
+**BFV has no level ladder, and its noise scale degree is not a substitute.**
+OpenFHE 1.5.1.0 reports `GetLevel() == 0` for every BFV ciphertext in a run,
+so the level-difference model that measures CKKS and BGV depth has nothing to
+read. `GetNoiseScaleDeg()` looks like a replacement — it is 1 on a fresh
+ciphertext and rises by one per multiplication — but it is not cumulative:
+measured on the pinned build, `EvalAdd(deg 1, deg 2)` returns degree 1, so an
+addition against a shallower operand erases the evidence of the
+multiplications upstream of it. A first implementation used the degree and was
+caught by the C++ `bfv_arithmetic` fixture, which does exactly that add; the
+seeded cases, being pure multiplication chains, had all passed.
+BFV depth is therefore counted from the recorded multiplications along the
+deepest lineage (`critical_paths.nonlinear_ciphertext`), which is exact unless
+an opaque call hides part of the path — in which case the rule declines rather
+than guesses. Every depth finding names its source in `depth_evidence`.
 
 **`bootstrap.restored_levels_underused.v1` needs a deep input.** An earlier
 version of this note claimed `GetLevel()` is unchanged by `EvalBootstrap`; that

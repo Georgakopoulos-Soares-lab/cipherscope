@@ -101,8 +101,36 @@ def _nonlinear_weight(event: Mapping[str, Any]) -> int | None:
     return None
 
 
+#: Schemes whose ciphertext state carries a monotone level ladder. A level
+#: never falls inside an epoch, so the difference between an operation's
+#: output level and its deepest input is the depth that operation consumed.
+LEVELED_SCHEMES = ("BGV", "CKKS")
+
+
+def depth_coordinate(snapshot: Mapping[str, Any], scheme: str | None) -> int | None:
+    """The per-ciphertext level coordinate, for the schemes that have one.
+
+    CKKS and BGV spend one level per multiplication, so the level field is the
+    coordinate. BFV has none: OpenFHE 1.5.1.0 reports level 0 for the whole
+    run, and the noise scale degree is not a substitute because it is not
+    cumulative -- it accumulates along a multiplication chain (1, 2, 3, ...)
+    but an EvalAdd against a shallower operand resets it downward, measured
+    on the pinned build. Depth for BFV is therefore counted from the recorded
+    operations instead; see ``critical_paths.nonlinear_ciphertext``.
+
+    An unknown scheme has no coordinate either: answering 0 would be read
+    downstream as "no depth consumed", which is how a wrong headroom claim
+    gets made.
+    """
+
+    if scheme in LEVELED_SCHEMES:
+        level = snapshot.get("level")
+        return level if isinstance(level, int) and not isinstance(level, bool) else None
+    return None
+
+
 def _snapshot_level(
-    event: Mapping[str, Any], field: str, ciphertext_id: str
+    event: Mapping[str, Any], field: str, ciphertext_id: str, scheme: str | None
 ) -> int | None:
     snapshots = event.get(field)
     if not isinstance(snapshots, list):
@@ -110,8 +138,7 @@ def _snapshot_level(
     for snapshot in snapshots:
         if not isinstance(snapshot, Mapping) or snapshot.get("id") != ciphertext_id:
             continue
-        level = snapshot.get("level")
-        return level if isinstance(level, int) and not isinstance(level, bool) else None
+        return depth_coordinate(snapshot, scheme)
     return None
 
 
@@ -138,7 +165,9 @@ def _epoch_record(
 
 
 def _compute_depth_metrics(
-    events: list[Mapping[str, Any]], states: list[Mapping[str, Any]]
+    events: list[Mapping[str, Any]],
+    states: list[Mapping[str, Any]],
+    scheme: str | None = None,
 ) -> tuple[dict[str, int | None], dict[str, int | None], dict[str, Any]]:
     ciphertext_by_id = {str(state["id"]): state for state in states}
     roots = [
@@ -284,33 +313,21 @@ def _compute_depth_metrics(
                 next_level_path: list[str] = []
             else:
                 output_level = _snapshot_level(
-                    event, "output_states", output_ciphertext_id
+                    event, "output_states", output_ciphertext_id, scheme
                 )
                 if output_level is None:
-                    state_level = ciphertext_by_id.get(output_ciphertext_id, {}).get(
-                        "level"
-                    )
-                    output_level = (
-                        state_level
-                        if isinstance(state_level, int)
-                        and not isinstance(state_level, bool)
-                        else None
+                    output_level = depth_coordinate(
+                        ciphertext_by_id.get(output_ciphertext_id, {}), scheme
                     )
                 parents: list[tuple[int, int, str]] = []
                 unresolved = output_level is None
                 for input_ciphertext_id in input_ciphertext_ids:
                     input_level = _snapshot_level(
-                        event, "input_states", input_ciphertext_id
+                        event, "input_states", input_ciphertext_id, scheme
                     )
                     if input_level is None:
-                        state_level = ciphertext_by_id.get(input_ciphertext_id, {}).get(
-                            "level"
-                        )
-                        input_level = (
-                            state_level
-                            if isinstance(state_level, int)
-                            and not isinstance(state_level, bool)
-                            else None
+                        input_level = depth_coordinate(
+                            ciphertext_by_id.get(input_ciphertext_id, {}), scheme
                         )
                     parent_use = level_use.get(input_ciphertext_id)
                     if (
@@ -429,7 +446,11 @@ def build_graph(trace: Mapping[str, Any]) -> dict[str, Any]:
         (state for state in trace["ciphertexts"] if isinstance(state, Mapping)),
         key=_state_sort_key,
     )
-    nonlinear, level_use, critical_paths = _compute_depth_metrics(events, states)
+    context = trace.get("context")
+    scheme = context.get("scheme") if isinstance(context, Mapping) else None
+    nonlinear, level_use, critical_paths = _compute_depth_metrics(
+        events, states, scheme if isinstance(scheme, str) else None
+    )
 
     ciphertext_nodes: list[dict[str, Any]] = []
     for state in states:

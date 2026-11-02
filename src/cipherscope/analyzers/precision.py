@@ -8,7 +8,13 @@ from collections.abc import Mapping
 from itertools import pairwise
 from typing import Any
 
-from ._shared import event_order, finalize, require_valid_trace
+from ._shared import (
+    EXACT_SCHEMES,
+    event_order,
+    finalize,
+    require_valid_trace,
+    trace_scheme,
+)
 
 RULE_ID = "precision.checkpoint_drop.v1"
 TOLERANCE_RULE_ID = "precision.tolerance_violated.v1"
@@ -74,6 +80,17 @@ def analyze_precision(trace: Mapping[str, Any]) -> dict[str, Any]:
             "analysis_status": "not_applicable",
             "not_applicable_reasons": [
                 "Precision analysis requires a run created with shadow_mode=True."
+            ],
+            "findings": [],
+        }
+    scheme = trace_scheme(trace)
+    if scheme in EXACT_SCHEMES:
+        return {
+            **base,
+            "analysis_status": "not_applicable",
+            "not_applicable_reasons": [
+                f"{scheme} is an exact scheme: a checkpoint carries no "
+                "approximation error that could drop."
             ],
             "findings": [],
         }
@@ -203,6 +220,21 @@ def analyze_tolerance(trace: Mapping[str, Any]) -> dict[str, Any]:
         "schema_version": trace["schema_version"],
         "run_id": trace["run"]["run_id"],
     }
+    scheme = trace_scheme(trace)
+    if scheme in EXACT_SCHEMES:
+        # An exact scheme that misses its expected value has not lost
+        # precision; it is wrong (a plaintext-modulus overflow, say). That is a
+        # different diagnosis with its own evidence requirements, so this rule
+        # declines rather than reporting a correctness fault as precision loss.
+        return {
+            **base,
+            "analysis_status": "not_applicable",
+            "not_applicable_reasons": [
+                f"{scheme} is an exact scheme: a tolerance contract measures "
+                "approximation error, which it does not have."
+            ],
+            "findings": [],
+        }
     events = sorted(
         (event for event in trace["events"] if isinstance(event, Mapping)),
         key=event_order,

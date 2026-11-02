@@ -196,6 +196,88 @@ class CoverageGapTests(unittest.TestCase):
                                     "scaling_technique": context["scaling_technique"]}
         support.record("API-08", **observed)
 
+    def test_api_09_scheme_is_identified_live_and_depth_uses_the_right_coordinate(self) -> None:
+        """API-09: schemes are identified from a live context with no declared parameters, and depth headroom uses each scheme's own coordinate."""
+
+        fhe = support.require_openfhe()
+        from cipherscope.analyzers.parameters import analyze_parameters
+
+        configured = 4
+        multiplications = 2
+        cases = (
+            ("CKKS", fhe.CCParamsCKKSRNS, "ckks_modulus_getter", "ciphertext_levels"),
+            ("BFV", fhe.CCParamsBFVRNS, "no_ckks_modulus_and_norescale", "recorded_multiplications"),
+            ("BGV", fhe.CCParamsBGVRNS, "no_ckks_modulus_and_rescaling", "ciphertext_levels"),
+        )
+        observed: dict[str, dict[str, object]] = {}
+        for scheme, params_type, expected_evidence, expected_depth_evidence in cases:
+            with self.subTest(scheme=scheme):
+                parameters = params_type()
+                parameters.SetMultiplicativeDepth(configured)
+                if scheme == "CKKS":
+                    parameters.SetScalingModSize(50)
+                else:
+                    parameters.SetPlaintextModulus(65537)
+                parameters.SetBatchSize(8)
+                native = fhe.GenCryptoContext(parameters)
+                for feature in (
+                    fhe.PKESchemeFeature.PKE,
+                    fhe.PKESchemeFeature.KEYSWITCH,
+                    fhe.PKESchemeFeature.LEVELEDSHE,
+                ):
+                    native.Enable(feature)
+                keys = native.KeyGen()
+                native.EvalMultKeyGen(keys.secretKey)
+                # Deliberately no parameters= argument: the scheme has to come
+                # from the live context alone.
+                with cipherscope.trace(native) as session:
+                    cc = session.context
+                    plaintext = (
+                        cc.MakeCKKSPackedPlaintext([1.0] * 8)
+                        if scheme == "CKKS"
+                        else cc.MakePackedPlaintext([1, 2, 3, 4, 5, 6, 7, 8])
+                    )
+                    current = cc.Encrypt(keys.publicKey, plaintext)
+                    source = current
+                    for _ in range(multiplications):
+                        current = cc.EvalMult(current, source)
+                    cc.Decrypt(current, keys.secretKey)
+                trace = session.to_trace()
+                context = trace["context"]
+                self.assertEqual(context["scheme"], scheme)
+                self.assertEqual(context["scheme_evidence"], expected_evidence)
+                # CKKS packs N/2 complex slots; the integer schemes pack N.
+                ring = context["ring_dimension"]
+                self.assertEqual(
+                    context["available_slots"],
+                    ring // 2 if scheme == "CKKS" else ring,
+                )
+                result = analyze_parameters(trace)
+                self.assertEqual(result["analysis_status"], "positive")
+                inventory = result["inventory"]
+                self.assertEqual(inventory["depth_evidence"], expected_depth_evidence)
+                # Every scheme must observe the multiplications that ran, even
+                # though BFV reports level 0 for all of them.
+                self.assertEqual(
+                    inventory["observed_max_levels_consumed_in_epoch"], multiplications
+                )
+                levels = {
+                    state["level"]
+                    for state in trace["ciphertexts"]
+                    if isinstance(state.get("level"), int)
+                }
+                if scheme == "BFV":
+                    self.assertEqual(levels, {0}, "BFV never moves its level")
+                observed[scheme] = {
+                    "scheme_evidence": context["scheme_evidence"],
+                    "available_slots": context["available_slots"],
+                    "ring_dimension": ring,
+                    "depth_evidence": inventory["depth_evidence"],
+                    "observed_depth": inventory["observed_max_levels_consumed_in_epoch"],
+                    "observed_levels": sorted(levels),
+                }
+        support.record("API-09", configured_multiplicative_depth=configured, **observed)
+
     def test_gap_04_strict_and_permissive_eval_add_mutable(self) -> None:
         """GAP-04: an uncovered call (EvalAddMutable, level-adjusting) rejects or is counted as passthrough."""
 
