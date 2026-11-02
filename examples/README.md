@@ -157,8 +157,10 @@ raw context or a free function that the proxy cannot observe.
 
 ## Synthetic example gallery (`examples/synthetic/`)
 
-`examples/synthetic/` contains twelve additional real OpenFHE programs, each
-exercising a specific CipherScope diagnostic. They come in two flavors.
+`examples/synthetic/` contains sixteen additional real OpenFHE programs, each
+exercising a specific CipherScope diagnostic. Twelve are CKKS; four are the
+integer schemes, so the gallery covers every scheme CipherScope supports. They
+come in two flavors.
 
 ### Bare programs (no CipherScope import)
 
@@ -174,6 +176,18 @@ edits through `profile_unmodified.py`.
 | `matrix_vector_diag.py` | 4x4 diagonal-method matrix-vector product | rotations, keys |
 | `repeated_rotations.py` | sum of rotations by 1, 2, 3 (key 5 unused) | rotation hoisting, unused keys |
 | `bootstrap_then_idle.py` | five squarings, bootstrap, one product | bootstrap path, parameter headroom |
+| `bfv_integer_rotations.py` | BFV: sum of rotations by 1, 2, 3 (key 5 unused) | rotation hoisting under BV key switching, unused keys |
+| `bgv_integer_polynomial.py` | BGV: `3x^3 + 2x^2 + 5` by Horner on packed integers | depth critical path, parameter headroom |
+| `bgv_windowed_sum.py` | BGV: sliding-window sums, 4 rotations of one version, key 7 unused | rotation hoisting, unused keys, parameter headroom |
+
+The integer-scheme programs are exact: they print observed and expected
+values that must match bit for bit, not within a tolerance. `bfv_integer_rotations.py`
+also shows the two BFV differences that matter when reading its report — the
+context uses BV key switching rather than HYBRID, and `EvalRotate` shifts left
+with zero fill instead of wrapping the batch. Its depth-headroom finding
+carries `confidence: inferred` rather than `measured`, because BFV's configured
+depth is a noise budget counted from recorded multiplications, not a level
+ladder read from ciphertext state.
 
 Run one directly (without CipherScope):
 
@@ -216,6 +230,7 @@ directly:
 | Program | Assertion used | Diagnostic exercised |
 |---|---|---|
 | `annotate_packing.py` | `annotate(meaningful_slots=...)` | packing low utilization |
+| `bfv_encrypted_scoring.py` | BFV: score 8 encrypted records against a public model | repeated public encoding, public-value provenance, packing utilization, serial reduction |
 | `public_constant_mult.py` | `annotate(provenance="public_constant")` | public-value ciphertext multiply |
 | `repeated_public_constant.py` | `annotate_plaintext(constant_id=...)` | repeated public-constant encoding |
 | `serial_reduction_region.py` | `region(operator="multiply", associative=True)` | serial multiplication reduction |

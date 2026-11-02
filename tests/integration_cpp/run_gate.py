@@ -494,7 +494,10 @@ def main(argv: list[str] | None = None) -> int:
 
     # ---- artifact ----
     counts = {status: sum(c["status"] == status for c in gate.checks) for status in ("pass", "fail", "skip")}
-    status = "fail" if counts["fail"] else ("incomplete" if counts["skip"] else "native_pass")
+    # A lane whose name declares emulation must not report "native_pass": the
+    # whole value of the status field is that it says what substrate ran.
+    passing_status = "emulated_pass" if "emulated" in LANE else "native_pass"
+    status = "fail" if counts["fail"] else ("incomplete" if counts["skip"] else passing_status)
     discovered = discover_cmake_build(build / "repeated_rotations") if (build / "CMakeCache.txt").is_file() else None
     openfhe = discover_openfhe(discovered.cache) if discovered else None
     os_release: dict[str, str] = {}
@@ -539,7 +542,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     _write_private_json(args.output, document)
     print(json.dumps({"status": status, "lane": LANE, "summary": document["summary"], "output": str(args.output)}, sort_keys=True))
-    return 0 if status == "native_pass" else 1
+    return 0 if status == passing_status else 1
 
 
 if __name__ == "__main__":

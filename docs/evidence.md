@@ -9,11 +9,13 @@ the artifacts.
 
 | Lane | Platform | Python | OpenFHE wrapper | Status | Pass / Skip / Total | Authoritative | Artifact |
 |---|---|---|---|---|---|---|---|
-| `developer` | macOS ARM64 (Darwin arm64) | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`) | `incomplete` | 37 / 1 / 38 | no | `artifact/feasibility/developer/feasibility.json` |
+| `developer` | macOS ARM64 (Darwin arm64) | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`) | `incomplete` | 41 / 1 / 42 | no | `artifact/feasibility/developer/feasibility.json` |
 | `provisional-wheel-py312` | Ubuntu 24.04 x86_64 | 3.12.3 | PyPI wheel `1.5.1.0.24.4` | `provisional_pass` | 33 / 0 / 33 | no | `artifact/feasibility/provisional-wheel-py312/feasibility.json` |
 | `ls6-native-py311` | Rocky Linux 8.10 x86_64, bare TACC LS6 host (AMD EPYC 7763), `gcc/15.2.0` + `cmake/3.31.5` modules | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`), GCC 15.2.0 | `native_pass` | 40 / 0 / 40 | no | `artifact/feasibility/ls6-native-py311/feasibility.json` |
 | `cpp-gcc152-openfhe151` | Rocky Linux 8.10 x86_64, bare TACC LS6 host; GCC 15.2.0 plugin frontend against the native OpenFHE 1.5.1 C++ install | 3.11.15 (driver) | C++ API of the same native v1.5.1 build (`1306d14f`), instrumentation manifest `openfhe-1.5-v3` | `native_pass` | 21 / 0 / 21 | no | `artifact/feasibility/cpp-gcc152-openfhe151/feasibility.json` |
 | `cpp-gcc133-openfhe151` | Ubuntu 24.04 x86_64 container (the primary lane's image, GCC 13.3.0 with `gcc-13-plugin-dev`) against its `/opt/openfhe` 1.5.1 install | 3.11.15 (driver) | same manifest, second compiler and distribution | `native_pass` | 21 / 0 / 21 | no | `artifact/feasibility/cpp-gcc133-openfhe151/feasibility.json` |
+| `emulated-docker-py311` | Ubuntu 24.04 x86_64 container built and run **under x86_64 emulation** (Docker Desktop on an Apple M4 Pro, arm64 host); not physical x86_64 hardware | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`), Ubuntu gcc 13.3.0 | `emulated_pass` | 42 / 0 / 42 | no | `artifact/feasibility/emulated-docker-py311/feasibility.json` |
+| `cpp-gcc133-openfhe151-emulated` | the same emulated Ubuntu 24.04 x86_64 image, GCC 13.3.0 plugin frontend against its `/opt/openfhe` 1.5.1 install; **emulated**, not physical x86_64 | 3.11.15 (driver) | C++ API of the same native v1.5.1 build (`1306d14f`), instrumentation manifest `openfhe-1.5-v3` | `emulated_pass` | 21 / 0 / 21 | no | `artifact/feasibility/cpp-gcc133-openfhe151-emulated/feasibility.json` |
 | `primary-source-py311` | Ubuntu 24.04 x86_64 container (Apptainer 1.4.1 `--fakeroot` image built and run on TACC LS6; Rocky 8.10 host, AMD EPYC 7763) | 3.11.15 | source-built v1.5.1.0 (`4f13e2c3`) on native v1.5.1 (`1306d14f`), Ubuntu gcc 13.3.0 | `pass` | 40 / 0 / 40 | yes | `artifact/feasibility/primary-source-py311/feasibility.json` |
 
 ## What each lane proves
@@ -21,10 +23,52 @@ the artifacts.
 **`developer`** — the local macOS build runs every real-binding check except
 `RES-02`, which reads `/proc/self/status` and is Linux-only. That single skip is
 why the status is `incomplete` rather than `pass`, and it is expected on macOS.
+This is currently the only lane carrying `API-09` and `ROT-04` (live scheme
+identification for CKKS/BFV/BGV with no declared parameters, each scheme's own
+depth coordinate, and fast-rotation equivalence under BV key switching), which
+took the gate from 40 checks to 42 on 2026-11-01. The Linux lanes below were
+archived at 40 and must be rerun before the paper quotes 42 anywhere outside
+this row.
 This lane also runs the seeded benchmark (`SEED-01`; 27 cases when archived,
 28 since `bootstrap.positive.underused_deep` was added — see
 `evaluation/seeded/README.md`). It is a developer convenience, not a
 compatibility claim: the wheel is not the pinned Linux toolchain.
+
+**`emulated-docker-py311`** — the same pinned Dockerfile, the same base-image
+digest, the same Python tarball hash and the same two OpenFHE commits as the
+primary lane, built with `docker buildx --platform linux/amd64` on an arm64
+macOS host. It is the only lane that has run all 42 checks, so it is what
+currently shows `API-09` and `ROT-04` passing somewhere other than macOS, and
+the only place `RES-02` and the 61-case seeded benchmark have run together.
+
+It is **not** a substitute for `primary-source-py311` and is never
+authoritative. Two reasons, both checkable. The substrate is emulated rather
+than the AMD EPYC hardware the primary lane names, so it is evidence that the
+recipe and the code work on Linux x86_64, not that they work on the cluster.
+And it is a genuinely different binary: its native module hashes to
+`91b0253f…` where the primary lane's hashes to `a3a6e18a…`, so no run bundle
+produced under one lane can be mistaken for the other. Treat it as a
+pre-flight check that de-risks a cluster allocation, not as cluster evidence.
+
+One practical caveat for anyone reproducing this lane: the Docker VM it was
+built in has 7.7 GB of RAM, and the seeded bootstrap case peaks at 6.98 GB.
+The 42-check gate passes because it runs that case with the memory to itself,
+but `unittest discover` over the whole suite in the same container SIGKILLs it
+(`unreadable bundle: ... trace.json`). That is the VM's limit, not a defect:
+the identical suite passes with every real-binding test executing on the
+developer lane (312 tests, 1 skip). Give the container 12 GB or more before
+running the full suite inside it.
+
+**`cpp-gcc133-openfhe151-emulated`** — the GCC plugin frontend inside that same
+emulated image. The C++ gate derives its lane name from the toolchain, so this
+run would otherwise have been called `cpp-gcc133-openfhe151` and overwritten
+the LS6 artifact of the same name; the `--lane` override keeps them apart. It
+is the only C++ evidence covering the per-scheme depth coordinate, through
+`SCHEME-01` (BFV and BGV report their scheme, N packed slots and plaintext
+modulus while CKKS keeps N/2 and none) and `PARITY-01` (the BFV and BGV C++
+traces are semantically equivalent to the Python frontend's). Like the lane
+above it is emulated and never authoritative; the GCC 15.2 and native GCC 13.3
+cluster lanes remain the compiler evidence.
 
 **`provisional-wheel-py312`** — the official PyPI wheel on the target OS passed
 every check that existed when it was archived. It proves the API behavior

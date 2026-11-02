@@ -29,11 +29,19 @@ real_workload,sol_encrypted_inference,precision.tolerance_violated.v1,,not_appli
 real_workload,sol_lin_reg,precision.tolerance_violated.v1,,not_applicable,not_applicable,needs a precision checkpoint with a declared tolerance; unmodified programs carry none
 real_workload,sol_log_reg,precision.tolerance_violated.v1,,not_applicable,not_applicable,needs a precision checkpoint with a declared tolerance; unmodified programs carry none
 real_workload,sol_nag_log_reg,precision.tolerance_violated.v1,,not_applicable,not_applicable,needs a precision checkpoint with a declared tolerance; unmodified programs carry none
+seeded,bfv.negative.security_default,configuration.testing_only_security.v1,clean,clean,true_negative,
+seeded,bfv.positive.security_not_set,configuration.testing_only_security.v1,positive,positive,hit,
+seeded,bgv.negative.security_default,configuration.testing_only_security.v1,clean,clean,true_negative,
+seeded,bgv.positive.security_not_set,configuration.testing_only_security.v1,positive,positive,hit,
 seeded,configuration.kernel.default,configuration.testing_only_security.v1,clean,clean,true_negative,
 seeded,configuration.negative.undeclared,configuration.testing_only_security.v1,not_applicable,not_applicable,expected_not_applicable,HEStd_NotSet is in use but undeclared; the rule must decline rather than infer it from the 64-slot ring
 seeded,configuration.positive.not_set,configuration.testing_only_security.v1,positive,positive,hit,
+seeded,bfv.negative.precision_exact,precision.checkpoint_drop.v1,not_applicable,not_applicable,expected_not_applicable,"BFV is exact, so a checkpoint carries no approximation error; both precision rules must decline rather than report a measurement"
+seeded,bgv.negative.precision_exact,precision.checkpoint_drop.v1,not_applicable,not_applicable,expected_not_applicable,"BGV is exact, so a checkpoint carries no approximation error; both precision rules must decline rather than report a measurement"
 seeded,precision.negative.recovered,precision.checkpoint_drop.v1,clean,clean,true_negative,the later checkpoint is a fresh re-encryption and is ~14 bits more precise than the earlier one; an improvement is not a drop
 seeded,precision.negative.same_ciphertext,precision.checkpoint_drop.v1,clean,clean,true_negative,"two decryptions of one ciphertext differ only by noise flooding (about half a bit), below the one-bit minimum"
 seeded,precision.positive.drop,precision.checkpoint_drop.v1,positive,positive,hit,
+seeded,bfv.negative.precision_exact,precision.tolerance_violated.v1,not_applicable,not_applicable,expected_not_applicable,"BFV is exact, so a checkpoint carries no approximation error; both precision rules must decline rather than report a measurement"
+seeded,bgv.negative.precision_exact,precision.tolerance_violated.v1,not_applicable,not_applicable,expected_not_applicable,"BGV is exact, so a checkpoint carries no approximation error; both precision rules must decline rather than report a measurement"
 seeded,precision.negative.tolerance_within,precision.tolerance_violated.v1,clean,clean,true_negative,"same computation and loss, but the declared 1e-3 tolerance is far looser than the ~1e-9 error"
 seeded,precision.positive.tolerance_violated,precision.tolerance_violated.v1,positive,positive,hit,
