@@ -1,0 +1,107 @@
+\begin{thebibliography}{17}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{{#1}}
+\providecommand{\urlprefix}{URL }
+\providecommand{\doi}[1]{\url{https://doi.org/#1}}
+\providecommand{\eprint}[2][]{\url{#2}}
+ \bibcommenthead
+
+\bibitem[{Ali et~al.(2025)Ali, Choi, Gipson, Gorantala, Kun, Legiest, Lim,
+  Viand, Demissie, and Zheng}]{heir2025}
+Ali A, Choi J, Gipson B, et~al (2025) {HEIR}: A universal compiler for
+  homomorphic encryption. arXiv:2508.11095, \doi{10.48550/arXiv.2508.11095}
+
+\bibitem[{Badawi et~al.(2022)Badawi, Bates, Bergamaschi, Cousins, Erabelli,
+  Genise, Halevi, Hunt, Kim, Lee, Liu, Micciancio, Quah, Polyakov, R.V.,
+  Rohloff, Saylor, Suponitsky, Triplett, Vaikuntanathan, and
+  Zucca}]{openfhe2022}
+Badawi AA, Bates J, Bergamaschi F, et~al (2022) {OpenFHE}: Open-source fully
+  homomorphic encryption library. In: Proceedings of the 10th Workshop on
+  Encrypted Computing and Applied Homomorphic Cryptography (WAHC), pp 53--63,
+  \doi{10.1145/3560827.3563379}
+
+\bibitem[{Berger et~al.(2023)Berger, Stern, and Pizzorno}]{berger2023scalene}
+Berger ED, Stern S, Pizzorno JA (2023) Triangulating python performance issues
+  with {Scalene}. In: 17th USENIX Symposium on Operating Systems Design and
+  Implementation (OSDI), pp 51--64
+
+\bibitem[{Brakerski(2012)}]{brakerski2012}
+Brakerski Z (2012) Fully homomorphic encryption without modulus switching from
+  classical {GapSVP}. In: Advances in Cryptology -- CRYPTO 2012, pp 868--886,
+  \doi{10.1007/978-3-642-32009-5_50}
+
+\bibitem[{Brakerski et~al.(2012)Brakerski, Gentry, and
+  Vaikuntanathan}]{bgv2012}
+Brakerski Z, Gentry C, Vaikuntanathan V (2012) (leveled) fully homomorphic
+  encryption without bootstrapping. In: Proceedings of the 3rd Innovations in
+  Theoretical Computer Science Conference (ITCS), pp 309--325,
+  \doi{10.1145/2090236.2090262}
+
+\bibitem[{Brynds et~al.(2025)Brynds, McLeod, Caccamise, Pal, Saiham, Rahman,
+  Miguel, and Wu}]{cryptoracle2025}
+Brynds C, McLeod P, Caccamise L, et~al (2025) {CryptOracle}: A modular
+  framework to characterize fully homomorphic encryption. arXiv:2510.03565,
+  \doi{10.48550/arXiv.2510.03565}
+
+\bibitem[{Chen et~al.(2026)Chen, Brown, and Zheng}]{rotom2026}
+Chen E, Brown F, Zheng W (2026) Bridging usability and performance: A tensor
+  compiler for autovectorizing homomorphic encryption. In: 35th USENIX Security
+  Symposium. USENIX Association, pp 141--160
+
+\bibitem[{Cheon et~al.(2017)Cheon, Kim, Kim, and Song}]{ckks2017}
+Cheon JH, Kim A, Kim M, et~al (2017) Homomorphic encryption for arithmetic of
+  approximate numbers. In: Advances in Cryptology -- ASIACRYPT 2017, pp
+  409--437, \doi{10.1007/978-3-319-70694-8_15}
+
+\bibitem[{Curtsinger and Berger(2015)}]{curtsinger2015coz}
+Curtsinger C, Berger ED (2015) Coz: Finding code that counts with causal
+  profiling. In: Proceedings of the 25th Symposium on Operating Systems
+  Principles (SOSP), pp 184--197, \doi{10.1145/2815400.2815409}
+
+\bibitem[{Dathathri et~al.(2020)Dathathri, Kostova, Saarikivi, Dai, Laine, and
+  Musuvathi}]{dathathri2020eva}
+Dathathri R, Kostova B, Saarikivi O, et~al (2020) {EVA}: An encrypted vector
+  arithmetic language and compiler for efficient homomorphic computation. In:
+  Proceedings of the 41st ACM SIGPLAN Conference on Programming Language Design
+  and Implementation (PLDI), pp 546--561, \doi{10.1145/3385412.3386023}
+
+\bibitem[{Fan and Vercauteren(2012)}]{fv2012}
+Fan J, Vercauteren F (2012) Somewhat practical fully homomorphic encryption.
+  IACR Cryptology ePrint Archive, Report 2012/144
+
+\bibitem[{Faneela et~al.(2025)Faneela, Ahmad, Ghaleb, Jan, and
+  Buchanan}]{crossplatform2025}
+Faneela, Ahmad J, Ghaleb B, et~al (2025) Cross-platform benchmarking of the
+  {FHE} libraries: Novel insights into {SEAL} and {OpenFHE}. arXiv:2503.11216,
+  \doi{10.48550/arXiv.2503.11216}
+
+\bibitem[{Lee et~al.(2022)Lee, Heo, Cheon, Jeong, Kim, Kim, Lee, and
+  Kim}]{hecate2022}
+Lee Y, Heo S, Cheon S, et~al (2022) {HECATE}: Performance-aware scale
+  optimization for homomorphic encryption compiler. In: IEEE/ACM International
+  Symposium on Code Generation and Optimization (CGO), pp 193--204,
+  \doi{10.1109/CGO53902.2022.9741265}
+
+\bibitem[{Njungle et~al.(2025)Njungle, Stojkov, and Kinsy}]{safetycentric2025}
+Njungle NB, Stojkov M, Kinsy MA (2025) A safety-centric analysis and benchmarks
+  of modern open-source homomorphic encryption libraries. In: Proceedings of
+  the 22nd International Conference on Security and Cryptography (SECRYPT), pp
+  483--494, \doi{10.5220/0013626400003979}
+
+\bibitem[{Peng et~al.(2026)Peng, Xiao, Liu, Ji, and Wang}]{herta2026}
+Peng Y, Xiao D, Liu Z, et~al (2026) Detecting and understanding vulnerabilities
+  in fully homomorphic encryption frameworks. arXiv:2606.22519,
+  \doi{10.48550/arXiv.2606.22519}
+
+\bibitem[{Takeshita et~al.(2025)Takeshita, Koirala, McKechney, and
+  Jung}]{takeshita2025heprofiler}
+Takeshita J, Koirala N, McKechney C, et~al (2025) {HEProfiler}: An in-depth
+  profiler of approximate homomorphic encryption libraries. Journal of
+  Cryptographic Engineering 15(14). \doi{10.1007/s13389-025-00377-5}
+
+\bibitem[{Xu et~al.(2025)Xu, Gong, Ran, Tang, Wen, and Ding}]{fheagent2025}
+Xu N, Gong Z, Ran R, et~al (2025) {FHE-Agent}: Automating {CKKS} configuration
+  for practical encrypted inference via an {LLM}-guided agentic framework.
+  arXiv:2511.18653, \doi{10.48550/arXiv.2511.18653}
+
+\end{thebibliography}
